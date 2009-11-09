@@ -1,0 +1,42 @@
+/*
+ * Copyright Samuel Halliday 2009
+ *
+ * This file is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This file is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this file.
+ * If not, see <http://www.gnu.org/licenses/>.
+ */
+package uk.me.fommil.ff;
+
+import javax.swing.JFrame;
+
+/**
+ * @author Samuel Halliday
+ * @see <a href="http://hotud.org/component/content/article/42-sport/22386">SWOS 96/97 Download</a>
+ */
+@SuppressWarnings("serial")
+public class Main {
+
+	/** @param args */
+	public static final void main(String[] args) {
+		Team a = new Team();
+		Team b = new Team();
+		GameView gv = new GameView(a, b);
+
+		JFrame frame = new JFrame();
+		frame.add(gv);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setSize(280, 240);
+        frame.setLocationRelativeTo(null);
+        frame.setTitle("Foolish Football");
+        frame.setVisible(true);
+
+		assert gv.getKeyListeners().length > 0;
+	}
+}
