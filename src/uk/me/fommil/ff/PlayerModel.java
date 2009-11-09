@@ -18,6 +18,7 @@ import com.google.common.base.Preconditions;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
+import java.util.Collection;
 import uk.me.fommil.ff.GameView.Action;
 
 /**
@@ -30,6 +31,7 @@ public class PlayerModel {
 	private final Player player;
 	private final int i;
 	private Point location;
+	private Collection<Action> actions;
 	private Point step;
 
 	/**
@@ -44,24 +46,40 @@ public class PlayerModel {
 		this.player = player;
 	}
 
-	public void performAction(Action action) {
-		switch (action) {
-			case UP:
-				step = new Point(0, -5);
-				break;
-			case DOWN:
-				step = new Point(0, 5);
-				break;
-			case LEFT:
-				step = new Point(-5, 0);
-				break;
-			case RIGHT:
-				step = new Point(5, 0);
-				break;
-			default:
-				return;
+	public void tick(long millis) {
+		if (actions == null)
+			return;
+
+		int rate = (int) millis / 100;
+
+		int x = 0;
+		int y = 0;
+		for (Action action : actions) {
+			switch (action) {
+				case UP:
+					y -= 5;
+					break;
+				case DOWN:
+					y += 5;
+					break;
+				case LEFT:
+					x -= 5;
+					break;
+				case RIGHT:
+					x += 5;
+					break;
+			}
 		}
-		location.move(location.x + step.x, location.y + step.y);
+		step = new Point(x, y);
+		location = new Point(location.x + rate * x, location.y + rate * y);
+	}
+
+	public Rectangle2D getBounds() {
+		return new Rectangle.Double(location.getX() - 4, location.getY() - 4, 9, 9);
+	}
+
+	public void setActions(Collection<Action> actions) {
+		this.actions = actions;
 	}
 
 	public void setLocation(Point p) {
@@ -70,10 +88,6 @@ public class PlayerModel {
 
 	public Point getLocation() {
 		return location;
-	}
-
-	public Rectangle2D getBounds() {
-		return new Rectangle.Double(location.getX() - 4, location.getY() - 4, 9, 9);
 	}
 
 	public Point getLastStep() {

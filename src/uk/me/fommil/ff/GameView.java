@@ -15,6 +15,7 @@
 package uk.me.fommil.ff;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -25,7 +26,10 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.geom.Rectangle2D;
+import java.util.Collection;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Logger;
 import javax.swing.JPanel;
 
@@ -71,6 +75,7 @@ fonts: 190776
 public class GameView extends JPanel {
 
 	private static final Logger log = Logger.getLogger(GameView.class.getName());
+	private final long PERIOD = 100L;
 
 	/**
 	 * the full list of actions we can expect from each team
@@ -86,6 +91,66 @@ public class GameView extends JPanel {
 //	private final List<PlayerModel> bs = Lists.newArrayListWithCapacity(11);
 	private final Tactics aTactics;
 //	private final Tactics bTactics;
+	private final TimerTask ticker = new TimerTask() {
+
+		@Override
+		public synchronized void run() {
+			updatePhysics();
+			repaint();
+		}
+	};
+	private final KeyListener keyboardInput = new KeyAdapter() {
+
+		private final Collection<Action> actions = Sets.newHashSet();
+
+		@Override
+		public void keyPressed(KeyEvent e) {
+			switch (e.getKeyCode()) {
+				case KeyEvent.VK_LEFT:
+					actions.add(Action.LEFT);
+					break;
+				case KeyEvent.VK_RIGHT:
+					actions.add(Action.RIGHT);
+					break;
+				case KeyEvent.VK_UP:
+					actions.add(Action.UP);
+					break;
+				case KeyEvent.VK_DOWN:
+					actions.add(Action.DOWN);
+					break;
+				case KeyEvent.VK_ENTER:
+					actions.add(Action.BUTTON_A);
+					break;
+				case KeyEvent.VK_SPACE:
+					actions.add(Action.BUTTON_B);
+					break;
+				default:
+					return;
+			}
+			setActions(GameView.this.a, actions);
+		}
+
+		@Override
+		public void keyReleased(KeyEvent e) {
+			switch (e.getKeyCode()) {
+				case KeyEvent.VK_LEFT:
+					actions.remove(Action.LEFT);
+					break;
+				case KeyEvent.VK_RIGHT:
+					actions.remove(Action.RIGHT);
+					break;
+				case KeyEvent.VK_UP:
+					actions.remove(Action.UP);
+					break;
+				case KeyEvent.VK_DOWN:
+					actions.remove(Action.DOWN);
+					break;
+				default:
+					return;
+			}
+			setActions(GameView.this.a, actions);
+		}
+	};
 
 	/**
 	 * @param a
@@ -108,41 +173,12 @@ public class GameView extends JPanel {
 			as.add(pma);
 		}
 
+		// HACK: eventually take in input controls
 		// needs to get focus for keys
+		// TODO: calculate who pressed the key and the associated action
 		setFocusable(true);
-		addKeyListener(new KeyAdapter() {
-
-			@Override
-			public void keyPressed(KeyEvent e) {
-				int key = e.getKeyCode();
-
-				// TODO: calculate who pressed the key and the associated action
-				final Team team = GameView.this.a;
-				switch (key) {
-					case KeyEvent.VK_LEFT:
-						performAction(team, Action.LEFT);
-						break;
-					case KeyEvent.VK_RIGHT:
-						performAction(team, Action.RIGHT);
-						break;
-					case KeyEvent.VK_UP:
-						performAction(team, Action.UP);
-						break;
-					case KeyEvent.VK_DOWN:
-						performAction(team, Action.DOWN);
-						break;
-					case KeyEvent.VK_ENTER:
-						performAction(team, Action.BUTTON_A);
-						break;
-					case KeyEvent.VK_SPACE:
-						performAction(team, Action.BUTTON_B);
-						break;
-					default:
-						return;
-				}
-				repaint();
-			}
-		});
+		addKeyListener(keyboardInput);
+		new Timer().schedule(ticker, 0L, PERIOD);
 	}
 
 	@Override
@@ -153,7 +189,7 @@ public class GameView extends JPanel {
 		Dimension size = getSize();
 		double w = size.getWidth();
 		double h = size.getHeight();
-		g2.clearRect(0, 0, (int)w, (int)h);
+		g2.clearRect(0, 0, (int) w, (int) h);
 		g2.setColor(Color.GREEN);
 
 		// we are always centred over the ball
@@ -161,15 +197,13 @@ public class GameView extends JPanel {
 
 		Rectangle2D view = new Rectangle.Double(ballLoc.x - w / 2, ballLoc.y - h / 2, w, h);
 
-
 		// TODO: draw the pitch
 
 		// draw the players that are in view
 		for (PlayerModel pm : as) {
 			Rectangle2D b = pm.getBounds();
-			// TODO: investigate why intersection of rectangles returns false sometimes
 			if (view.intersects(b))
-				draw(g2, pm);
+				draw(g2, view, pm);
 		}
 
 		// draw the ball
@@ -178,12 +212,12 @@ public class GameView extends JPanel {
 		g2.fillOval(cx - 2, cy - 2, 5, 5);
 	}
 
-	private void performAction(Team team, Action action) {
+	private void setActions(Team team, Collection<Action> actions) {
 		PlayerModel pm = getSelected(team);
 
 		// TODO: consider context of when action is to change the selected player
 
-		pm.performAction(action);
+		pm.setActions(actions);
 	}
 
 	// get the selected player for the given team
@@ -195,13 +229,21 @@ public class GameView extends JPanel {
 		throw new AssertionError();
 	}
 
-	private void draw(Graphics2D g, PlayerModel pm) {
-		// HACK
+	// HACK: should really ask model for the sprite
+	private void draw(Graphics2D g, Rectangle2D view, PlayerModel pm) {
+		int xoff = (int) view.getX();
+		int yoff = (int) view.getY();
 		Point p = new Point(pm.getLocation());
-		g.drawOval(p.x - 4, p.y - 4, 9, 9);
+		g.drawOval(p.x - 4 - xoff, p.y - 4 - yoff, 9, 9);
 		Point ds = pm.getLastStep();
 		if (ds == null)
 			return;
-		g.drawLine(p.x, p.y, p.x + ds.x, p.y + ds.y);
+		g.drawLine(p.x - xoff, p.y - yoff, p.x + ds.x - xoff, p.y + ds.y - yoff);
+	}
+
+	private void updatePhysics() {
+		for (PlayerModel pm : as) {
+			pm.tick(PERIOD);
+		}
 	}
 }
