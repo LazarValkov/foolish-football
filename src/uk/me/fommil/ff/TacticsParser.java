@@ -18,7 +18,6 @@ import com.google.common.collect.Lists;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
@@ -89,7 +88,7 @@ public class TacticsParser {
 		List<byte[]> tacs = Lists.newArrayList();
 		byte[] tac;
 
-		for (int i = 360; i < bytes.length - TAC.length; i++) {
+		for (int i = 359; i < bytes.length - TAC.length; i++) {
 			for (int j = 0; j < TAC.length; j++) {
 				if (bytes[i + j] != (byte) TAC[j])
 					break;
