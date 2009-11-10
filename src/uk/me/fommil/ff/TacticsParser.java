@@ -14,9 +14,14 @@
  */
 package uk.me.fommil.ff;
 
+import com.google.common.collect.Lists;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Import a SWOS TAC file, containing legacy tactics.
@@ -32,60 +37,73 @@ import java.io.FileInputStream;
  * the top left.
  * <p>
  * The first 8 bytes of the file are a string containing the name of
- * the tactic, then bytes 9 to 166 (hex) are used to define where the 10 players
+ * the tactic, then bytes 9 to 359 are used to define where the 10 players
  * should run to when the ball is in one of the areas (goalkeeper is not included).
- * The last few bytes in the file from 167 to 171 are unknown and always
- * {@code 00 FF FF 00 01 FF FF 01 FF FF 00}.
- * <p>
- * Within the file, player positions are held in sequences. Use the following formula to
- * find the byte defining where the player will run to:
- * {@code (Player No * 35) - 26 + (Ball Location - 1)}.
- * <p>
- * For example, if we have byte 7F in position 120 of the file, this means that when the
- * ball is in quadrant 35 (top left corner), player 8, normally the left winger will be
- * at the goal-mouth of the opponents.
+ * The last 10 bytes in the stream (360 to 369) always seem to be
+ * {@code 00 FF FF 00 01 FF FF 01 FF FF}.
  * 
  * @author Samuel Halliday
  * @see <a href="http://bigcalm.tripod.com/swos/tactics-analysis.htm">Tactics File Hex Analysis</a>
  */
 public class TacticsParser {
 
-	// TODO TAC parser
-	// TODO read the SWOS basic tactics from the data files
-	// it appears a
-	// for A in `find . -type f` ; do grep "4-3-3" $A ; done
-	// finds that the tactics are stored in ENGLISH.EXE and SWS!!!_!.EXE
-
-	private final int[] TAC = new int[]{0x00, 0xFF, 0xFF, 0x00, 0x01, 0xFF, 0xFF, 0x01, 0xFF, 0xFF, 0x00};
+	private static final Logger log = Logger.getLogger(TacticsParser.class.getName());
+	private static final int[] TAC = new int[]{0x00, 0xFF, 0xFF, 0x00, 0x01, 0xFF, 0xFF, 0x01, 0xFF, 0xFF};
 
 	/**
 	 * @param args
 	 * @throws Exception
 	 */
 	public static final void main(String[] args) throws Exception {
-		File file = new File("data/Sensible World of Soccer 96-97/ENGLISH.EXE");
+		// for A in `find . -type f` ; do grep "4-3-3" $A ; done
+		// finds that the tactics are stored in ENGLISH.EXE and SWS!!!_!.EXE
+		// File file = new File("data/Sensible World of Soccer 96-97/ENGLISH.EXE");
+		File dir = new File("data/Sensible World of Soccer 96-97");
+		for (File file : dir.listFiles()) {
+			if (!file.isFile())
+				continue;
+			extractTacs(file);
+		}
+	}
+
+	private static void extractTacs(File file) throws Exception {
 		FileInputStream is = new FileInputStream(file);
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
 		int read = -1;
-		byte [] buf = new byte[1024];
-		while ((is.read(buf)) != -1) {
-			baos.write(buf, 0, read);
+		byte[] buf = new byte[1024];
+		try {
+			while ((read = is.read(buf)) != -1) {
+				baos.write(buf, 0, read);
+			}
+		} finally {
+			is.close();
 		}
-		is.close();
 		byte[] bytes = baos.toByteArray();
-
-		match(bytes);
+		List<byte[]> tacs = extractTac(bytes);
+		if (!tacs.isEmpty())
+			log.info("EXTRACTED " + tacs.size() + " from " + file);
 	}
 
-	private static byte[] match(byte[] bytes) {
-		for (int i = 0; i < bytes.length; i++) {
-			byte b = bytes[i];
+	private static List<byte[]> extractTac(byte[] bytes) {
+		List<byte[]> tacs = Lists.newArrayList();
+		byte[] tac;
+
+		for (int i = 360; i < bytes.length - TAC.length; i++) {
+			for (int j = 0; j < TAC.length; j++) {
+				if (bytes[i + j] != (byte) TAC[j])
+					break;
+				if (j == TAC.length - 1) {
+					tac = Arrays.copyOfRange(bytes, i - 360, i + 9);
+					tacs.add(tac);
+					StringBuilder name = new StringBuilder(8);
+					for (int k = 0; k < 8; k++) {
+						name.append((char) tac[k]);
+					}
+					log.info("MATCHED: " + name);
+				}
+			}
 		}
-
-
-
-		throw new UnsupportedOperationException("Not yet implemented");
+		return tacs;
 	}
-
 }
