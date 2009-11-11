@@ -14,13 +14,21 @@
  */
 package uk.me.fommil.ff;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Logger;
+import uk.me.fommil.ff.Tactics.BallZone;
+import uk.me.fommil.ff.Tactics.PlayerZone;
 
 /**
  * Import a SWOS TAC file, containing legacy tactics.
@@ -36,9 +44,9 @@ import java.util.logging.Logger;
  * the top left.
  * <p>
  * The first 8 bytes of the file are a string containing the name of
- * the tactic, then bytes 9 to 359 are used to define where the 10 players
+ * the tactic, then bytes 9 to 358 are used to define where the 10 players
  * should run to when the ball is in one of the areas (goalkeeper is not included).
- * The last 10 bytes in the stream (360 to 369) always seem to be
+ * The last 10 bytes in the stream (359 to 368) always seem to be
  * {@code 00 FF FF 00 01 FF FF 01 FF FF}.
  * 
  * @author Samuel Halliday
@@ -47,6 +55,7 @@ import java.util.logging.Logger;
 public class TacticsParser {
 
 	private static final Logger log = Logger.getLogger(TacticsParser.class.getName());
+	// the magic binaries that end a tactics instance
 	private static final int[] TAC = new int[]{0x00, 0xFF, 0xFF, 0x00, 0x01, 0xFF, 0xFF, 0x01, 0xFF, 0xFF};
 
 	/**
@@ -58,33 +67,48 @@ public class TacticsParser {
 		// finds that the tactics are stored in ENGLISH.EXE and SWS!!!_!.EXE
 		// File file = new File("data/Sensible World of Soccer 96-97/ENGLISH.EXE");
 		File dir = new File("data/Sensible World of Soccer 96-97");
+		TacticsParser parser = new TacticsParser();
+		Collection<Tactics> tactics = Sets.newLinkedHashSet();
 		for (File file : dir.listFiles()) {
 			if (!file.isFile())
 				continue;
-			extractTacs(file);
+			FileInputStream in = new FileInputStream(file);
+			tactics.addAll(parser.extractTactics(in));
+		}
+		log.info(tactics.toString());
+		for (Tactics tactic : tactics) {
+			System.out.println(tactic.debugView());
 		}
 	}
 
-	private static void extractTacs(File file) throws Exception {
-		FileInputStream is = new FileInputStream(file);
+	/**
+	 * @param in
+	 * @return
+	 * @throws IOException
+	 */
+	public Collection<Tactics> extractTactics(InputStream in) throws IOException {
+		Preconditions.checkNotNull(in);
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
 		int read = -1;
 		byte[] buf = new byte[1024];
 		try {
-			while ((read = is.read(buf)) != -1) {
+			while ((read = in.read(buf)) != -1) {
 				baos.write(buf, 0, read);
 			}
 		} finally {
-			is.close();
+			in.close();
 		}
 		byte[] bytes = baos.toByteArray();
-		List<byte[]> tacs = extractTac(bytes);
-		if (!tacs.isEmpty())
-			log.info("EXTRACTED " + tacs.size() + " from " + file);
+		List<byte[]> tacs = extractTacs(bytes);
+		Collection<Tactics> tactics = Sets.newLinkedHashSet();
+		for (byte[] tac : tacs) {
+			tactics.add(parseTacs(tac));
+		}
+		return tactics;
 	}
 
-	private static List<byte[]> extractTac(byte[] bytes) {
+	private List<byte[]> extractTacs(byte[] bytes) {
 		List<byte[]> tacs = Lists.newArrayList();
 		byte[] tac;
 
@@ -93,16 +117,47 @@ public class TacticsParser {
 				if (bytes[i + j] != (byte) TAC[j])
 					break;
 				if (j == TAC.length - 1) {
-					tac = Arrays.copyOfRange(bytes, i - 360, i + 9);
+					tac = Arrays.copyOfRange(bytes, i - 359, i + 10);
 					tacs.add(tac);
-					StringBuilder name = new StringBuilder(8);
-					for (int k = 0; k < 8; k++) {
-						name.append((char) tac[k]);
-					}
-					log.info("MATCHED: " + name);
 				}
 			}
 		}
 		return tacs;
+	}
+
+	private Tactics parseTacs(byte[] tac) {
+		assert tac.length == 369;
+		StringBuilder name = new StringBuilder(8);
+		for (int i = 0; i < 8; i++) {
+			int c = tac[i];
+			if (c == 0)
+				break;
+			name.append((char) c);
+		}
+		Tactics tactics = new Tactics(name.toString());
+
+		for (int p = 0; p < 10; p++) {
+			for (int x = 0; x < 5; x++) {
+				for (int y = 0; y < 7; y++) {
+					int i = 9 + (p * 35) + (y * 5) + x;
+					int loc = unsignedByteToInt(tac[i]);
+					Preconditions.checkArgument(loc >= 0, Joiner.on(",").join(loc, tactics, p, x, y, i));
+					int px = (loc >> 4) & 0x0F;
+					assert px >= 0 && px < 15 : Joiner.on(",").join(loc, tactics, p, x, y, i, px);
+					int py = loc & 0x0F;
+					assert py >= 0 && py < 16 : Joiner.on(",").join(loc, tactics, p, x, y, i, py);
+					tactics.set(new BallZone(x, y), p + 2, new PlayerZone(px, py));
+				}
+			}
+		}
+		return tactics;
+	}
+
+	/**
+	 * @param b
+	 * @return
+	 */
+	public static int unsignedByteToInt(byte b) {
+		return (int) b & 0xFF;
 	}
 }

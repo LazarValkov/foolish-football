@@ -26,7 +26,7 @@ import java.util.List;
  */
 public class Team {
 
-	private Tactics current = new Tactics();
+	private Tactics current;
 	private List<Player> players = Lists.newArrayList();
 
 	/** */

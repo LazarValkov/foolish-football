@@ -166,8 +166,8 @@ public class GameView extends JPanel {
 		List<Player> aPlayers = a.getPlayers();
 //		List<Player> bPlayers = b.getPlayers();
 		for (int i = 0; i < 11; i++) {
-			Point p = Tactics.getKickOff().getLocation(i);
-
+			// Point p = Tactics.getKickOff().getLocation(i);
+			Point p = new Point(200, 200);
 			PlayerModel pma = new PlayerModel(i, aPlayers.get(i));
 			pma.setLocation(p);
 			as.add(pma);
