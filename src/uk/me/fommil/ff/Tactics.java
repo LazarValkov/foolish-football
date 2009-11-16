@@ -132,14 +132,6 @@ public class Tactics {
 		}
 	}
 
-	/**
-	 * @return the tactics associated to the kick off position.
-	 */
-	public static Tactics getKickOff() {
-		Tactics kickoff = new Tactics("Kickoff");
-		kickoff.set(new BallZone(2, 3), 1, new PlayerZone(7, 7));
-		return kickoff;
-	}
 	private String name;
 	private final Map<BallZone, Map<Integer, PlayerZone>> zones = Maps.newHashMapWithExpectedSize(35);
 
