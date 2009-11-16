@@ -53,11 +53,13 @@ import uk.me.fommil.ff.Tactics.PlayerZone;
  * 
  * @author Samuel Halliday
  * @see <a href="http://bigcalm.tripod.com/swos/tactics-analysis.htm">Tactics File Hex Analysis</a>
+ * @see <a href="https://yodasoccer.svn.sourceforge.net/svnroot/yodasoccer/trunk/data/tactics/">Yoda Soccer Tactics</a>
  */
 public class TacticsParser {
 
 	private static final Logger log = Logger.getLogger(TacticsParser.class.getName());
 	// the magic binaries that end a tactics instance
+	// FIXME: this is not the full story, lots of tactics not being parsed from ENGLISH.EXE
 	private static final int[] TAC = new int[]{0x00, 0xFF, 0xFF, 0x00, 0x01, 0xFF, 0xFF, 0x01, 0xFF, 0xFF};
 
 	/**
@@ -92,17 +94,19 @@ public class TacticsParser {
 		// File file = new File("data/Sensible World of Soccer 96-97/ENGLISH.EXE");
 		File dir = new File("data/Sensible World of Soccer 96-97");
 		TacticsParser parser = new TacticsParser();
-		Collection<Tactics> tactics = Sets.newLinkedHashSet();
+		Map<String, Tactics> all = Maps.newHashMap();
 		for (File file : dir.listFiles()) {
 			if (!file.isFile())
 				continue;
 			FileInputStream in = new FileInputStream(file);
-			tactics.addAll(parser.extractTactics(in));
+			for (Tactics t : parser.extractTactics(in)) {
+				all.put(t.getName(), t);
+			}
 		}
-		log.info(tactics.toString());
-		for (Tactics tactic : tactics) {
-			System.out.println(tactic.debugView());
-		}
+		log.info(all.keySet().toString());
+//		for (Tactics tactic : tactics) {
+//			System.out.println(tactic.debugView());
+//		}
 	}
 
 	/**
