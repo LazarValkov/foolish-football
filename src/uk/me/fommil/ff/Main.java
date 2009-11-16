@@ -14,6 +14,9 @@
  */
 package uk.me.fommil.ff;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Map;
 import javax.swing.JFrame;
 
 /**
@@ -23,16 +26,25 @@ import javax.swing.JFrame;
 @SuppressWarnings("serial")
 public class Main {
 
-	/** @param args */
-	public static final void main(String[] args) {
+	private static final File SWOS = new File("data/Sensible World of Soccer 96-97");
+
+	/**
+	 * @param args
+	 * @throws IOException
+	 */
+	public static final void main(String[] args) throws IOException {
+		Map<String, Tactics> swosTactics = TacticsParser.getSwosTactics(SWOS);
+
 		Team a = new Team();
+		a.setCurrentTactics(swosTactics.get("442"));
 		Team b = new Team();
+		b.setCurrentTactics(swosTactics.get("433"));
 		GameView gv = new GameView(a, b);
 
 		JFrame frame = new JFrame();
 		frame.add(gv);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setSize(280, 240);
+		frame.setSize(400, 600);
         frame.setLocationRelativeTo(null);
         frame.setTitle("Foolish Football");
         frame.setVisible(true);

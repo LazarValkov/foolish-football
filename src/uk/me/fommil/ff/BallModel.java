@@ -25,7 +25,7 @@ public class BallModel {
 
 	public Point getLocation() {
 		// TODO implement
-		return new Point(100, 100);
+		return new Point(200, 300);
 	}
 
 }

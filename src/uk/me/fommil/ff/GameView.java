@@ -32,6 +32,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
 import javax.swing.JPanel;
+import uk.me.fommil.ff.Tactics.BallZone;
 
 /**
  * The overlord class for visualising game play.
@@ -165,9 +166,10 @@ public class GameView extends JPanel {
 		// create models for each of the team's players
 		List<Player> aPlayers = a.getPlayers();
 //		List<Player> bPlayers = b.getPlayers();
-		for (int i = 0; i < 11; i++) {
-			// Point p = Tactics.getKickOff().getLocation(i);
-			Point p = new Point(200, 200);
+		BallZone centre = new Tactics.BallZone(2, 3);
+		for (int i = 1; i < 11; i++) {
+			Point p = a.getCurrentTactics().getZone(centre, i + 1).getLocation(true, 400, 600);
+
 			PlayerModel pma = new PlayerModel(i, aPlayers.get(i));
 			pma.setLocation(p);
 			as.add(pma);

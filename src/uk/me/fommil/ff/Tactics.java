@@ -16,6 +16,7 @@ package uk.me.fommil.ff;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+import java.awt.Point;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -114,6 +115,20 @@ public class Tactics {
 		@Override
 		public String toString() {
 			return "(" + x + ", " + y + ")";
+		}
+
+		/**
+		 * @param upwards true if the team is playing upwards
+		 * @param width
+		 * @param height
+		 * @return the central point represented by this for an image of the given width and height
+		 */
+		public Point getLocation(boolean upwards, int width, int height) {
+			int xx = (width * x) / 15 - 1;
+			int yy = (height * y) / 16 - 1;
+			if (upwards)
+				yy = height - yy;
+			return new Point(xx, yy);
 		}
 	}
 

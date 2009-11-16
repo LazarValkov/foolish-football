@@ -17,6 +17,7 @@ package uk.me.fommil.ff;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -26,6 +27,7 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 import uk.me.fommil.ff.Tactics.BallZone;
 import uk.me.fommil.ff.Tactics.PlayerZone;
@@ -57,6 +59,28 @@ public class TacticsParser {
 	private static final Logger log = Logger.getLogger(TacticsParser.class.getName());
 	// the magic binaries that end a tactics instance
 	private static final int[] TAC = new int[]{0x00, 0xFF, 0xFF, 0x00, 0x01, 0xFF, 0xFF, 0x01, 0xFF, 0xFF};
+
+	/**
+	 * Extract the base tactics from the SWOS installation.
+	 *
+	 * @param dir top level of the SWOS installation.
+	 * @return
+	 * @throws IOException
+	 */
+	public static final Map<String, Tactics> getSwosTactics(File dir) throws IOException {
+		Preconditions.checkNotNull(dir);
+		Preconditions.checkArgument(dir.isDirectory());
+		File file = new File(dir.getPath() + File.separator + "ENGLISH.EXE");
+		Preconditions.checkArgument(file.isFile(), file);
+
+		Map<String, Tactics> tactics = Maps.newHashMap();
+		TacticsParser parser = new TacticsParser();
+		FileInputStream in = new FileInputStream(file);
+		for (Tactics t : parser.extractTactics(in)) {
+			tactics.put(t.getName(), t);
+		}
+		return tactics;
+	}
 
 	/**
 	 * @param args

@@ -42,6 +42,9 @@ public class Team {
 	public Tactics getCurrentTactics() {
 		return current;
 	}
+	public void setCurrentTactics(Tactics tactics) {
+		this.current = tactics;
+	}
 
 	/**
 	 * @return
