@@ -17,6 +17,7 @@ package uk.me.fommil.ff;
 import com.google.common.base.Preconditions;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Shape;
 import java.awt.geom.Rectangle2D;
 import java.util.Collection;
 import uk.me.fommil.ff.GameView.Action;
@@ -33,6 +34,7 @@ public class PlayerModel {
 	private Point location;
 	private Collection<Action> actions;
 	private Point step;
+	private boolean kicking;
 
 	/**
 	 * @param i
@@ -68,6 +70,9 @@ public class PlayerModel {
 				case RIGHT:
 					x += 5;
 					break;
+				case BUTTON_A:
+					setKicking(true);
+					break;
 			}
 		}
 		step = new Point(x, y);
@@ -76,6 +81,12 @@ public class PlayerModel {
 
 	public Rectangle2D getBounds() {
 		return new Rectangle.Double(location.getX() - 4, location.getY() - 4, 9, 9);
+	}
+
+	// return the area that this player can control the ball with
+	public Shape getControlBounds() {
+		// TODO: bounds of control
+		return getBounds();
 	}
 
 	public void setActions(Collection<Action> actions) {
@@ -92,5 +103,13 @@ public class PlayerModel {
 
 	public Point getLastStep() {
 		return step;
+	}
+
+	public boolean isKicking() {
+		return kicking;
+	}
+
+	public void setKicking(boolean kicking) {
+		this.kicking = kicking;
 	}
 }

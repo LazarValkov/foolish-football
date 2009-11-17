@@ -22,12 +22,15 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Shape;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Collection;
 import java.util.List;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
@@ -119,10 +122,10 @@ public class GameView extends JPanel {
 				case KeyEvent.VK_DOWN:
 					actions.add(Action.DOWN);
 					break;
-				case KeyEvent.VK_ENTER:
+				case KeyEvent.VK_SPACE:
 					actions.add(Action.BUTTON_A);
 					break;
-				case KeyEvent.VK_SPACE:
+				case KeyEvent.VK_ENTER:
 					actions.add(Action.BUTTON_B);
 					break;
 				default:
@@ -145,6 +148,12 @@ public class GameView extends JPanel {
 					break;
 				case KeyEvent.VK_DOWN:
 					actions.remove(Action.DOWN);
+					break;
+				case KeyEvent.VK_SPACE:
+					actions.remove(Action.BUTTON_A);
+					break;
+				case KeyEvent.VK_ENTER:
+					actions.remove(Action.BUTTON_B);
 					break;
 				default:
 					return;
@@ -195,9 +204,9 @@ public class GameView extends JPanel {
 		g2.setColor(Color.GREEN);
 
 		// we are always centred over the ball
-		Point ballLoc = ball.getLocation();
+		Point2D ballLoc = ball.getLocation();
 
-		Rectangle2D view = new Rectangle.Double(ballLoc.x - w / 2, ballLoc.y - h / 2, w, h);
+		Rectangle2D view = new Rectangle.Double(ballLoc.getX() - w / 2, ballLoc.getY() - h / 2, w, h);
 
 		// TODO: draw the pitch
 
@@ -237,15 +246,40 @@ public class GameView extends JPanel {
 		int yoff = (int) view.getY();
 		Point p = new Point(pm.getLocation());
 		g.drawOval(p.x - 4 - xoff, p.y - 4 - yoff, 9, 9);
-		Point ds = pm.getLastStep();
-		if (ds == null)
+		Point kv = pm.getLastStep();
+		if (kv == null)
 			return;
-		g.drawLine(p.x - xoff, p.y - yoff, p.x + ds.x - xoff, p.y + ds.y - yoff);
+		g.drawLine(p.x - xoff, p.y - yoff, kv.x + p.x - xoff, kv.y + p.y - yoff);
 	}
 
 	private void updatePhysics() {
+		// do sprite collision detection for ball movement and player states
+
+		// detect who has rights to the ball
+		List<PlayerModel> candidate = Lists.newArrayList();
 		for (PlayerModel pm : as) {
+			Shape b = pm.getControlBounds();
+			if (b.contains(ball.getLocation())) {
+				log.info("POTENTIAL OWNER");
+				candidate.add(pm);
+			}
+		}
+		// FIXME: resolution of contended owner
+		if (!candidate.isEmpty()) {
+			PlayerModel owner = candidate.get(new Random().nextInt(candidate.size()));
+			if (owner.isKicking()) {
+				log.info("KICK");
+				Point direction = owner.getLastStep();
+				ball.setVelocity(direction);
+			}
+		}
+
+		// TODO: reset tackling states for others
+
+		for (PlayerModel pm : as) {
+			pm.setKicking(false);
 			pm.tick(PERIOD);
 		}
+		ball.tick(PERIOD);
 	}
 }

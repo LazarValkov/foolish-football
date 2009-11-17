@@ -126,8 +126,10 @@ public class Tactics {
 		public Point getLocation(boolean upwards, int width, int height) {
 			int xx = (width * x) / 15 - 1;
 			int yy = (height * y) / 16 - 1;
-			if (upwards)
+			if (upwards) {
 				yy = height - yy;
+				xx = width - xx;
+			}
 			return new Point(xx, yy);
 		}
 	}

@@ -15,6 +15,7 @@
 package uk.me.fommil.ff;
 
 import java.awt.Point;
+import java.awt.geom.Point2D;
 
 /**
  * Contains all the physics information about the ball during game play.
@@ -23,9 +24,21 @@ import java.awt.Point;
  */
 public class BallModel {
 
-	public Point getLocation() {
-		// TODO implement
-		return new Point(200, 300);
+	Point2D p = new Point(200, 300);
+	Point2D v;
+
+	public Point2D getLocation() {
+		return p;
 	}
 
+	public void setVelocity(Point direction) {
+		v = new Point(30 * direction.x, 30 * direction.y);
+	}
+
+	public void tick(long PERIOD) {
+		if (v != null) {
+			p = new Point.Double(p.getX() + v.getX() / 10, p.getY() + v.getY() / 10);
+			v = new Point.Double(0.9 * v.getX(), 0.9 * v.getY());
+		}
+	}
 }
