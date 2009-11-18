@@ -29,6 +29,7 @@ import java.awt.event.KeyListener;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.Timer;
@@ -224,20 +225,42 @@ public class GameView extends JPanel {
 	}
 
 	private void setActions(Team team, Collection<Action> actions) {
-		PlayerModel pm = getSelected(team);
+		PlayerModel pm = updateSelected(team, actions);
 
 		// TODO: consider context of when action is to change the selected player
-
 		pm.setActions(actions);
+		ball.setActions(actions);
+
+		// clear actions for all non-interactive models
+		// ?? this is where the AI for each model would be called
+		for (PlayerModel p : as) {
+			if (p != pm)
+				p.setActions(Collections.<Action>emptySet());
+		}
 	}
 
 	// get the selected player for the given team
-	private PlayerModel getSelected(Team team) {
-		if (team == a)
-			return as.get(1);
-		// assert team == b;
-		// return bs.get(1);
-		throw new AssertionError();
+	private PlayerModel selectedA = null;
+	private PlayerModel updateSelected(Team team, Collection<Action> actions) {
+		assert team == a;
+		if (selectedA == null)
+			selectedA = as.get(9);
+
+		if (!actions.contains(Action.BUTTON_A))
+			return selectedA;
+
+		// set the closed player
+		PlayerModel closest = selectedA;
+		double distance = selectedA.getLocation().distanceSq(ball.getLocation());
+		for (PlayerModel model : as) {
+			double ds2 = model.getLocation().distanceSq(ball.getLocation());
+			if (ds2 < distance) {
+				distance = ds2;
+				closest = model;
+			}
+		}
+		selectedA = closest;
+		return selectedA;
 	}
 
 	// HACK: should really ask model for the sprite
@@ -247,7 +270,7 @@ public class GameView extends JPanel {
 		Point p = new Point(pm.getLocation());
 		g.drawOval(p.x - 4 - xoff, p.y - 4 - yoff, 9, 9);
 		Point kv = pm.getLastStep();
-		if (kv == null)
+		if (kv == null || (kv.x == 0 && kv.y == 0))
 			return;
 		g.drawLine(p.x - xoff, p.y - yoff, kv.x + p.x - xoff, kv.y + p.y - yoff);
 	}
@@ -269,6 +292,12 @@ public class GameView extends JPanel {
 			PlayerModel owner = candidate.get(new Random().nextInt(candidate.size()));
 			if (owner.isKicking()) {
 				log.info("KICK");
+				Point direction = owner.getLastStep();
+				direction = new Point(3 * direction.x, 3 * direction.y);
+				ball.setVelocity(direction);
+			} else {
+				// dribble the ball
+				log.info("DRIBBLE");
 				Point direction = owner.getLastStep();
 				ball.setVelocity(direction);
 			}
