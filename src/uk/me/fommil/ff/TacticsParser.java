@@ -16,17 +16,11 @@ package uk.me.fommil.ff;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import java.io.ByteArrayOutputStream;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 import uk.me.fommil.ff.Tactics.BallZone;
@@ -48,8 +42,9 @@ import uk.me.fommil.ff.Tactics.PlayerZone;
  * The first 8 bytes of the file are a string containing the name of
  * the tactic, then bytes 9 to 358 are used to define where the 10 players
  * should run to when the ball is in one of the areas (goalkeeper is not included).
- * The last 10 bytes in the stream (359 to 368) always seem to be
- * {@code 00 FF FF 00 01 FF FF 01 FF FF}.
+ * The next 10 bytes in the stream (360 to 369) are specific to the tactics editor (pairs)
+ * and then the id of the tactics, again used by the tactics editor. There is no magic number
+ * to indicate when a tactics stream begins.
  * 
  * @author Samuel Halliday
  * @see <a href="http://bigcalm.tripod.com/swos/tactics-analysis.htm">Tactics File Hex Analysis</a>
@@ -58,9 +53,21 @@ import uk.me.fommil.ff.Tactics.PlayerZone;
 public class TacticsParser {
 
 	private static final Logger log = Logger.getLogger(TacticsParser.class.getName());
-	// the magic binaries that end a tactics instance
-	// FIXME: this is not the full story, lots of tactics not being parsed from ENGLISH.EXE
-	private static final int[] TAC = new int[]{0x00, 0xFF, 0xFF, 0x00, 0x01, 0xFF, 0xFF, 0x01, 0xFF, 0xFF};
+	/** Offsets of the tactics in the SWOS ENGLISH.EXE file */
+	private static final int[] SWOS_OFFSETS = new int[]{
+		1528886, // 442
+		1529262, // 541
+		1529638, // 451
+		1530014, // 532
+		1530390, // 352
+		1530766, // 433
+		1531142, // 424
+		1531518, // 343
+		1531894, // SWEEP
+		1532270, // 523
+		1532646, // ATTACK
+		1533022 // DEFEND
+	};
 
 	/**
 	 * Extract the base tactics from the SWOS installation.
@@ -78,10 +85,24 @@ public class TacticsParser {
 		Map<String, Tactics> tactics = Maps.newHashMap();
 		TacticsParser parser = new TacticsParser();
 		FileInputStream in = new FileInputStream(file);
-		for (Tactics t : parser.extractTactics(in)) {
-			tactics.put(t.getName(), t);
+		BufferedInputStream bin = new BufferedInputStream(in);
+		try {
+			long pointer = 0;
+			for (int i = 0; i < SWOS_OFFSETS.length; i++) {
+				long skipped = bin.skip(SWOS_OFFSETS[i] - pointer);
+				pointer += skipped;
+				Preconditions.checkArgument(pointer == SWOS_OFFSETS[i]);
+				byte[] b = new byte[370];
+				int read = bin.read(b);
+				pointer += read;
+				Tactics t = parser.parseTacs(b);
+				tactics.put(t.getName(), t);
+			}
+			Preconditions.checkArgument(tactics.size() == 12);
+			return tactics;
+		} finally {
+			bin.close();
 		}
-		return tactics;
 	}
 
 	/**
@@ -93,68 +114,13 @@ public class TacticsParser {
 		// finds that the tactics are stored in ENGLISH.EXE and SWS!!!_!.EXE
 		// File file = new File("data/Sensible World of Soccer 96-97/ENGLISH.EXE");
 		File dir = new File("data/Sensible World of Soccer 96-97");
-		TacticsParser parser = new TacticsParser();
-		Map<String, Tactics> all = Maps.newHashMap();
-		for (File file : dir.listFiles()) {
-			if (!file.isFile())
-				continue;
-			FileInputStream in = new FileInputStream(file);
-			for (Tactics t : parser.extractTactics(in)) {
-				all.put(t.getName(), t);
-			}
-		}
-		log.info(all.keySet().toString());
-//		for (Tactics tactic : tactics) {
-//			System.out.println(tactic.debugView());
-//		}
+		log.info(getSwosTactics(dir).keySet().toString());
 	}
 
-	/**
-	 * @param in
-	 * @return
-	 * @throws IOException
-	 */
-	public Collection<Tactics> extractTactics(InputStream in) throws IOException {
-		Preconditions.checkNotNull(in);
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	public Tactics parseTacs(byte[] tac) {
+		Preconditions.checkNotNull(tac);
+		Preconditions.checkArgument(tac.length == 370);
 
-		int read = -1;
-		byte[] buf = new byte[1024];
-		try {
-			while ((read = in.read(buf)) != -1) {
-				baos.write(buf, 0, read);
-			}
-		} finally {
-			in.close();
-		}
-		byte[] bytes = baos.toByteArray();
-		List<byte[]> tacs = extractTacs(bytes);
-		Collection<Tactics> tactics = Sets.newLinkedHashSet();
-		for (byte[] tac : tacs) {
-			tactics.add(parseTacs(tac));
-		}
-		return tactics;
-	}
-
-	private List<byte[]> extractTacs(byte[] bytes) {
-		List<byte[]> tacs = Lists.newArrayList();
-		byte[] tac;
-
-		for (int i = 359; i < bytes.length - TAC.length; i++) {
-			for (int j = 0; j < TAC.length; j++) {
-				if (bytes[i + j] != (byte) TAC[j])
-					break;
-				if (j == TAC.length - 1) {
-					tac = Arrays.copyOfRange(bytes, i - 359, i + 10);
-					tacs.add(tac);
-				}
-			}
-		}
-		return tacs;
-	}
-
-	private Tactics parseTacs(byte[] tac) {
-		assert tac.length == 369;
 		StringBuilder name = new StringBuilder(8);
 		for (int i = 0; i < 8; i++) {
 			int c = tac[i];
@@ -178,6 +144,8 @@ public class TacticsParser {
 				}
 			}
 		}
+		// ignore the final "pair" and "id" fields
+
 		return tactics;
 	}
 
