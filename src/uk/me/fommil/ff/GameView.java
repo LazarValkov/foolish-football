@@ -221,7 +221,8 @@ public class GameView extends JPanel {
 		// draw the ball
 		int cx = (int) Math.round(w / 2);
 		int cy = (int) Math.round(h / 2);
-		g2.fillOval(cx - 2, cy - 2, 5, 5);
+		int d = ball.getWidth();
+		g2.fillOval(cx - d/2, cy - d/2, d, d);
 	}
 
 	private void setActions(Team team, Collection<Action> actions) {

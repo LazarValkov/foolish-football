@@ -37,6 +37,7 @@ public class BallModel {
 
 	public void setVelocity(Point direction) {
 		v = direction;
+		h += 5;
 	}
 
 	public void tick(long PERIOD) {
@@ -46,9 +47,9 @@ public class BallModel {
 				p = new Point.Double(p.getX() + aftertouch.getX(), p.getY());
 			}
 			v = new Point.Double(0.9 * v.getX(), 0.9 * v.getY());
-			if (h > 1) {
+			if (h > 0.1 && h < 20) {
 				// FIXME
-				p = new Point.Double(p.getX(), p.getY() + aftertouch.getY());
+				h += aftertouch.getY();
 			}
 			h = Math.max(0, h - 1);
 		}
@@ -62,6 +63,7 @@ public class BallModel {
 		aftertouch = new Point2D.Double();
 		for (Action action : actions) {
 			switch (action) {
+				case UP:
 				case DOWN:
 					aftertouch = new Point2D.Double(aftertouch.getX(), aftertouch.getY() + 5);
 					break;
@@ -73,5 +75,9 @@ public class BallModel {
 					break;
 			}
 		}
+	}
+
+	int getWidth() {
+		return 5 + (int)Math.round(h / 1);
 	}
 }
