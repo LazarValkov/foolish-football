@@ -18,8 +18,10 @@ import com.google.common.base.Preconditions;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Shape;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Collection;
+import javax.vecmath.Point3d;
 import uk.me.fommil.ff.GameView.Action;
 
 /**
@@ -31,10 +33,10 @@ public class PlayerModel {
 
 	private final Player player;
 	private final int i;
-	private Point location;
 	private Collection<Action> actions;
-	private Point step;
 	private boolean kicking;
+	private Point3d s = new Point3d();
+	private Point3d v = new Point3d();
 
 	/**
 	 * @param i
@@ -48,39 +50,17 @@ public class PlayerModel {
 		this.player = player;
 	}
 
-	public void tick(long millis) {
-		if (actions == null)
-			return;
-
-		int rate = (int) millis / 100;
-
-		int x = 0;
-		int y = 0;
-		for (Action action : actions) {
-			switch (action) {
-				case UP:
-					y -= 5;
-					break;
-				case DOWN:
-					y += 5;
-					break;
-				case LEFT:
-					x -= 5;
-					break;
-				case RIGHT:
-					x += 5;
-					break;
-				case BUTTON_A:
-					setKicking(true);
-					break;
-			}
-		}
-		step = new Point(x, y);
-		location = new Point(location.x + rate * x, location.y + rate * y);
+	/**
+	 * @param t with units of seconds
+	 */
+	public void tick(double t) {
+		Point3d dv = (Point3d) v.clone();
+		dv.scale(t);
+		s.add(dv);
 	}
 
 	public Rectangle2D getBounds() {
-		return new Rectangle.Double(location.getX() - 4, location.getY() - 4, 9, 9);
+		return new Rectangle.Double(s.x - 4, s.y - 4, 9, 9);
 	}
 
 	// return the area that this player can control the ball with
@@ -89,20 +69,46 @@ public class PlayerModel {
 		return getBounds();
 	}
 
+	/**
+	 * Controller.
+	 * 
+	 * @param actions
+	 */
 	public void setActions(Collection<Action> actions) {
-		this.actions = actions;
+		double x = 0;
+		double y = 0;
+		for (Action action : actions) {
+			switch (action) {
+				case UP:
+					y -= 50;
+					break;
+				case DOWN:
+					y += 50;
+					break;
+				case LEFT:
+					x -= 50;
+					break;
+				case RIGHT:
+					x += 50;
+					break;
+				case BUTTON_A:
+					setKicking(true);
+					break;
+			}
+		}
+		v = new Point3d(x, y, 0);
 	}
 
 	public void setLocation(Point p) {
-		location = p;
+		s = new Point3d(p.x, p.y, 0);
 	}
 
-	public Point getLocation() {
-		return location;
+	public Point2D getLocation() {
+		return new Point2D.Double(s.x, s.y);
 	}
 
-	public Point getLastStep() {
-		return step;
+	public Point3d getVelocity() {
+		return (Point3d) v.clone();
 	}
 
 	public boolean isKicking() {

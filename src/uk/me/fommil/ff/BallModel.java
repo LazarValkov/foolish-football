@@ -14,9 +14,14 @@
  */
 package uk.me.fommil.ff;
 
-import java.awt.Point;
+import static java.lang.Math.max;
+import static java.lang.Math.signum;
+import static java.lang.Math.abs;
 import java.awt.geom.Point2D;
 import java.util.Collection;
+import java.util.logging.Logger;
+import javax.vecmath.Point2d;
+import javax.vecmath.Point3d;
 import uk.me.fommil.ff.GameView.Action;
 
 /**
@@ -26,58 +31,83 @@ import uk.me.fommil.ff.GameView.Action;
  */
 public class BallModel {
 
-	Point2D p = new Point(200, 300);
-	Point2D v;
-	double h = 0;
-	Point2D aftertouch;
+	private static final Logger log = Logger.getLogger(BallModel.class.getName());
+	private final Point3d s = new Point3d(200, 400, 0);
+	private Point3d v = new Point3d();
+	private static final double FRICTION = 10;
+	private static final double GRAVITY = -10;
 
+	// aftertouch direction
+	Point2d at = new Point2d();
+
+	/**
+	 * @return
+	 */
 	public Point2D getLocation() {
-		return p;
+		return new Point2D.Double(s.x, s.y);
 	}
 
-	public void setVelocity(Point direction) {
-		v = direction;
-		h += 5;
+	/**
+	 * @param v
+	 */
+	public void setVelocity(Point3d v) {
+		this.v = v;
 	}
 
-	public void tick(long PERIOD) {
-		if (v != null) {
-			p = new Point.Double(p.getX() + v.getX(), p.getY() + v.getY());
-			if (h > 10) {
-				p = new Point.Double(p.getX() + aftertouch.getX(), p.getY());
-			}
-			v = new Point.Double(0.9 * v.getX(), 0.9 * v.getY());
-			if (h > 0.1 && h < 20) {
-				// FIXME
-				h += aftertouch.getY();
-			}
-			h = Math.max(0, h - 1);
-		}
-	}
-
+	/**
+	 * @return
+	 */
 	public double getHeight() {
-		return h;
+		return s.z;
 	}
 
+	/**
+	 * @param t with units of seconds
+	 */
+	public void tick(double t) {
+		// apply gravity
+		v.z += t * GRAVITY;
+
+		// update position
+		s.x += v.x * t;
+		s.y += v.y * t;
+		// TODO: bounces
+		s.z = max(0, s.z + v.z * t);
+		if (s.z == 0)
+			v.z = 0;
+
+		// apply friction
+		v.x = signum(v.x) * max(0, abs(v.x) - FRICTION);
+		v.y = signum(v.y) * max(0, abs(v.y) - FRICTION);
+	}
+
+	/**
+	 * Controller.
+	 *
+	 * @param actions
+	 */
 	public void setActions(Collection<Action> actions) {
-		aftertouch = new Point2D.Double();
+		if (actions.isEmpty() || s.z < 10)
+			return;
+
+		// apply aftertouch
+		Point2d at = new Point2d();
 		for (Action action : actions) {
 			switch (action) {
 				case UP:
+					at.y += 1;
+					break;
 				case DOWN:
-					aftertouch = new Point2D.Double(aftertouch.getX(), aftertouch.getY() + 5);
+					at.y -= 1;
 					break;
 				case LEFT:
-					aftertouch = new Point2D.Double(aftertouch.getX() - 5, aftertouch.getY());
+					at.x -= 1;
 					break;
 				case RIGHT:
-					aftertouch = new Point2D.Double(aftertouch.getX() + 5, aftertouch.getY());
+					at.x += 1;
 					break;
 			}
 		}
-	}
-
-	int getWidth() {
-		return 5 + (int)Math.round(h / 1);
+		this.at = at;
 	}
 }

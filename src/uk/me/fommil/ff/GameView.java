@@ -14,6 +14,7 @@
  */
 package uk.me.fommil.ff;
 
+import static java.lang.Math.round;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.awt.Color;
@@ -36,6 +37,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
 import javax.swing.JPanel;
+import javax.vecmath.Point3d;
 import uk.me.fommil.ff.Tactics.BallZone;
 
 /**
@@ -221,7 +223,7 @@ public class GameView extends JPanel {
 		// draw the ball
 		int cx = (int) Math.round(w / 2);
 		int cy = (int) Math.round(h / 2);
-		int d = ball.getWidth();
+		int d = ((int)Math.round(ball.getHeight() * 2) + 5);
 		g2.fillOval(cx - d/2, cy - d/2, d, d);
 	}
 
@@ -268,12 +270,14 @@ public class GameView extends JPanel {
 	private void draw(Graphics2D g, Rectangle2D view, PlayerModel pm) {
 		int xoff = (int) view.getX();
 		int yoff = (int) view.getY();
-		Point p = new Point(pm.getLocation());
+		Point2D p2d = pm.getLocation();
+		Point p = new Point((int)round(p2d.getX()), (int)round(p2d.getY()));
 		g.drawOval(p.x - 4 - xoff, p.y - 4 - yoff, 9, 9);
-		Point kv = pm.getLastStep();
-		if (kv == null || (kv.x == 0 && kv.y == 0))
-			return;
-		g.drawLine(p.x - xoff, p.y - yoff, kv.x + p.x - xoff, kv.y + p.y - yoff);
+//		Point2D kv2d = pm.getVelocity();
+//		if (kv2d == null || (kv2d.getX() == 0 && kv2d.getY() == 0))
+//			return;
+//		Point kv = new Point((int)round(kv2d.getX()), (int)round(kv2d.getY()));
+//		g.drawLine(p.x - xoff, p.y - yoff, kv.x + p.x - xoff, kv.y + p.y - yoff);
 	}
 
 	private void updatePhysics() {
@@ -283,33 +287,38 @@ public class GameView extends JPanel {
 		List<PlayerModel> candidate = Lists.newArrayList();
 		for (PlayerModel pm : as) {
 			Shape b = pm.getControlBounds();
-			if (b.contains(ball.getLocation())) {
-				log.info("POTENTIAL OWNER");
+			if (ball.getHeight() < 2 && b.contains(ball.getLocation())) {
+				log.info("POTENTIAL OWNER " + pm);
 				candidate.add(pm);
 			}
 		}
-		// FIXME: resolution of contended owner
+		// TODO: better resolution of contended owner (e.g. by skill)
 		if (!candidate.isEmpty()) {
 			PlayerModel owner = candidate.get(new Random().nextInt(candidate.size()));
 			if (owner.isKicking()) {
-				log.info("KICK");
-				Point direction = owner.getLastStep();
-				direction = new Point(3 * direction.x, 3 * direction.y);
-				ball.setVelocity(direction);
+				// log.info("KICK");
+				Point3d kick = owner.getVelocity();
+				kick.scale(3);
+				kick.z = 1;
+				ball.setVelocity(kick);
 			} else {
 				// dribble the ball
-				log.info("DRIBBLE");
-				Point direction = owner.getLastStep();
-				ball.setVelocity(direction);
+				//log.info("DRIBBLE");
+				Point3d kick = owner.getVelocity();
+				ball.setVelocity(kick);
 			}
 		}
+
+		// TODO: tackling
+
+		// TODO: headers
 
 		// TODO: reset tackling states for others
 
 		for (PlayerModel pm : as) {
 			pm.setKicking(false);
-			pm.tick(PERIOD);
+			pm.tick(PERIOD / 1000.0);
 		}
-		ball.tick(PERIOD);
+		ball.tick(PERIOD / 1000.0);
 	}
 }
