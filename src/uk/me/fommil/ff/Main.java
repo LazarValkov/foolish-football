@@ -39,7 +39,7 @@ public class Main {
 		a.setCurrentTactics(swosTactics.get("442"));
 		Team b = new Team();
 		b.setCurrentTactics(swosTactics.get("433"));
-		GameView gv = new GameView(a, b);
+		GameMVC gv = new GameMVC(a, b);
 
 		JFrame frame = new JFrame();
 		frame.add(gv);

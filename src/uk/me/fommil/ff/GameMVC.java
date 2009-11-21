@@ -41,47 +41,14 @@ import javax.vecmath.Point3d;
 import uk.me.fommil.ff.Tactics.BallZone;
 
 /**
- * The overlord class for visualising game play.
+ * The model (M), View (V) and controller (C) for the game play.
  * 
-Regarding sprites and reading the MAP files for the pitch.
-from http://eab.abime.net/showthread.php?p=561488
-if you are ripping from SWOS , its a lot easier to just use the datafiles in the game and convert them to iff
-
-they are all dimensions; 352,272,16 (colours) or 320,256,16 , and are stored as raw interleaved files which need fist decrunching (RNC packed with propack)
-
-once converted you need only add a palette (which you can rip with action replay or similar)
-
-the only exceptions being the .MAP files, which you will have to calcuate the dimension size for. they are all 16 pixels wide and 3000+ pixels tall.
-
-tiles:
-off: 16188
-x 16
-y 16
-Bit 4
-Pal E 660
-Mode ST
-
-sprites:
-Off 224284
-x 16
-y 132 (whatever you want but bigger then 16)
-Bit 4
-Pal E 660
-Mode ST
-
-those are tricky, you don't get a nice clear sheet but you can rip single sprites and need to change for other "teamsprites" use left and right cursor to swap around until
-you see the actual sprites:
-
-eg:
-same settings as above but off: 245174
-
-fonts: 190776
  * @author Samuel Halliday
  */
 @SuppressWarnings("serial")
-public class GameView extends JPanel {
+public class GameMVC extends JPanel {
 
-	private static final Logger log = Logger.getLogger(GameView.class.getName());
+	private static final Logger log = Logger.getLogger(GameMVC.class.getName());
 	private final long PERIOD = 100L;
 
 	/**
@@ -93,10 +60,9 @@ public class GameView extends JPanel {
 	};
 	private final Team a;
 //	private final Team b;
-	private final BallModel ball;
-	private final List<PlayerModel> as = Lists.newArrayListWithCapacity(11);
+	private final BallMC ball;
+	private final List<PlayerMC> as = Lists.newArrayListWithCapacity(11);
 //	private final List<PlayerModel> bs = Lists.newArrayListWithCapacity(11);
-	private final Tactics aTactics;
 //	private final Tactics bTactics;
 	private final TimerTask ticker = new TimerTask() {
 
@@ -134,7 +100,7 @@ public class GameView extends JPanel {
 				default:
 					return;
 			}
-			setActions(GameView.this.a, actions);
+			setActions(GameMVC.this.a, actions);
 		}
 
 		@Override
@@ -161,7 +127,7 @@ public class GameView extends JPanel {
 				default:
 					return;
 			}
-			setActions(GameView.this.a, actions);
+			setActions(GameMVC.this.a, actions);
 		}
 	};
 
@@ -169,12 +135,10 @@ public class GameView extends JPanel {
 	 * @param a
 	 * @param b
 	 */
-	public GameView(Team a, Team b) {
+	public GameMVC(Team a, Team b) {
 		this.a = a;
 //		this.b = b;
-		this.ball = new BallModel();
-		aTactics = a.getCurrentTactics();
-//		bTactics = b.getCurrentTactics();
+		this.ball = new BallMC();
 		// create models for each of the team's players
 		List<Player> aPlayers = a.getPlayers();
 //		List<Player> bPlayers = b.getPlayers();
@@ -182,7 +146,7 @@ public class GameView extends JPanel {
 		for (int i = 1; i < 11; i++) {
 			Point p = a.getCurrentTactics().getZone(centre, i + 1).getLocation(true, 400, 600);
 
-			PlayerModel pma = new PlayerModel(i, aPlayers.get(i));
+			PlayerMC pma = new PlayerMC(i, aPlayers.get(i));
 			pma.setLocation(p);
 			as.add(pma);
 		}
@@ -214,7 +178,7 @@ public class GameView extends JPanel {
 		// TODO: draw the pitch
 
 		// draw the players that are in view
-		for (PlayerModel pm : as) {
+		for (PlayerMC pm : as) {
 			Rectangle2D b = pm.getBounds();
 			if (view.intersects(b))
 				draw(g2, view, pm);
@@ -228,7 +192,7 @@ public class GameView extends JPanel {
 	}
 
 	private void setActions(Team team, Collection<Action> actions) {
-		PlayerModel pm = updateSelected(team, actions);
+		PlayerMC pm = updateSelected(team, actions);
 
 		// TODO: consider context of when action is to change the selected player
 		pm.setActions(actions);
@@ -236,15 +200,15 @@ public class GameView extends JPanel {
 
 		// clear actions for all non-interactive models
 		// ?? this is where the AI for each model would be called
-		for (PlayerModel p : as) {
+		for (PlayerMC p : as) {
 			if (p != pm)
 				p.setActions(Collections.<Action>emptySet());
 		}
 	}
 
 	// get the selected player for the given team
-	private PlayerModel selectedA = null;
-	private PlayerModel updateSelected(Team team, Collection<Action> actions) {
+	private PlayerMC selectedA = null;
+	private PlayerMC updateSelected(Team team, Collection<Action> actions) {
 		assert team == a;
 		if (selectedA == null)
 			selectedA = as.get(9);
@@ -253,9 +217,9 @@ public class GameView extends JPanel {
 			return selectedA;
 
 		// set the closed player
-		PlayerModel closest = selectedA;
+		PlayerMC closest = selectedA;
 		double distance = selectedA.getLocation().distanceSq(ball.getLocation());
-		for (PlayerModel model : as) {
+		for (PlayerMC model : as) {
 			double ds2 = model.getLocation().distanceSq(ball.getLocation());
 			if (ds2 < distance) {
 				distance = ds2;
@@ -267,7 +231,7 @@ public class GameView extends JPanel {
 	}
 
 	// HACK: should really ask model for the sprite
-	private void draw(Graphics2D g, Rectangle2D view, PlayerModel pm) {
+	private void draw(Graphics2D g, Rectangle2D view, PlayerMC pm) {
 		int xoff = (int) view.getX();
 		int yoff = (int) view.getY();
 		Point2D p2d = pm.getLocation();
@@ -284,8 +248,8 @@ public class GameView extends JPanel {
 		// do sprite collision detection for ball movement and player states
 
 		// detect who has rights to the ball
-		List<PlayerModel> candidate = Lists.newArrayList();
-		for (PlayerModel pm : as) {
+		List<PlayerMC> candidate = Lists.newArrayList();
+		for (PlayerMC pm : as) {
 			Shape b = pm.getControlBounds();
 			if (ball.getHeight() < 2 && b.contains(ball.getLocation())) {
 				log.info("POTENTIAL OWNER " + pm);
@@ -294,7 +258,7 @@ public class GameView extends JPanel {
 		}
 		// TODO: better resolution of contended owner (e.g. by skill)
 		if (!candidate.isEmpty()) {
-			PlayerModel owner = candidate.get(new Random().nextInt(candidate.size()));
+			PlayerMC owner = candidate.get(new Random().nextInt(candidate.size()));
 			if (owner.isKicking()) {
 				// log.info("KICK");
 				Point3d kick = owner.getVelocity();
@@ -315,7 +279,7 @@ public class GameView extends JPanel {
 
 		// TODO: reset tackling states for others
 
-		for (PlayerModel pm : as) {
+		for (PlayerMC pm : as) {
 			pm.setKicking(false);
 			pm.tick(PERIOD / 1000.0);
 		}

@@ -22,14 +22,14 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Collection;
 import javax.vecmath.Point3d;
-import uk.me.fommil.ff.GameView.Action;
+import uk.me.fommil.ff.GameMVC.Action;
 
 /**
- * Contains all the physics information regarding a {@link Player} during game play.
+ * The model (M) and controller (C) for a {@link Player} during game play.
  *
  * @author Samuel Halliday
  */
-public class PlayerModel {
+public class PlayerMC {
 
 	private final Player player;
 	private final int i;
@@ -42,7 +42,7 @@ public class PlayerModel {
 	 * @param i
 	 * @param player
 	 */
-	public PlayerModel(int i, Player player) {
+	public PlayerMC(int i, Player player) {
 		Preconditions.checkArgument(i >= 0 && i < 11, i);
 		Preconditions.checkNotNull(player);
 

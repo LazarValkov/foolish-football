@@ -22,16 +22,16 @@ import java.util.Collection;
 import java.util.logging.Logger;
 import javax.vecmath.Point2d;
 import javax.vecmath.Point3d;
-import uk.me.fommil.ff.GameView.Action;
+import uk.me.fommil.ff.GameMVC.Action;
 
 /**
- * Contains all the physics information about the ball during game play.
+ * The model (M) and controller (C) for the ball during game play.
  * 
  * @author Samuel Halliday
  */
-public class BallModel {
+public class BallMC {
 
-	private static final Logger log = Logger.getLogger(BallModel.class.getName());
+	private static final Logger log = Logger.getLogger(BallMC.class.getName());
 	private final Point3d s = new Point3d(200, 400, 0);
 	private Point3d v = new Point3d();
 	private static final double FRICTION = 10;
