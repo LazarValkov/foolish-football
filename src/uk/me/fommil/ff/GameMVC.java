@@ -156,15 +156,26 @@ public class GameMVC extends JPanel {
 		Dimension size = getSize();
 		double w = size.getWidth();
 		double h = size.getHeight();
+
 		g2.clearRect(0, 0, (int) w, (int) h);
 		g2.setColor(Color.GREEN);
 
 		// we are always centred over the ball
-		Point ballLoc = ball.getLocation();
+		Point3d ballLoc = ball.getPosition();
 
-		Rectangle2D view = new Rectangle.Double(ballLoc.getX() - w / 2, ballLoc.getY() - h / 2, w, h);
+		Rectangle2D view = new Rectangle.Double(ballLoc.x - w / 2, ballLoc.y - h / 2, w, h);
+		int xoff = (int) view.getX();
+		int yoff = (int) view.getY();
 
 		// TODO: draw the pitch
+		for (int i = 0; i <= 5; i++) {
+			int x = i * PITCH_WIDTH / 5;
+			g2.drawLine(x - xoff, 0 - yoff, x - xoff, PITCH_HEIGHT - yoff);
+		}
+		for (int i = 0; i <= 7; i++) {
+			int y = i * PITCH_HEIGHT / 7;
+			g2.drawLine(0 - xoff, y - yoff, PITCH_WIDTH - xoff, y - yoff);
+		}
 
 		// draw the players that are in view
 		for (PlayerMC pm : as) {
