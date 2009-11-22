@@ -81,8 +81,8 @@ public class BallMC {
 		Preconditions.checkArgument(height > 0);
 		int x, y;
 
-		x = (4 - (int) (4 * s.x / width));
-		y = (6 - (int) (6 * s.y / height));
+		x = (int) (5 * (width - s.x) / width);
+		y = (int) (7 * (height - s.y) / height);
 		x = max(0, min(x, 4));
 		y = max(0, min(y, 6));
 

@@ -249,7 +249,8 @@ public class GameMVC extends JPanel {
 
 	private void updatePhysics() {
 		// autopilot
-		BallZone bz = ball.getZone(PITCH_WIDTH, PITCH_WIDTH);
+		BallZone bz = ball.getZone(PITCH_WIDTH, PITCH_HEIGHT);
+		log.info("BALL " + bz);
 		Tactics tactics = a.getCurrentTactics();
 		for (PlayerMC p : as) {
 			if (p != selectedA) {
@@ -266,7 +267,7 @@ public class GameMVC extends JPanel {
 		for (PlayerMC pm : as) {
 			Bounds pmb = pm.getBounds();
 			if (pm.getPosition().distance(b) < 100 && pmb.intersect(b)) {
-				log.info("POTENTIAL OWNER " + pm);
+				//log.info("POTENTIAL OWNER " + pm);
 				candidate.add(pm);
 			}
 		}
