@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import javax.vecmath.Point3d;
 
 /**
  * Represents the team tactics, which dictates where each {@link Player} should be
@@ -46,10 +47,22 @@ public class Tactics {
 		 * @param y
 		 */
 		public BallZone(int x, int y) {
-			Preconditions.checkArgument(x >= 0 && x < 5);
-			Preconditions.checkArgument(y >= 0 && y < 7);
+			Preconditions.checkArgument(x >= 0 && x < 5, x);
+			Preconditions.checkArgument(y >= 0 && y < 7, y);
 			this.x = x;
 			this.y = y;
+		}
+
+		/**
+		 * @param width
+		 * @param height
+		 * @return the central point represented by this for an image of the given width and height
+		 */
+		@Deprecated
+		public Point getLocation(int width, int height) {
+			int xx = (width * x) / 5 - 1;
+			int yy = (height * y) / 7 - 1;
+			return new Point(xx, yy);
 		}
 
 		@Override
@@ -123,6 +136,7 @@ public class Tactics {
 		 * @param height
 		 * @return the central point represented by this for an image of the given width and height
 		 */
+		@Deprecated
 		public Point getLocation(boolean upwards, int width, int height) {
 			int xx = (width * x) / 15 - 1;
 			int yy = (height * y) / 16 - 1;
@@ -132,8 +146,23 @@ public class Tactics {
 			}
 			return new Point(xx, yy);
 		}
-	}
 
+		/**
+		 * @param upwards true if the team is playing upwards
+		 * @param width
+		 * @param height
+		 * @return the central point represented by this for a pitch of the given width and height
+		 */
+		public Point3d getCentre(boolean upwards, double width, double height) {
+			double xx = (width * x) / 15 - 1;
+			double yy = (height * y) / 16 - 1;
+			if (upwards) {
+				yy = height - yy;
+				xx = width - xx;
+			}
+			return new Point3d(xx, yy, 0);
+		}
+	}
 	private String name;
 	private final Map<BallZone, Map<Integer, PlayerZone>> zones = Maps.newHashMapWithExpectedSize(35);
 

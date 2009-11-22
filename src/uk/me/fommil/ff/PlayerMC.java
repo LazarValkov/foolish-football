@@ -14,19 +14,20 @@
  */
 package uk.me.fommil.ff;
 
-import static java.lang.Math.max;
-import static java.lang.Math.min;
 import static java.lang.Math.round;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.util.Collection;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
-import javax.media.j3d.BoundingBox;
-import javax.media.j3d.Bounds;
+import javax.media.j3d.BoundingPolytope;
+import javax.media.j3d.Transform3D;
+import javax.vecmath.AxisAngle4d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
@@ -38,7 +39,8 @@ import javax.vecmath.Vector3d;
 public class PlayerMC {
 
 	// this is mutable, so be careful not to edit it
-	private static final Vector3d UP = new Vector3d(0, 0, 1);
+	private static final Vector3d UP = new Vector3d(0, -1, 0);
+	private static final int AUTO = 10;
 
 	// View
 	@Deprecated
@@ -61,6 +63,13 @@ public class PlayerMC {
 		return new Rectangle.Double(s.x - 4, s.y - 4, 9, 9);
 	}
 
+	private double getAngle() {
+		if (facing.x < 0)
+			return -facing.angle(UP);
+		else
+			return facing.angle(UP);
+	}
+
 	/**
 	 * The actions that a player can perform.
 	 */
@@ -74,7 +83,7 @@ public class PlayerMC {
 	private boolean kicking, tackling, heading;
 	private Point3d s = new Point3d();
 	private Vector3d v = new Vector3d();
-	private Vector3d facing = new Vector3d(0, 1, 0);
+	private Vector3d facing = new Vector3d(0, -1, 0);
 
 	/**
 	 * @param i
@@ -92,32 +101,25 @@ public class PlayerMC {
 	 *
 	 * @return
 	 */
-	public Bounds getBounds() {
-		
+	public BoundingPolytope getBounds() {
+		BoundingPolytope b = new BoundingPolytope();
 
+		// TODO: heading and tackling bounds (should follow same pattern)
 
-		// perhaps the best approach is to construct a BoundingPolytope and rotate/translate/scale
+		Transform3D affine = new Transform3D();
+		Vector3d t = new Vector3d(facing);
+		// centre of bounding box is biased in front of the player
+		t.scale(1);
+		t.add(s);
+		affine.setTranslation(t);
+		// defines the scale of the bounding box in x, y, z
+		// TODO: control could determine the x scale
+		affine.setScale(new Vector3d(8, 5, 2));
+		// rotate
+		affine.setRotation(new AxisAngle4d(0, 0, 1, getAngle()));
 
-		// TODO: implement method
-		throw new UnsupportedOperationException("not implemented yet");
-
-
-//		Vector3d bottom = new Vector3d();
-//		bottom.cross(facing, UP);
-//		Vector3d top = (Vector3d) facing.clone();
-//		top.add(UP);
-//		top.sub(bottom);
-
-		// FIXME: diagonal
-//		bottom.scale(10);
-//		bottom.add(s);
-//		top.scale(10);
-//		top.add(s);
-
-//		Point3d min = new Point3d(min(bottom.x, top.x), min(bottom.y, top.y), min(bottom.z, top.z));
-//		Point3d max = new Point3d(max(bottom.x, top.x), max(bottom.y, top.y), max(bottom.z, top.z));
-//		BoundingBox bbox = new BoundingBox(min, max);
-//		return bbox;
+		b.transform(affine);
+		return b;
 	}
 	private static final Logger log = Logger.getLogger(PlayerMC.class.getName());
 
@@ -166,8 +168,9 @@ public class PlayerMC {
 			}
 		}
 		v = new Vector3d(x, y, 0);
-		if (v.lengthSquared() > 0)
+		if (v.lengthSquared() > 0) {
 			facing.normalize(v);
+		}
 	}
 
 	/**
@@ -175,6 +178,29 @@ public class PlayerMC {
 	 */
 	public void clearActions() {
 		v = new Vector3d();
+	}
+
+	/**
+	 * Controller. Ignore user input and go to the zone indicated.
+	 *
+	 * @param attractor
+	 */
+	public void autoPilot(Point3d attractor) {
+		Preconditions.checkNotNull(attractor);
+		List<PlayerMC.Action> auto = Lists.newArrayList();
+		double dx = s.x - attractor.x;
+		if (dx < -AUTO) {
+			auto.add(PlayerMC.Action.RIGHT);
+		} else if (dx > AUTO) {
+			auto.add(PlayerMC.Action.LEFT);
+		}
+		double dy = s.y - attractor.y;
+		if (dy < -AUTO) {
+			auto.add(PlayerMC.Action.DOWN);
+		} else if (dy > AUTO) {
+			auto.add(PlayerMC.Action.UP);
+		}
+		setActions(auto);
 	}
 
 	private void kick() {
@@ -239,15 +265,6 @@ public class PlayerMC {
 
 	public Vector3d getVelocity() {
 		return (Vector3d) v.clone();
-	}
-
-	public void setfacing(Vector3d facing) {
-		Preconditions.checkNotNull(facing);
-		this.facing.normalize(facing);
-	}
-
-	public Vector3d getFacing() {
-		return (Vector3d) facing.clone();
 	}
 	// </editor-fold>
 }

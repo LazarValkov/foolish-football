@@ -14,7 +14,6 @@
  */
 package uk.me.fommil.ff;
 
-import static java.lang.Math.abs;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.awt.Color;
@@ -34,12 +33,13 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
-import javax.media.j3d.BoundingBox;
+import javax.media.j3d.BoundingPolytope;
 import javax.media.j3d.Bounds;
 import javax.swing.JPanel;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 import uk.me.fommil.ff.Tactics.BallZone;
+import uk.me.fommil.ff.Tactics.PlayerZone;
 
 /**
  * The model (M), view (V) and controller (C) for the game play.
@@ -49,6 +49,8 @@ import uk.me.fommil.ff.Tactics.BallZone;
 @SuppressWarnings("serial")
 public class GameMVC extends JPanel {
 
+	private static final int PITCH_WIDTH = 400;
+	private static final int PITCH_HEIGHT = 600;
 	private static final Logger log = Logger.getLogger(GameMVC.class.getName());
 	private final long PERIOD = 100L;
 	private final Team a;
@@ -127,23 +129,20 @@ public class GameMVC extends JPanel {
 	 */
 	public GameMVC(Team a, Team b) {
 		this.a = a;
-//		this.b = b;
 		this.ball = new BallMC();
-		// create models for each of the team's players
+		ball.setPosition(new Point3d(PITCH_WIDTH / 2, PITCH_HEIGHT / 2, 0));
+		BallZone bz = ball.getZone(PITCH_WIDTH, PITCH_HEIGHT);
 		List<Player> aPlayers = a.getPlayers();
-//		List<Player> bPlayers = b.getPlayers();
-		BallZone centre = new Tactics.BallZone(2, 3);
+		Tactics tactics = a.getCurrentTactics();
 		for (int i = 2; i <= 11; i++) {
-			Point p = a.getCurrentTactics().getZone(centre, i).getLocation(true, 400, 600);
-
+			Point3d p = tactics.getZone(bz, i).getCentre(true, PITCH_WIDTH, PITCH_HEIGHT);
 			PlayerMC pma = new PlayerMC(i, aPlayers.get(i - 2));
-			pma.setLocation(p);
+			pma.setPosition(p);
 			as.add(pma);
 		}
+		selectedA = as.get(9);
 
 		// HACK: eventually take in input controls
-		// needs to get focus for keys
-		// TODO: calculate who pressed the key and the associated action
 		setFocusable(true);
 		addKeyListener(keyboardInput);
 		new Timer().schedule(ticker, 0L, PERIOD);
@@ -182,46 +181,40 @@ public class GameMVC extends JPanel {
 	}
 
 	private void setPlayerActions(Team team, Collection<PlayerMC.Action> actions) {
-		PlayerMC pm = updateSelected(team, actions);
-
-		// TODO: consider context of when action is to change the selected player
-		pm.setActions(actions);
+		updateSelected(team, actions);
+		selectedA.setActions(actions);
 		// ball.setAftertouches(actions);
-
-		// clear actions for all non-interactive models
-		// ?? this is where the AI for each model would be called
-		for (PlayerMC p : as) {
-			if (p != pm)
-				p.clearActions();
-		}
 	}
 	// get the selected player for the given team
 	private PlayerMC selectedA = null;
 
-	private PlayerMC updateSelected(Team team, Collection<PlayerMC.Action> actions) {
+	private void updateSelected(Team team, Collection<PlayerMC.Action> actions) {
 		assert team == a;
-		if (selectedA == null)
-			selectedA = as.get(9);
+		assert selectedA != null;
 
 		if (!actions.contains(PlayerMC.Action.KICK))
-			return selectedA;
+			return;
 
 		// set the closed player
 		PlayerMC closest = selectedA;
-		double distance = selectedA.getLocation().distanceSq(ball.getLocation());
+		double distance = selectedA.getPosition().distanceSquared(ball.getPosition());
 		for (PlayerMC model : as) {
-			double ds2 = model.getLocation().distanceSq(ball.getLocation());
+			double ds2 = model.getPosition().distanceSquared(ball.getPosition());
 			if (ds2 < distance) {
 				distance = ds2;
 				closest = model;
 			}
 		}
 		selectedA = closest;
-		return selectedA;
 	}
 
 	// HACK: should really ask view for the sprite
 	private void draw(Graphics2D g, Rectangle2D view, PlayerMC pm) {
+		if (pm == selectedA)
+			g.setColor(Color.WHITE);
+		else
+			g.setColor(Color.GREEN);
+
 		int xoff = (int) view.getX();
 		int yoff = (int) view.getY();
 		Point p = pm.getLocation();
@@ -230,33 +223,38 @@ public class GameMVC extends JPanel {
 		Point kv = pm.getStep();
 		g.drawLine(p.x - xoff, p.y - yoff, kv.x + p.x - xoff, kv.y + p.y - yoff);
 
-		BoundingBox bounds = (BoundingBox) pm.getBounds();
-		Point3d upper = new Point3d();
-		Point3d lower = new Point3d();
-		bounds.getUpper(upper);
-		bounds.getLower(lower);
-		
+		// draw the bounds, scattergun and not efficient
+		BoundingPolytope bounds = pm.getBounds();
+		for (int x = p.x - 50; x < p.x + 50; x++) {
+			for (int y = p.y - 50; y < p.y + 50; y++) {
+				Point3d test = new Point3d(x, y, 0);
+				if (bounds.intersect(test))
+					g.drawLine(x - xoff, y - yoff, x - xoff, y - yoff);
+			}
+		}
 
-		int x1 = (int) Math.round(lower.x - xoff);
-		int y1 = (int) Math.round(lower.y - yoff);
-
-		int x4 = (int) Math.round(upper.x - xoff);
-		int y4 = (int) Math.round(upper.y - yoff);
-		g.drawPolygon(new int[]{x1, x4}, new int[]{y1, y4}, 2);
+		g.drawString(Integer.toString(pm.getShirt()), p.x - xoff - 5, p.y - yoff - 10);
 	}
 
 	private void updatePhysics() {
-		ball.tick(PERIOD / 1000.0);
+		// autopilot
+		BallZone bz = ball.getZone(PITCH_WIDTH, PITCH_WIDTH);
+		Tactics tactics = a.getCurrentTactics();
+		for (PlayerMC p : as) {
+			if (p != selectedA) {
+				PlayerZone pz = tactics.getZone(bz, p.getShirt());
+				Point3d target = pz.getCentre(true, PITCH_WIDTH, PITCH_HEIGHT);
+				p.autoPilot(target);
+			}
+		}
 
 		// sprite collision detection for ball movement and player states
 		// detect who has rights to the ball
 		List<PlayerMC> candidate = Lists.newArrayList();
+		Point3d b = ball.getPosition();
 		for (PlayerMC pm : as) {
 			Bounds pmb = pm.getBounds();
-			if (pm.getPosition().distance(ball.getPosition()) < 20 && !pmb.intersect(ball.getBounds())) {
-				log.warning(pmb + " " + ball.getPosition());
-			}
-			if (pmb.intersect(ball.getBounds())) {
+			if (pm.getPosition().distance(b) < 100 && pmb.intersect(b)) {
 				log.info("POTENTIAL OWNER " + pm);
 				candidate.add(pm);
 			}
@@ -265,7 +263,7 @@ public class GameMVC extends JPanel {
 		if (!candidate.isEmpty()) {
 			PlayerMC owner = candidate.get(new Random().nextInt(candidate.size()));
 			// always give control to the operator
-			// FIXME: delay when handing over control
+			// TODO: fix delay when handing over control
 			selectedA = owner;
 			if (owner.isKicking()) {
 				// kick the ball
@@ -283,5 +281,6 @@ public class GameMVC extends JPanel {
 		for (PlayerMC pm : as) {
 			pm.tick(PERIOD / 1000.0);
 		}
+		ball.tick(PERIOD / 1000.0);
 	}
 }

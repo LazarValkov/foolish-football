@@ -14,6 +14,7 @@
  */
 package uk.me.fommil.ff;
 
+import static java.lang.Math.min;
 import static java.lang.Math.round;
 import com.google.common.base.Preconditions;
 import java.awt.Point;
@@ -26,6 +27,7 @@ import javax.media.j3d.BoundingSphere;
 import javax.media.j3d.Bounds;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
+import uk.me.fommil.ff.Tactics.BallZone;
 
 /**
  * The model (M) and controller (C) for the ball during game play.
@@ -54,22 +56,38 @@ public class BallMC {
 		LIFT, POWER, LEFT, RIGHT
 	}
 	private static final Logger log = Logger.getLogger(BallMC.class.getName());
-	private Point3d s = new Point3d(200, 400, 0);
+	private Point3d s = new Point3d(0, 0, 0);
 	private Vector3d v = new Vector3d();
 	private static final double FRICTION = 10;
 	private static final double GRAVITY = -10;
 	// aftertouch direction
 	private Vector3d aftertouch = new Vector3d();
 
-		/**
-	 * Return the volume in which this player can control the ball.
-	 *
+//	/**
+//	 * Return the volume in which this player can control the ball.
+//	 *
+//	 * @return
+//	 */
+//	public Bounds getBounds() {
+//		return new BoundingSphere(s, 2);
+//	}
+	/**
+	 * @param width
+	 * @param height
 	 * @return
 	 */
-	public Bounds getBounds() {
-		return new BoundingSphere(s, 2);
-	}
+	public BallZone getZone(double width, double height) {
+		Preconditions.checkArgument(width > 0);
+		Preconditions.checkArgument(height > 0);
+		int x, y;
 
+		x = (4 - (int) (4 * s.x / width));
+		y = (6 - (int) (6 * s.y / height));
+		x = max(0, min(x, 4));
+		y = max(0, min(y, 6));
+
+		return new BallZone(x, y);
+	}
 
 	/**
 	 * Update the model.
