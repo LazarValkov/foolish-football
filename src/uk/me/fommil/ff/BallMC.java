@@ -14,15 +14,18 @@
  */
 package uk.me.fommil.ff;
 
+import static java.lang.Math.round;
+import com.google.common.base.Preconditions;
+import java.awt.Point;
 import static java.lang.Math.max;
 import static java.lang.Math.signum;
 import static java.lang.Math.abs;
-import java.awt.geom.Point2D;
 import java.util.Collection;
 import java.util.logging.Logger;
-import javax.vecmath.Point2d;
+import javax.media.j3d.BoundingSphere;
+import javax.media.j3d.Bounds;
 import javax.vecmath.Point3d;
-import uk.me.fommil.ff.GameMVC.Action;
+import javax.vecmath.Vector3d;
 
 /**
  * The model (M) and controller (C) for the ball during game play.
@@ -31,37 +34,46 @@ import uk.me.fommil.ff.GameMVC.Action;
  */
 public class BallMC {
 
+	// View
+	@Deprecated
+	public void setLocation(Point p) {
+		setPosition(new Point3d(p.x, p.y, 0));
+	}
+
+	@Deprecated
+	public Point getLocation() {
+		return new Point((int) round(s.x), (int) round(s.y));
+	}
+
+	/**
+	 * The aftertouch that a ball may exhibit. Directional aftertouch is always relate to
+	 * the direction of motion.
+	 */
+	public enum Aftertouch {
+
+		LIFT, POWER, LEFT, RIGHT
+	}
 	private static final Logger log = Logger.getLogger(BallMC.class.getName());
-	private final Point3d s = new Point3d(200, 400, 0);
-	private Point3d v = new Point3d();
+	private Point3d s = new Point3d(200, 400, 0);
+	private Vector3d v = new Vector3d();
 	private static final double FRICTION = 10;
 	private static final double GRAVITY = -10;
-
 	// aftertouch direction
-	Point2d at = new Point2d();
+	private Vector3d aftertouch = new Vector3d();
 
-	/**
+		/**
+	 * Return the volume in which this player can control the ball.
+	 *
 	 * @return
 	 */
-	public Point2D getLocation() {
-		return new Point2D.Double(s.x, s.y);
+	public Bounds getBounds() {
+		return new BoundingSphere(s, 2);
 	}
 
-	/**
-	 * @param v
-	 */
-	public void setVelocity(Point3d v) {
-		this.v = v;
-	}
 
 	/**
-	 * @return
-	 */
-	public double getHeight() {
-		return s.z;
-	}
-
-	/**
+	 * Update the model.
+	 *
 	 * @param t with units of seconds
 	 */
 	public void tick(double t) {
@@ -84,30 +96,46 @@ public class BallMC {
 	/**
 	 * Controller.
 	 *
-	 * @param actions
+	 * @param aftertouches
 	 */
-	public void setActions(Collection<Action> actions) {
-		if (actions.isEmpty() || s.z < 10)
+	public void setAftertouches(Collection<Aftertouch> aftertouches) {
+		if (aftertouches.isEmpty() || s.z < 10)
 			return;
 
 		// apply aftertouch
-		Point2d at = new Point2d();
-		for (Action action : actions) {
-			switch (action) {
-				case UP:
-					at.y += 1;
+		Vector3d ats = new Vector3d();
+		for (Aftertouch at : aftertouches) {
+			switch (at) {
+				case LIFT:
 					break;
-				case DOWN:
-					at.y -= 1;
+				case POWER:
 					break;
 				case LEFT:
-					at.x -= 1;
 					break;
 				case RIGHT:
-					at.x += 1;
 					break;
 			}
 		}
-		this.at = at;
+		aftertouch = ats;
 	}
+
+	// <editor-fold defaultstate="collapsed" desc="BOILERPLATE GETTERS/SETTERS">
+	public Point3d getPosition() {
+		return (Point3d) s.clone();
+	}
+
+	public void setPosition(Point3d s) {
+		Preconditions.checkNotNull(s);
+		this.s = s;
+	}
+
+	public Vector3d getVelocity() {
+		return (Vector3d) v.clone();
+	}
+
+	public void setVelocity(Vector3d v) {
+		Preconditions.checkNotNull(v);
+		this.v = v;
+	}
+	// </editor-fold>
 }
