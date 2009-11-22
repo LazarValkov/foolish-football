@@ -89,14 +89,15 @@ public class PitchParser {
 					dat.read(); // ??
 				}
 			}
+			assert dat.read() == -1;
 
 			// FIXME: colour index
 			Color[] index = new Color[256];
 			for (int i = 0; i < 256; i++) {
-				int r = dat.read();
-				int g = dat.read();
-				int b = dat.read();
-				// index[i] = new Color(r, g, b);
+//				int r = dat.read();
+//				int g = dat.read();
+//				int b = dat.read();
+//				// index[i] = new Color(r, g, b);
 				index[i] = new Color(i, i, i);
 			}
 
