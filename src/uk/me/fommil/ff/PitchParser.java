@@ -15,6 +15,7 @@
 package uk.me.fommil.ff;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Image;
@@ -23,6 +24,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.SortedSet;
 import java.util.logging.Logger;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
@@ -36,6 +38,29 @@ import javax.swing.JLabel;
  * <li>BLK - contains blocks of 16x16 tiles, 256 bit indexed.</li>
  * <li>DAT - Unknown, but probably the index and the ordering.</li>
  * </ul>
+ * <p>
+ * Notes, cobbled together from the SWOS Picture Editor (SWPE) documentation and
+ * inspection.
+ * <p>
+ * Colour 11 will be converted into the primary colour of the team. Colour 10 will be
+ * converted to the secondary colour or shorts. Only 42 patterns have this colour
+ * converting property, and those are mostly crowd patterns.
+ * <p>
+ * Pitch types are achieved by palette modification of entries
+ * 0, 7, 9, 78, 79, 80, 81, 106 and 107
+ * denoting visual changes according to conditions.
+ * Patterns 1 to 24 are animated. Patterns 1..12 are upper crowd, and patterns 13..24
+ * are lower crowd. Odd indices are pictures when not moving, and even indices are
+ * pictures when animated (jumping, cheering).
+ * <p>
+ * There are as many as 59 unique colours in the BLK files, 11 of which are defined as
+ * above, maximum value 108. The {@code PALA.DAT} file, which looks like a palette file,
+ * has 11 blocks of 48 ASCII hex codes.
+ * <p>
+ * Pattern 0 is usually empty pattern (except in training pitch).
+ * <p>
+ * SWOS can only read a maximum of 296 unique patterns and pitches are
+ * comprised of 42 x 53 patterns.
  *
  * @author Samuel Halliday
  */
@@ -57,19 +82,19 @@ public class PitchParser {
 //		}));
 //		System.out.println(files);
 
-		File blkFile = new File(Main.SWOS.getPath() + "/PITCH1.BLK");
-		File datFile = new File(Main.SWOS.getPath() + "/PITCH1.DAT");
-		FileInputStream blk = new FileInputStream(blkFile);
-		FileInputStream dat = new FileInputStream(datFile);
-		PitchParser parser = new PitchParser();
-		Image image = parser.extractPitch(blk, dat);
-
-		JFrame jf = new JFrame();
-		jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		jf.add(new JLabel(new ImageIcon(image)));
-		jf.pack();
-		jf.setVisible(true);
-
+		for (int i = 1 ; i <= 6; i++) {
+			File blkFile = new File(Main.SWOS.getPath() + "/PITCH" + i + ".BLK");
+			File datFile = new File(Main.SWOS.getPath() + "/PITCH" + i + ".DAT");
+			FileInputStream blk = new FileInputStream(blkFile);
+			FileInputStream dat = new FileInputStream(datFile);
+			PitchParser parser = new PitchParser();
+			Image image = parser.extractPitch(blk, dat);
+			JFrame jf = new JFrame();
+			jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+			jf.add(new JLabel(new ImageIcon(image)));
+			jf.pack();
+			jf.setVisible(true);
+		}
 	}
 
 	public Image extractPitch(InputStream blk, InputStream dat) throws IOException {
@@ -94,34 +119,19 @@ public class PitchParser {
 			// FIXME: colour index
 			Color[] index = new Color[256];
 			for (int i = 0; i < 256; i++) {
-//				int r = dat.read();
-//				int g = dat.read();
-//				int b = dat.read();
-//				// index[i] = new Color(r, g, b);
-				index[i] = new Color(i, i, i);
+				index[255 - i] = new Color(i, i, i);
+			}
+			// team colours
+			index[10] = Color.RED;
+			index[11] = Color.BLUE;
+
+			// weather-based indices
+			int[] weather = new int[]{0, 7, 9, 78, 79, 80, 81, 106, 107};
+			for (int i : weather) {
+				index[i] = Color.GREEN;
 			}
 
-
-			/**
-			 * Notes from the SWOS Picture Editor (SWPE) documentation.
-			 * 
-			 * Colour 11 will be converted into the primary colour of the team. Colour 10 will be
-			 * converted to the secondary colour or shorts. Only 42 patterns have this colour
-			 * converting property, and those are mostly crowd patterns.
-			 *
-			 * Pitch types are achieved by palette modification of entries
-			 * 0, 7, 9, 78, 79, 80, 81, 106 and 107
-			 * denoting visual changes according to conditions.
-			 * Patterns 1 to 24 are animated. Patterns 1..12 are upper crowd, and patterns 13..24
-			 * are lower crowd. Odd indices are pictures when not moving, and even indices are
-			 * pictures when animated (jumping, cheering).
-			 *
-			 * Pattern 0 is usually empty pattern (except in training pitch).
-			 * 
-			 * SWOS can only read a maximum of 296 unique patterns and pitches are
-			 * comprised of 42 x 53 patterns
-			 */
-			// red/blue have bit values of 252 when shown using SWPE
+			SortedSet<Integer> uniqueColours = Sets.newTreeSet();
 			BufferedImage[] patterns = new BufferedImage[296];
 			outer:
 			for (int i = 0; i < 296; i++) {
@@ -134,6 +144,7 @@ public class PitchParser {
 
 						Color c = index[read];
 						patterns[i].setRGB(x, y, c.getRGB());
+						uniqueColours.add(read);
 					}
 				}
 			}
@@ -146,6 +157,8 @@ public class PitchParser {
 					g.drawImage(patterns[p], i * 16, j * 16, null);
 				}
 			}
+
+			log.info(uniqueColours.size() + " " + uniqueColours);
 
 			return image;
 		} finally {
