@@ -20,12 +20,15 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.SortedSet;
 import java.util.logging.Logger;
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -49,13 +52,14 @@ import javax.swing.JLabel;
  * Pitch types are achieved by palette modification of entries
  * 0, 7, 9, 78, 79, 80, 81, 106 and 107
  * denoting visual changes according to conditions.
+ * <p>
+ * There are as many as 59 unique colours in the BLK files, 11 of which are defined as
+ * above, maximum value 108. The {@code PALA.DAT} file contains the palette as
+ * 11 blocks of 48 ASCII hex codes.
+ * <p>
  * Patterns 1 to 24 are animated. Patterns 1..12 are upper crowd, and patterns 13..24
  * are lower crowd. Odd indices are pictures when not moving, and even indices are
  * pictures when animated (jumping, cheering).
- * <p>
- * There are as many as 59 unique colours in the BLK files, 11 of which are defined as
- * above, maximum value 108. The {@code PALA.DAT} file, which looks like a palette file,
- * has 11 blocks of 48 ASCII hex codes.
  * <p>
  * Pattern 0 is usually empty pattern (except in training pitch).
  * <p>
@@ -82,25 +86,90 @@ public class PitchParser {
 //		}));
 //		System.out.println(files);
 
-		for (int i = 1 ; i <= 6; i++) {
+		File palFile = new File(Main.SWOS.getPath() + "/PALA.DAT");
+		FileInputStream pal = new FileInputStream(palFile);
+		Color[] palette = getPalette(pal);
+//		palette[10] = Color.RED;
+//		palette[11] = Color.BLUE;
+//		int[] weather = new int[]{0, 7, 9, 78, 79, 80, 81, 106, 107};
+//		for (int i : weather) {
+//			palette[i] = Color.GREEN;
+//		}
+
+		BufferedImage image = new BufferedImage(16, 11, BufferedImage.TYPE_INT_RGB);
+		for (int j = 0; j < 11; j++) {
+			for (int i = 0; i < 16; i++) {
+				int ij = 16 * j + i;
+				Color c;
+				if (ij >= palette.length)
+					c = Color.BLACK;
+				else
+					c = palette[ij];
+
+				image.setRGB(i, j, c.getRGB());
+			}
+		}
+//		Image img = image.getScaledInstance(160, 11, Image.SCALE_FAST);
+//		image = new BufferedImage(160, 110, BufferedImage.TYPE_INT_RGB);
+//		image.getGraphics().drawImage(img, 0, 0, null);
+		File palOut = new File("pala.png");
+		ImageIO.write(image, "png", palOut);
+
+//		JFrame jf = new JFrame();
+//		jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//		jf.add(new JLabel(new ImageIcon(img)));
+//		jf.pack();
+//		jf.setVisible(true);
+
+		for (int i = 1; i <= 6; i++) {
 			File blkFile = new File(Main.SWOS.getPath() + "/PITCH" + i + ".BLK");
 			File datFile = new File(Main.SWOS.getPath() + "/PITCH" + i + ".DAT");
+			File out = new File("pitch" + i + ".png");
 			FileInputStream blk = new FileInputStream(blkFile);
 			FileInputStream dat = new FileInputStream(datFile);
 			PitchParser parser = new PitchParser();
-			Image image = parser.extractPitch(blk, dat);
-			JFrame jf = new JFrame();
-			jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			jf.add(new JLabel(new ImageIcon(image)));
-			jf.pack();
-			jf.setVisible(true);
+			BufferedImage pImage = parser.extractPitch(blk, dat, palette);
+			ImageIO.write(pImage, "png", out);
+
+//			JFrame jf = new JFrame();
+//			jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//			jf.add(new JLabel(new ImageIcon(pImage)));
+//			jf.pack();
+//			jf.setVisible(true);
 		}
 	}
 
-	public Image extractPitch(InputStream blk, InputStream dat) throws IOException {
+	public static Color[] getPalette(InputStream pal) throws IOException {
+		InputStreamReader isr = new InputStreamReader(pal);
+		BufferedReader reader = new BufferedReader(isr);
+		Color[] color = new Color[176];
+
+		int i = 0;
+		String line;
+		while ((line = reader.readLine()) != null) {
+			if (line.trim().isEmpty())
+				continue;
+			String[] cs = line.toLowerCase().split(",");
+			int r = Integer.valueOf(new StringBuilder(cs[0].substring(1, 3)).reverse().toString(), 16);
+			int g = Integer.valueOf(new StringBuilder(cs[1].substring(1, 3)).reverse().toString(), 16);
+			int b = Integer.valueOf(new StringBuilder(cs[2].substring(1, 3)).reverse().toString(), 16);
+			color[i] = new Color(r, g, b );
+			i++;
+			r = Integer.valueOf(new StringBuilder(cs[3].substring(1, 3)).reverse().toString(), 16);
+			g = Integer.valueOf(new StringBuilder(cs[4].substring(1, 3)).reverse().toString(), 16);
+			b = Integer.valueOf(new StringBuilder(cs[5].substring(1, 3)).reverse().toString(), 16);
+			color[i] = new Color(r, g, b);
+			i++;
+		}
+		return color;
+	}
+
+	public BufferedImage extractPitch(InputStream blk, InputStream dat, Color[] palette) throws IOException {
 		Preconditions.checkNotNull(blk);
 		Preconditions.checkNotNull(dat);
+		Preconditions.checkNotNull(palette);
 		try {
+
 
 			int WIDTH = 55;
 			int HEIGHT = 42;
@@ -115,22 +184,6 @@ public class PitchParser {
 				}
 			}
 			assert dat.read() == -1;
-
-			// FIXME: colour index
-			Color[] index = new Color[256];
-			for (int i = 0; i < 256; i++) {
-				index[255 - i] = new Color(i, i, i);
-			}
-			// team colours
-			index[10] = Color.RED;
-			index[11] = Color.BLUE;
-
-			// weather-based indices
-			int[] weather = new int[]{0, 7, 9, 78, 79, 80, 81, 106, 107};
-			for (int i : weather) {
-				index[i] = Color.GREEN;
-			}
-
 			SortedSet<Integer> uniqueColours = Sets.newTreeSet();
 			BufferedImage[] patterns = new BufferedImage[296];
 			outer:
@@ -142,7 +195,7 @@ public class PitchParser {
 						if (read == -1)
 							break outer;
 
-						Color c = index[read];
+						Color c = palette[read];
 						patterns[i].setRGB(x, y, c.getRGB());
 						uniqueColours.add(read);
 					}
