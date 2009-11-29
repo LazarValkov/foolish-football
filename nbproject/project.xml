@@ -19,6 +19,7 @@
             <word>Karakas</word>
             <word>Zlatko</word>
             <word>aftertouch</word>
+            <word>sprites</word>
         </spellchecker-wordlist>
     </configuration>
 </project>
