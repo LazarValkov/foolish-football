@@ -50,7 +50,9 @@ import uk.me.fommil.ff.Tactics.PlayerZone;
 @SuppressWarnings("serial")
 public class GameMVC extends JPanel {
 
+	@Deprecated
 	private static final int PITCH_WIDTH = 672;
+	@Deprecated
 	private static final int PITCH_HEIGHT = 880;
 	private static final Logger log = Logger.getLogger(GameMVC.class.getName());
 	private final long PERIOD = 100L;
@@ -154,12 +156,12 @@ public class GameMVC extends JPanel {
 	@Override
 	public void paint(Graphics g) {
 		Graphics2D g2 = (Graphics2D) g;
-//		g2.setBackground(Color.BLACK);
 
 		Dimension size = getSize();
 		double w = size.getWidth();
 		double h = size.getHeight();
 
+//		g2.setBackground(Color.BLACK);
 //		g2.clearRect(0, 0, size.width, size.height);
 		g2.setColor(Color.GREEN);
 
@@ -177,14 +179,14 @@ public class GameMVC extends JPanel {
 		// TODO: consider case when the window is bigger than the pitch image
 		g2.drawImage(pitch.getSubimage(xoff, yoff, size.width, size.height), 0, 0, null);
 
-//		for (int i = 0; i <= 5; i++) {
-//			int x = i * PITCH_WIDTH / 5;
-//			g2.drawLine(x - xoff, 0 - yoff, x - xoff, PITCH_HEIGHT - yoff);
-//		}
-//		for (int i = 0; i <= 7; i++) {
-//			int y = i * PITCH_HEIGHT / 7;
-//			g2.drawLine(0 - xoff, y - yoff, PITCH_WIDTH - xoff, y - yoff);
-//		}
+		for (int i = 0; i <= 5; i++) {
+			int x = 81 + i * (590 - 81) / 5;
+			g2.drawLine(x - xoff, 129 - yoff, x - xoff, 769 - yoff);
+		}
+		for (int i = 0; i <= 7; i++) {
+			int y = 129 + i * (769 - 129) / 7;
+			g2.drawLine(81 - xoff, y - yoff, 590 - xoff, y - yoff);
+		}
 
 		// draw the players that are in view
 		for (PlayerMC pm : as) {

@@ -15,20 +15,16 @@
 package uk.me.fommil.ff;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Sets;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.SortedSet;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 
@@ -41,7 +37,7 @@ import javax.imageio.ImageIO;
  * <li>DAT - contains the ordering of the patterns for a pitch.</li>
  * </ul>
  * <p>
- * The palette was supplied by Zlatko Karakas (author of the SWOS Picture Editor).
+ * The palette was extracted by Zlatko Karakas (author of SWOS Picture Editor).
  * Every colour has its darkened counterpart (colour + 128). Note that although
  * the {@code PALA.DAT} file contains a palette that is apparently 11 blocks of 48
  * ASCII hex codes, it is not clear if it encodes the palette used for the pitch.
@@ -63,9 +59,23 @@ import javax.imageio.ImageIO;
  * <p>
  * SWOS can only read a maximum of 296 unique patterns and pitches are
  * comprised of 42 x 53 patterns.
+ * <p>
+ * The location of the corner flags are pixels (81, 129), (590, 129), (590, 769),
+ * (81, 769).
+ * <p>
+ * The location of the goal posts are (300, 769), (300, 751), (372, 751),
+ * (372, 769) and (372, 129), (372, 111), (300, 111), (300, 129). (Note that the posts
+ * are wider than single pixels).
+ * <p>
+ * The locations of the penalty boxes are (193, 129), (478, 129), (193, 216),
+ * (478, 216) and (193, 769), (193, 682), (478, 682), (478, 769).
+ * <p>
+ * The locations of the goal boxes are (273, 769), (273, 740), (398, 740), (398, 769)
+ * and (273, 129), (273, 158), (398, 129), (398, 158).
+ * <p>
+ * The penalty spots are (336, 711) and (336, 187).
  *
  * @author Samuel Halliday
- * @author Zlatko Karakas, via SWOS Picture Editor 0.9
  */
 public class PitchParser {
 
@@ -117,62 +127,16 @@ public class PitchParser {
 		132, 132, 132, 132, 132, 148, 148, 148, 164, 164, 164, 180, 180, 180, 192,
 		56, 56
 	};
-	private static final int[] PAL_MENU_RAW = {
-		0, 0, 36, 180, 180, 180, 252, 252, 252, 0, 0, 0, 108, 36, 0, 180, 72, 0,
-		252, 108, 0, 108, 108, 108, 36, 36, 36, 72, 72, 72, 252, 0, 0, 0, 0, 252,
-		108, 0, 36, 144, 144, 252, 36, 144, 0, 252, 252, 0, 144, 120, 84, 156, 132,
-		92, 168, 140, 104, 180, 152, 116, 192, 164, 128, 204, 176, 140, 216, 192,
-		152, 228, 204, 168, 228, 208, 176, 232, 212, 188, 236, 220, 196, 240, 224,
-		208, 240, 232, 216, 244, 236, 228, 248, 244, 240, 252, 252, 252, 0, 0, 0,
-		0, 0, 8, 0, 0, 16, 0, 0, 24, 0, 0, 32, 0, 0, 40, 0, 0, 48, 0, 0, 56, 0, 0,
-		64, 0, 0, 72, 0, 0, 80, 0, 0, 88, 0, 0, 96, 0, 0, 104, 0, 0, 112, 0, 0,
-		120, 0, 0, 132, 0, 0, 140, 0, 0, 148, 0, 0, 156, 0, 0, 164, 0, 0, 172, 0,
-		0, 180, 0, 0, 188, 0, 0, 196, 0, 0, 204, 0, 0, 212, 0, 0, 220, 0, 0, 228,
-		0, 0, 236, 0, 0, 244, 0, 0, 252, 108, 36, 0, 112, 36, 0, 116, 40, 0, 120,
-		44, 0, 124, 48, 0, 128, 52, 0, 136, 56, 0, 140, 56, 0, 144, 60, 0, 148, 64,
-		0, 152, 68, 0, 156, 72, 0, 164, 76, 0, 168, 80, 0, 172, 88, 0, 176, 92, 0,
-		180, 96, 0, 184, 100, 0, 192, 104, 0, 196, 112, 0, 200, 116, 0, 204, 120,
-		0, 208, 124, 0, 212, 132, 0, 216, 136, 0, 224, 144, 0, 228, 148, 0, 232,
-		152, 0, 236, 160, 0, 240, 168, 0, 244, 172, 0, 252, 180, 0, 36, 36, 36, 40,
-		40, 40, 48, 48, 48, 56, 52, 52, 60, 60, 60, 68, 64, 64, 76, 72, 72, 80, 76,
-		76, 88, 80, 80, 96, 88, 88, 104, 92, 92, 108, 96, 96, 116, 104, 104, 124,
-		108, 108, 128, 112, 112, 136, 116, 116, 144, 124, 124, 148, 128, 128, 156,
-		132, 132, 164, 136, 136, 168, 140, 140, 176, 144, 144, 184, 148, 148, 188,
-		152, 152, 196, 156, 156, 204, 160, 160, 212, 164, 164, 216, 168, 168, 224,
-		168, 168, 232, 172, 172, 236, 176, 176, 244, 180, 180, 252, 0, 0, 252, 0,
-		0, 252, 4, 4, 252, 8, 8, 252, 8, 8, 252, 12, 12, 252, 16, 16, 252, 20, 20,
-		252, 24, 24, 252, 28, 28, 252, 32, 32, 252, 36, 36, 252, 40, 40, 252, 44,
-		44, 252, 48, 48, 252, 52, 52, 252, 56, 56, 252, 60, 60, 252, 64, 64, 252,
-		68, 68, 252, 72, 72, 252, 76, 76, 252, 80, 80, 252, 84, 84, 252, 88, 88,
-		252, 92, 92, 252, 96, 96, 252, 100, 100, 252, 104, 104, 252, 108, 108, 252,
-		112, 112, 252, 116, 116, 108, 0, 36, 112, 0, 44, 116, 0, 52, 120, 4, 64,
-		124, 4, 72, 128, 8, 84, 136, 12, 92, 140, 12, 104, 144, 16, 116, 148, 20,
-		128, 152, 24, 136, 156, 28, 148, 164, 32, 160, 160, 36, 168, 160, 40, 172,
-		156, 44, 176, 152, 48, 180, 152, 56, 184, 152, 60, 192, 148, 64, 196, 144,
-		72, 200, 144, 76, 204, 144, 84, 208, 140, 88, 212, 140, 96, 216, 140, 100,
-		224, 140, 108, 228, 140, 112, 232, 140, 120, 236, 140, 128, 240, 140, 136,
-		244, 144, 144, 252, 0, 0, 252, 0, 4, 248, 4, 16, 248, 4, 28, 248, 8, 36,
-		244, 12, 48, 244, 12, 60, 244, 16, 68, 244, 20, 76, 240, 20, 84, 240, 24,
-		96, 240, 28, 104, 236, 32, 112, 236, 32, 116, 236, 36, 124, 236, 40, 132,
-		232, 40, 140, 232, 44, 148, 232, 48, 152, 228, 48, 160, 228, 52, 164, 228,
-		56, 172, 228, 56, 176, 224, 60, 180, 224, 64, 188, 224, 64, 192, 220, 68,
-		196, 220, 68, 200, 220, 72, 204, 216, 76, 208, 216, 76, 212, 216, 80, 216,
-		216, 16, 32, 0, 16, 44, 0, 20, 56, 0, 24, 68, 0, 24, 80, 0, 28, 88, 0, 28,
-		100, 0, 32, 112, 0, 32, 124, 0, 36, 136, 0, 36, 144, 0, 48, 152, 0, 60,
-		156, 0, 68, 160, 0, 80, 168, 0, 88, 172, 0, 100, 176, 0, 108, 180, 0, 120,
-		188, 0, 132, 192, 0, 140, 196, 0, 152, 204, 0, 160, 208, 0, 172, 212, 0,
-		180, 216, 0, 192, 224, 0, 204, 228, 0, 212, 232, 0, 224, 240, 0, 232, 244,
-		0, 244, 248, 0, 252, 252, 0
-	};
 
 	/**
+	 * @param swos
 	 * @param i
 	 * @return
 	 * @throws IOException
 	 */
-	public static final BufferedImage getPitch(int i) throws IOException {
-		File blkFile = new File(Main.SWOS.getPath() + "/PITCH" + i + ".BLK");
-		File datFile = new File(Main.SWOS.getPath() + "/PITCH" + i + ".DAT");
+	public static final BufferedImage getPitch(File swos, int i) throws IOException {
+		File blkFile = new File(swos.getPath() + "/PITCH" + i + ".BLK");
+		File datFile = new File(swos.getPath() + "/PITCH" + i + ".DAT");
 		FileInputStream blk = new FileInputStream(blkFile);
 		FileInputStream dat = new FileInputStream(datFile);
 		PitchParser parser = new PitchParser();
@@ -184,18 +148,8 @@ public class PitchParser {
 	 * @throws Exception
 	 */
 	public static final void main(String[] args) throws Exception {
-//		palette[10] = Color.PINK;
-//		palette[11] = Color.PINK;
-//		int[] weather = new int[]{0, 7, 9, 78, 79, 80, 81, 106, 107};
-//		for (int i : weather) {
-//			palette[i] = Color.PINK;
-//		}
-
-		// writePal(getPalette(), "pal.png");
-
 		for (int i = 1; i <= 6; i++) {
-			File out = new File("pitch" + i + ".png");
-			ImageIO.write(getPitch(i), "png", out);
+			ImageIO.write(getPitch(Main.SWOS, i), "png", new File("pitch" + i + ".png"));
 		}
 	}
 
@@ -211,58 +165,18 @@ public class PitchParser {
 		return Collections.unmodifiableList(PAL);
 	}
 
-//	private static List<Color> getPala() throws IOException {
-//		File palFile = new File(Main.SWOS.getPath() + "/PALA.DAT");
-//		FileInputStream pal = new FileInputStream(palFile);
-//		InputStreamReader isr = new InputStreamReader(pal);
-//		BufferedReader reader = new BufferedReader(isr);
-//		Color[] color = new Color[176];
-//
-//		int i = 0;
-//		String line;
-//		try {
-//			while ((line = reader.readLine()) != null) {
-//				if (line.trim().isEmpty())
-//					continue;
-//				String[] cs = line.toLowerCase().split(",");
-//				int r = Integer.valueOf(new StringBuilder(cs[0].substring(1, 3)).reverse().toString(), 16);
-//				int g = Integer.valueOf(new StringBuilder(cs[1].substring(1, 3)).reverse().toString(), 16);
-//				int b = Integer.valueOf(new StringBuilder(cs[2].substring(1, 3)).reverse().toString(), 16);
-//				color[i] = new Color(r, g, b);
-//				i++;
-//				r = Integer.valueOf(new StringBuilder(cs[3].substring(1, 3)).reverse().toString(), 16);
-//				g = Integer.valueOf(new StringBuilder(cs[4].substring(1, 3)).reverse().toString(), 16);
-//				b = Integer.valueOf(new StringBuilder(cs[5].substring(1, 3)).reverse().toString(), 16);
-//				color[i] = new Color(r, g, b);
-//				i++;
-//			}
-//			return Arrays.asList(color);
-//		} finally {
-//			reader.close();
-//		}
-//	}
-//	private static void writePal(List<Color> palette, String string) throws IOException {
-//		BufferedImage image = new BufferedImage(16, 11, BufferedImage.TYPE_INT_RGB);
-//		for (int j = 0; j < 11; j++) {
-//			for (int i = 0; i < 16; i++) {
-//				int ij = 16 * j + i;
-//				Color c;
-//				if (ij >= palette.size())
-//					c = Color.BLACK;
-//				else
-//					c = palette.get(ij);
-//
-//				image.setRGB(i, j, c.getRGB());
-//			}
-//		}
-//		File palOut = new File(string);
-//		ImageIO.write(image, "png", palOut);
-//	}
+	/**
+	 * @param blk
+	 * @param dat
+	 * @return
+	 * @throws IOException
+	 */
 	public BufferedImage extractPitch(InputStream blk, InputStream dat) throws IOException {
 		Preconditions.checkNotNull(blk);
 		Preconditions.checkNotNull(dat);
 		List<Color> palette = getPalette();
 
+		// TODO: perhaps we should use an indexed BufferedImage instead of RGB
 		try {
 			int HEIGHT = 55;
 			int WIDTH = 42;

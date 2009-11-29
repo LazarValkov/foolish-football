@@ -35,7 +35,7 @@ public class Main {
 	 */
 	public static final void main(String[] args) throws IOException {
 		Map<String, Tactics> swosTactics = TacticsParser.getSwosTactics(SWOS);
-		BufferedImage pitch = PitchParser.getPitch(6);
+		BufferedImage pitch = PitchParser.getPitch(SWOS, 6);
 
 		Team a = new Team();
 		a.setCurrentTactics(swosTactics.get("442"));

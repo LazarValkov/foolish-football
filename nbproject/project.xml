@@ -16,6 +16,8 @@
             <definitions>./lib/nblibraries.properties</definitions>
         </libraries>
         <spellchecker-wordlist xmlns="http://www.netbeans.org/ns/spellchecker-wordlist/1">
+            <word>Karakas</word>
+            <word>Zlatko</word>
             <word>aftertouch</word>
         </spellchecker-wordlist>
     </configuration>
