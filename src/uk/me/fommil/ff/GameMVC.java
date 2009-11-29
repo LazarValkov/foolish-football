@@ -27,6 +27,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
@@ -49,8 +50,8 @@ import uk.me.fommil.ff.Tactics.PlayerZone;
 @SuppressWarnings("serial")
 public class GameMVC extends JPanel {
 
-	private static final int PITCH_WIDTH = 400;
-	private static final int PITCH_HEIGHT = 600;
+	private static final int PITCH_WIDTH = 672;
+	private static final int PITCH_HEIGHT = 880;
 	private static final Logger log = Logger.getLogger(GameMVC.class.getName());
 	private final long PERIOD = 100L;
 	private final Team a;
@@ -122,12 +123,14 @@ public class GameMVC extends JPanel {
 			setPlayerActions(GameMVC.this.a, actions);
 		}
 	};
+	private final BufferedImage pitch;
 
 	/**
 	 * @param a
 	 * @param b
 	 */
-	public GameMVC(Team a, Team b) {
+	public GameMVC(Team a, Team b, BufferedImage pitch) {
+		this.pitch = pitch;
 		this.a = a;
 		this.ball = new BallMC();
 		ball.setPosition(new Point3d(PITCH_WIDTH / 2, PITCH_HEIGHT / 2, 0));
@@ -151,31 +154,37 @@ public class GameMVC extends JPanel {
 	@Override
 	public void paint(Graphics g) {
 		Graphics2D g2 = (Graphics2D) g;
-		g2.setBackground(Color.BLACK);
+//		g2.setBackground(Color.BLACK);
 
 		Dimension size = getSize();
 		double w = size.getWidth();
 		double h = size.getHeight();
 
-		g2.clearRect(0, 0, (int) w, (int) h);
+//		g2.clearRect(0, 0, size.width, size.height);
 		g2.setColor(Color.GREEN);
 
 		// we are always centred over the ball
 		Point3d ballLoc = ball.getPosition();
 
-		Rectangle2D view = new Rectangle.Double(ballLoc.x - w / 2, ballLoc.y - h / 2, w, h);
-		int xoff = (int) view.getX();
-		int yoff = (int) view.getY();
+		// view never goes outside the pitch image
+		int xoff = (int) Math.min(pitch.getWidth() - size.width, Math.max(0, ballLoc.x - w / 2.0));
+		int yoff = (int) Math.min(pitch.getHeight() - size.height, Math.max(0, ballLoc.y - h / 2.0));
+		assert xoff >= 0 && yoff >= 0 : xoff + " " + yoff;
+		assert xoff < pitch.getWidth() && yoff < pitch.getHeight(): xoff + " " + yoff;
+		Rectangle2D view = new Rectangle.Double(xoff, yoff, w, h);
 
-		// TODO: draw the pitch
-		for (int i = 0; i <= 5; i++) {
-			int x = i * PITCH_WIDTH / 5;
-			g2.drawLine(x - xoff, 0 - yoff, x - xoff, PITCH_HEIGHT - yoff);
-		}
-		for (int i = 0; i <= 7; i++) {
-			int y = i * PITCH_HEIGHT / 7;
-			g2.drawLine(0 - xoff, y - yoff, PITCH_WIDTH - xoff, y - yoff);
-		}
+		// draw the pitch
+		// TODO: consider case when the window is bigger than the pitch image
+		g2.drawImage(pitch.getSubimage(xoff, yoff, size.width, size.height), 0, 0, null);
+
+//		for (int i = 0; i <= 5; i++) {
+//			int x = i * PITCH_WIDTH / 5;
+//			g2.drawLine(x - xoff, 0 - yoff, x - xoff, PITCH_HEIGHT - yoff);
+//		}
+//		for (int i = 0; i <= 7; i++) {
+//			int y = i * PITCH_HEIGHT / 7;
+//			g2.drawLine(0 - xoff, y - yoff, PITCH_WIDTH - xoff, y - yoff);
+//		}
 
 		// draw the players that are in view
 		for (PlayerMC pm : as) {
@@ -184,9 +193,10 @@ public class GameMVC extends JPanel {
 				draw(g2, view, pm);
 		}
 
-		// draw the ball
-		int cx = (int) Math.round(w / 2);
-		int cy = (int) Math.round(h / 2);
+		// draw the ball; FIXME view might not be centre, consider physics of height
+		// and false perspective also
+		int cx = (int) (ballLoc.x - xoff);
+		int cy = (int) (ballLoc.y - yoff);
 		int d = ((int) Math.round(ball.getPosition().z * 2) + 5);
 		g2.fillOval(cx - d / 2, cy - d / 2, d, d);
 	}

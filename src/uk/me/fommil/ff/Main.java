@@ -14,6 +14,7 @@
  */
 package uk.me.fommil.ff;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
@@ -34,20 +35,22 @@ public class Main {
 	 */
 	public static final void main(String[] args) throws IOException {
 		Map<String, Tactics> swosTactics = TacticsParser.getSwosTactics(SWOS);
+		BufferedImage pitch = PitchParser.getPitch(6);
 
 		Team a = new Team();
 		a.setCurrentTactics(swosTactics.get("442"));
 		Team b = new Team();
 		b.setCurrentTactics(swosTactics.get("433"));
-		GameMVC gv = new GameMVC(a, b);
+
+		GameMVC gv = new GameMVC(a, b, pitch);
 
 		JFrame frame = new JFrame();
 		frame.add(gv);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setSize(400, 600);
-        frame.setLocationRelativeTo(null);
-        frame.setTitle("Foolish Football");
-        frame.setVisible(true);
+		frame.setLocationRelativeTo(null);
+		frame.setTitle("Foolish Football");
+		frame.setVisible(true);
 
 		assert gv.getKeyListeners().length > 0;
 	}

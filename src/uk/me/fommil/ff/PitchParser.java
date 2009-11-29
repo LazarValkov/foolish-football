@@ -166,6 +166,20 @@ public class PitchParser {
 	};
 
 	/**
+	 * @param i
+	 * @return
+	 * @throws IOException
+	 */
+	public static final BufferedImage getPitch(int i) throws IOException {
+		File blkFile = new File(Main.SWOS.getPath() + "/PITCH" + i + ".BLK");
+		File datFile = new File(Main.SWOS.getPath() + "/PITCH" + i + ".DAT");
+		FileInputStream blk = new FileInputStream(blkFile);
+		FileInputStream dat = new FileInputStream(datFile);
+		PitchParser parser = new PitchParser();
+		return parser.extractPitch(blk, dat);
+	}
+
+	/**
 	 * @param args
 	 * @throws Exception
 	 */
@@ -180,14 +194,8 @@ public class PitchParser {
 		// writePal(getPalette(), "pal.png");
 
 		for (int i = 1; i <= 6; i++) {
-			File blkFile = new File(Main.SWOS.getPath() + "/PITCH" + i + ".BLK");
-			File datFile = new File(Main.SWOS.getPath() + "/PITCH" + i + ".DAT");
 			File out = new File("pitch" + i + ".png");
-			FileInputStream blk = new FileInputStream(blkFile);
-			FileInputStream dat = new FileInputStream(datFile);
-			PitchParser parser = new PitchParser();
-			BufferedImage pImage = parser.extractPitch(blk, dat);
-			ImageIO.write(pImage, "png", out);
+			ImageIO.write(getPitch(i), "png", out);
 		}
 	}
 
@@ -256,35 +264,35 @@ public class PitchParser {
 		List<Color> palette = getPalette();
 
 		try {
-			int WIDTH = 55;
-			int HEIGHT = 42;
-			// pattern index
+			int HEIGHT = 55;
+			int WIDTH = 42;
+			// pattern index, [0][0] is top left.
 			int[][] pattern = new int[WIDTH][HEIGHT];
-			for (int i = 0; i < WIDTH; i++) {
-				for (int j = 0; j < HEIGHT; j++) {
+			for (int j = HEIGHT - 1; j >= 0; j--) {
+				for (int i = WIDTH - 1; i >= 0; i--) {
 					int a = dat.read(); // ??
-					pattern[i][j] = dat.read();
+					pattern[WIDTH - i - 1][HEIGHT - j - 1] = dat.read();
 					int b = dat.read(); // ??
 					int c = dat.read(); // ??
+					Preconditions.checkArgument(a != -1 && b != -1 && c != -1 && pattern[i][j] != -1, "bad DAT file");
 					if (a != 0 || b != 0 || c != 0)
-						log.info(a + " " + b + " " + c);
+						log.info("Strange bytes in pitch DAT file: " + a + " " + b + " " + c);
 				}
 			}
-			assert dat.read() == -1;
-			SortedSet<Integer> uniqueColours = Sets.newTreeSet();
+			Preconditions.checkArgument(dat.read() == -1, "bad DAT file");
 			BufferedImage[] patterns = new BufferedImage[296];
 			outer:
 			for (int i = 0; i < 296; i++) {
 				patterns[i] = new BufferedImage(16, 16, BufferedImage.TYPE_INT_RGB);
-				for (int x = 0; x < 16; x++) {
-					for (int y = 0; y < 16; y++) {
+				for (int y = 0; y < 16; y++) {
+					for (int x = 0; x < 16; x++) {
 						int read = blk.read();
-						if (read == -1)
+						if (read == -1) {
+							Preconditions.checkArgument(x == 0 && y == 0, "bad BLK file");
 							break outer;
-
+						}
 						Color c = palette.get(read);
 						patterns[i].setRGB(x, y, c.getRGB());
-						uniqueColours.add(read);
 					}
 				}
 			}
@@ -297,9 +305,6 @@ public class PitchParser {
 					g.drawImage(patterns[p], i * 16, j * 16, null);
 				}
 			}
-
-			log.info(uniqueColours.size() + " " + uniqueColours);
-
 			return image;
 		} finally {
 			blk.close();
