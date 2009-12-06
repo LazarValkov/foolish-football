@@ -161,8 +161,8 @@ public class PitchParser {
 		for (int i = 0; i < palette.length; i++) {
 			palette[i] = new Color(PAL_GAME_RAW[i * 3], PAL_GAME_RAW[i * 3 + 1], PAL_GAME_RAW[i * 3 + 2]);
 		}
-		PAL = Arrays.asList(palette);
-		return Collections.unmodifiableList(PAL);
+		PAL = Collections.unmodifiableList(Arrays.asList(palette));
+		return PAL;
 	}
 
 	/**

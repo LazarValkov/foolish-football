@@ -14,14 +14,18 @@
  */
 package uk.me.fommil.ff;
 
+import com.google.common.collect.Lists;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 
 /**
@@ -32,6 +36,7 @@ import javax.imageio.ImageIO;
  */
 public class SpriteParser {
 
+	private static final Logger log = Logger.getLogger(SpriteParser.class.getName());
 	// TODO: code duplication with PitchParser
 	private static volatile List<Color> PAL;
 	private static final int[] PAL_GAME_RAW = {
@@ -81,6 +86,14 @@ public class SpriteParser {
 		56, 56
 	};
 
+// /* SpritesGetPalette
+//
+//   Return sprite mode specific palette.
+//*/
+//static byte *SpritesGetPalette()
+//{
+//    return s.sprite_no >= 1209 && s.sprite_no <= 1272 ? gamepal : pal;
+//}
 	private static List<Color> getPalette() {
 		if (PAL != null)
 			return PAL;
@@ -89,28 +102,48 @@ public class SpriteParser {
 		for (int i = 0; i < palette.length; i++) {
 			palette[i] = new Color(PAL_GAME_RAW[i * 3], PAL_GAME_RAW[i * 3 + 1], PAL_GAME_RAW[i * 3 + 2]);
 		}
-		PAL = Arrays.asList(palette);
-		return Collections.unmodifiableList(PAL);
+		PAL = Collections.unmodifiableList(Arrays.asList(palette));
+		return PAL;
 	}
+	// order to read the sprite files
+	private static final List<String> ORDER = Lists.newArrayList("CHARSET.DAT", "SCORE.DAT", "TEAM1.DAT", "TEAM3.DAT", "GOAL1.DAT", "GOAL1.DAT", "BENCH.DAT");
 
 	/** @param args */
 	public static final void main(String[] args) throws IOException {
-		File file = new File(Main.SWOS.getPath() + "/TEAM3.DAT");
-		FileInputStream input = new FileInputStream(file);
 		List<Color> pal = getPalette();
 
-		BufferedImage image = new BufferedImage(239, 200, BufferedImage.TYPE_INT_RGB);
-		outer:
-		for (int y = 0; y < image.getHeight(); y++) {
-			for (int x = 0; x < image.getWidth(); x++) {
-				int read = input.read();
-				if (read == -1)
-					break outer;
-				//input.read();
-				image.setRGB(x, y, pal.get(read).getRGB());
-			}
-		}
-		ImageIO.write(image, "png", new File("team1.png"));
+		File spriteFile = new File(Main.SWOS.getPath() + "/SPRITE.DAT");
+		FileInputStream index = new FileInputStream(spriteFile);
+		File datFile = new File(Main.SWOS.getPath() + "/SCORE.DAT");
+		InputStream datS = new FileInputStream(datFile);
+		DataInputStream dat = new DataInputStream(datS);
 
+		try {
+			for (int i = 0; i < 10; i++) {
+				int offset = Integer.reverseBytes(dat.readInt());
+				log.info("offset = " + offset);
+				assert offset >= 14 : offset;
+				dat.skipBytes(8);
+				int nlines = Short.reverseBytes(dat.readShort());
+				int wquads = Short.reverseBytes(dat.readShort());
+				log.info("nlines = " + nlines + ", wquads = " + wquads);
+				dat.skipBytes(6);
+				int id = Short.reverseBytes(dat.readShort());
+				assert id > 0 && id < 1335 : id;
+				log.info("id = " + id);
+				BufferedImage image = new BufferedImage(8 * wquads, nlines, BufferedImage.TYPE_INT_RGB);
+				// FIXME: interpretation of color values is incorrect
+				for (int x = 0; x < wquads * 8; x++) {
+					for (int y = 0; y < nlines; y++) {
+						int c = dat.read();
+						image.setRGB(x, y, pal.get(c).getRGB());
+					}
+				}
+				ImageIO.write(image, "png", new File("sprite" + i + ".png"));
+			}
+		} finally {
+			dat.close();
+			index.close();
+		}
 	}
 }
