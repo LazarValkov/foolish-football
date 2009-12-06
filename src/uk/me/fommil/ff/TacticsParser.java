@@ -17,10 +17,9 @@ package uk.me.fommil.ff;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.Map;
 import java.util.logging.Logger;
 import uk.me.fommil.ff.Tactics.BallZone;
@@ -44,8 +43,16 @@ import uk.me.fommil.ff.Tactics.PlayerZone;
  * should run to when the ball is in one of the areas (goalkeeper is not included).
  * The next 10 bytes in the stream (360 to 369) are specific to the tactics editor (pairs)
  * and then the id of the tactics, again used by the tactics editor. There is no magic number
- * to indicate when a tactics stream begins.
- * 
+ * to indicate when a tactics stream begins or ends.
+ * <p>
+ * To summarise, All tactics are 369 bytes:
+ * <ul>
+ * <li>name of the tactics: 8 bytes</li>
+ * <li>positions: 35 x 10 players = 350 bytes</li>
+ * <li>pairs: 10 bytes</li>
+ * <li>tactics ID: 1 byte</li>
+ * </ul>
+ *
  * @author Samuel Halliday
  * @see <a href="http://bigcalm.tripod.com/swos/tactics-analysis.htm">Tactics File Hex Analysis</a>
  * @see <a href="https://yodasoccer.svn.sourceforge.net/svnroot/yodasoccer/trunk/data/tactics/">Yoda Soccer Tactics</a>
@@ -81,27 +88,24 @@ public class TacticsParser {
 		Preconditions.checkArgument(dir.isDirectory());
 		File file = new File(dir.getPath() + File.separator + "ENGLISH.EXE");
 		Preconditions.checkArgument(file.isFile(), file);
+		Preconditions.checkArgument(file.length() == 1920801, file.length());
 
 		Map<String, Tactics> tactics = Maps.newHashMap();
 		TacticsParser parser = new TacticsParser();
-		FileInputStream in = new FileInputStream(file);
-		BufferedInputStream bin = new BufferedInputStream(in);
+		RandomAccessFile ran = new RandomAccessFile(file, "r");
+
 		try {
-			long pointer = 0;
 			for (int i = 0; i < SWOS_OFFSETS.length; i++) {
-				long skipped = bin.skip(SWOS_OFFSETS[i] - pointer);
-				pointer += skipped;
-				Preconditions.checkArgument(pointer == SWOS_OFFSETS[i]);
-				byte[] b = new byte[370];
-				int read = bin.read(b);
-				pointer += read;
+				ran.seek(SWOS_OFFSETS[i]);
+				byte[] b = new byte[369];
+				ran.readFully(b);
 				Tactics t = parser.parseTacs(b);
 				tactics.put(t.getName(), t);
 			}
 			Preconditions.checkArgument(tactics.size() == 12);
 			return tactics;
 		} finally {
-			bin.close();
+			ran.close();
 		}
 	}
 
@@ -110,16 +114,16 @@ public class TacticsParser {
 	 * @throws Exception
 	 */
 	public static final void main(String[] args) throws Exception {
-		// for A in `find . -type f` ; do grep "4-3-3" $A ; done
-		// finds that the tactics are stored in ENGLISH.EXE and SWS!!!_!.EXE
-		// File file = new File("data/Sensible World of Soccer 96-97/ENGLISH.EXE");
-		File dir = new File("data/Sensible World of Soccer 96-97");
-		log.info(getSwosTactics(dir).keySet().toString());
+		log.info(getSwosTactics(Main.SWOS).keySet().toString());
 	}
 
+	/**
+	 * @param tac
+	 * @return
+	 */
 	public Tactics parseTacs(byte[] tac) {
 		Preconditions.checkNotNull(tac);
-		Preconditions.checkArgument(tac.length == 370);
+		Preconditions.checkArgument(tac.length == 369);
 
 		StringBuilder name = new StringBuilder(8);
 		for (int i = 0; i < 8; i++) {

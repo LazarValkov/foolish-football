@@ -14,23 +14,51 @@
  */
 package uk.me.fommil.ff;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import java.awt.Color;
-import java.awt.image.BufferedImage;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
-import javax.imageio.ImageIO;
 
 /**
- * There are 1,334 sprites in SWOS. The index file is SPRITE.DAT (with 4 byte offsets).
- * Data files are CHARSET.DAT, SCORE.DAT, TEAM1.DAT, TEAM2.DAT, TEAM3.DAT, GOAL1.DAT, BENCH.DAT
+ * There are 1,334 sprites in SWOS contained across
+ * CHARSET.DAT, SCORE.DAT, TEAM1.DAT, TEAM2.DAT, TEAM3.DAT, GOAL1.DAT, BENCH.DAT.
+ * <p>
+ * Special thanks to Zlatko Karakas for providing the source code to the SWOS Picture Editor
+ * which cracked the file format, and to {@code Jester01} on {@code ##asm@irc.freenode.net}
+ * for interpreting the sprite chaining NASM code.
+ * <p>
+ * The sprite files consist of a sequence of individual sprites, each one has the following
+ * binary structure (in Little Endian, all bytes are unsigned)
+ * <ul>
+ * <li>{@code int} pointer to start of graphics in file</li>
+ * <li>{@code short} - unused</li>
+ * <li>{@code short} - unused</li>
+ * <li>{@code byte} - unused</li>
+ * <li>{@code byte} - unknown</li>
+ * <li>{@code short} - width, for visual cropping</li>
+ * <li>{@code short} - nlines (height)</li>
+ * <li>{@code short} - wquads (number of bytes / 8) in one line</li>
+ * <li>{@code short} - the x centre</li>
+ * <li>{@code short} - the x centre</li>
+ * <li>{@code byte} - unknown</li>
+ * <li>{@code byte} - nlines/4</li>
+ * <li>{@code short} - sprite id</li>
+ * <li>{@code byte[]} - encoded pixel data, {@code 8 * nlines * wquads} length.</li>
+ * </ul>
+ * The {@code byte[]} part is encoded into interleaved blocks of 8 bytes.
+ * Once de-interleaved, each 8 byte block must be decoded into the 8 palette colours
+ * using
  *
  * @author Samuel Halliday
  */
@@ -38,7 +66,54 @@ public class SpriteParser {
 
 	private static final Logger log = Logger.getLogger(SpriteParser.class.getName());
 	// TODO: code duplication with PitchParser
-	private static volatile List<Color> PAL;
+	private static volatile List<Color> PAL_GAME;
+	private static final int[] PAL_RAW = new int[]{
+		0, 0, 36, 180, 180, 180, 252, 252, 252, 0, 0, 0, 108, 36, 0, 180, 72, 0,
+		252, 108, 0, 108, 108, 108, 36, 36, 36, 72, 72, 72, 252, 0, 0, 0, 0, 252,
+		108, 0, 36, 144, 144, 252, 36, 144, 0, 252, 252, 0, 144, 120, 84, 156, 132,
+		92, 168, 140, 104, 180, 152, 116, 192, 164, 128, 204, 176, 140, 216, 192,
+		152, 228, 204, 168, 228, 208, 176, 232, 212, 188, 236, 220, 196, 240, 224,
+		208, 240, 232, 216, 244, 236, 228, 248, 244, 240, 252, 252, 252, 0, 0, 0,
+		0, 0, 8, 0, 0, 16, 0, 0, 24, 0, 0, 32, 0, 0, 40, 0, 0, 48, 0, 0, 56, 0, 0,
+		64, 0, 0, 72, 0, 0, 80, 0, 0, 88, 0, 0, 96, 0, 0, 104, 0, 0, 112, 0, 0,
+		120, 0, 0, 132, 0, 0, 140, 0, 0, 148, 0, 0, 156, 0, 0, 164, 0, 0, 172, 0,
+		0, 180, 0, 0, 188, 0, 0, 196, 0, 0, 204, 0, 0, 212, 0, 0, 220, 0, 0, 228,
+		0, 0, 236, 0, 0, 244, 0, 0, 252, 108, 36, 0, 112, 36, 0, 116, 40, 0, 120,
+		44, 0, 124, 48, 0, 128, 52, 0, 136, 56, 0, 140, 56, 0, 144, 60, 0, 148, 64,
+		0, 152, 68, 0, 156, 72, 0, 164, 76, 0, 168, 80, 0, 172, 88, 0, 176, 92, 0,
+		180, 96, 0, 184, 100, 0, 192, 104, 0, 196, 112, 0, 200, 116, 0, 204, 120,
+		0, 208, 124, 0, 212, 132, 0, 216, 136, 0, 224, 144, 0, 228, 148, 0, 232,
+		152, 0, 236, 160, 0, 240, 168, 0, 244, 172, 0, 252, 180, 0, 36, 36, 36, 40,
+		40, 40, 48, 48, 48, 56, 52, 52, 60, 60, 60, 68, 64, 64, 76, 72, 72, 80, 76,
+		76, 88, 80, 80, 96, 88, 88, 104, 92, 92, 108, 96, 96, 116, 104, 104, 124,
+		108, 108, 128, 112, 112, 136, 116, 116, 144, 124, 124, 148, 128, 128, 156,
+		132, 132, 164, 136, 136, 168, 140, 140, 176, 144, 144, 184, 148, 148, 188,
+		152, 152, 196, 156, 156, 204, 160, 160, 212, 164, 164, 216, 168, 168, 224,
+		168, 168, 232, 172, 172, 236, 176, 176, 244, 180, 180, 252, 0, 0, 252, 0,
+		0, 252, 4, 4, 252, 8, 8, 252, 8, 8, 252, 12, 12, 252, 16, 16, 252, 20, 20,
+		252, 24, 24, 252, 28, 28, 252, 32, 32, 252, 36, 36, 252, 40, 40, 252, 44,
+		44, 252, 48, 48, 252, 52, 52, 252, 56, 56, 252, 60, 60, 252, 64, 64, 252,
+		68, 68, 252, 72, 72, 252, 76, 76, 252, 80, 80, 252, 84, 84, 252, 88, 88,
+		252, 92, 92, 252, 96, 96, 252, 100, 100, 252, 104, 104, 252, 108, 108, 252,
+		112, 112, 252, 116, 116, 108, 0, 36, 112, 0, 44, 116, 0, 52, 120, 4, 64,
+		124, 4, 72, 128, 8, 84, 136, 12, 92, 140, 12, 104, 144, 16, 116, 148, 20,
+		128, 152, 24, 136, 156, 28, 148, 164, 32, 160, 160, 36, 168, 160, 40, 172,
+		156, 44, 176, 152, 48, 180, 152, 56, 184, 152, 60, 192, 148, 64, 196, 144,
+		72, 200, 144, 76, 204, 144, 84, 208, 140, 88, 212, 140, 96, 216, 140, 100,
+		224, 140, 108, 228, 140, 112, 232, 140, 120, 236, 140, 128, 240, 140, 136,
+		244, 144, 144, 252, 0, 0, 252, 0, 4, 248, 4, 16, 248, 4, 28, 248, 8, 36,
+		244, 12, 48, 244, 12, 60, 244, 16, 68, 244, 20, 76, 240, 20, 84, 240, 24,
+		96, 240, 28, 104, 236, 32, 112, 236, 32, 116, 236, 36, 124, 236, 40, 132,
+		232, 40, 140, 232, 44, 148, 232, 48, 152, 228, 48, 160, 228, 52, 164, 228,
+		56, 172, 228, 56, 176, 224, 60, 180, 224, 64, 188, 224, 64, 192, 220, 68,
+		196, 220, 68, 200, 220, 72, 204, 216, 76, 208, 216, 76, 212, 216, 80, 216,
+		216, 16, 32, 0, 16, 44, 0, 20, 56, 0, 24, 68, 0, 24, 80, 0, 28, 88, 0, 28,
+		100, 0, 32, 112, 0, 32, 124, 0, 36, 136, 0, 36, 144, 0, 48, 152, 0, 60,
+		156, 0, 68, 160, 0, 80, 168, 0, 88, 172, 0, 100, 176, 0, 108, 180, 0, 120,
+		188, 0, 132, 192, 0, 140, 196, 0, 152, 204, 0, 160, 208, 0, 172, 212, 0,
+		180, 216, 0, 192, 224, 0, 204, 228, 0, 212, 232, 0, 224, 240, 0, 232, 244,
+		0, 244, 248, 0, 252, 252, 0
+	};
 	private static final int[] PAL_GAME_RAW = {
 		112, 80, 0, 152, 152, 152, 252, 252, 252, 0, 0, 0, 100, 32, 0, 184, 68, 0,
 		252, 100, 0, 96, 80, 0, 0, 32, 0, 80, 80, 0, 252, 0, 0, 0, 0, 252, 100, 0,
@@ -95,55 +170,129 @@ public class SpriteParser {
 //    return s.sprite_no >= 1209 && s.sprite_no <= 1272 ? gamepal : pal;
 //}
 	private static List<Color> getPalette() {
-		if (PAL != null)
-			return PAL;
+		if (PAL_GAME != null)
+			return PAL_GAME;
 
 		Color[] palette = new Color[256];
 		for (int i = 0; i < palette.length; i++) {
 			palette[i] = new Color(PAL_GAME_RAW[i * 3], PAL_GAME_RAW[i * 3 + 1], PAL_GAME_RAW[i * 3 + 2]);
+//			palette[i] = new Color(PAL_RAW[i * 3], PAL_RAW[i * 3 + 1], PAL_RAW[i * 3 + 2]);
 		}
-		PAL = Collections.unmodifiableList(Arrays.asList(palette));
-		return PAL;
+		PAL_GAME = Collections.unmodifiableList(Arrays.asList(palette));
+		return PAL_GAME;
 	}
 	// order to read the sprite files
 	private static final List<String> ORDER = Lists.newArrayList("CHARSET.DAT", "SCORE.DAT", "TEAM1.DAT", "TEAM3.DAT", "GOAL1.DAT", "GOAL1.DAT", "BENCH.DAT");
 
-	/** @param args */
+	/**
+	 * @param args
+	 * @throws IOException
+	 */
 	public static final void main(String[] args) throws IOException {
 		List<Color> pal = getPalette();
 
-		File spriteFile = new File(Main.SWOS.getPath() + "/SPRITE.DAT");
-		FileInputStream index = new FileInputStream(spriteFile);
-		File datFile = new File(Main.SWOS.getPath() + "/SCORE.DAT");
-		InputStream datS = new FileInputStream(datFile);
-		DataInputStream dat = new DataInputStream(datS);
+		File pout = new File("data/sprites/pal.dat");
+		FileOutputStream pfout = new FileOutputStream(pout);
+		DataOutputStream pdout = new DataOutputStream(pfout);
+		for (Color c : pal) {
+			pdout.write(c.getRed());
+			pdout.write(c.getGreen());
+			pdout.write(c.getBlue());
+		}
+		pdout.close();
 
-		try {
-			for (int i = 0; i < 10; i++) {
-				int offset = Integer.reverseBytes(dat.readInt());
-				log.info("offset = " + offset);
-				assert offset >= 14 : offset;
-				dat.skipBytes(8);
-				int nlines = Short.reverseBytes(dat.readShort());
-				int wquads = Short.reverseBytes(dat.readShort());
-				log.info("nlines = " + nlines + ", wquads = " + wquads);
-				dat.skipBytes(6);
-				int id = Short.reverseBytes(dat.readShort());
-				assert id > 0 && id < 1335 : id;
-				log.info("id = " + id);
-				BufferedImage image = new BufferedImage(8 * wquads, nlines, BufferedImage.TYPE_INT_RGB);
-				// FIXME: interpretation of color values is incorrect
-				for (int x = 0; x < wquads * 8; x++) {
-					for (int y = 0; y < nlines; y++) {
-						int c = dat.read();
-						image.setRGB(x, y, pal.get(c).getRGB());
+		for (String name : ORDER) {
+			File datFile = new File(Main.SWOS.getPath() + File.separator + name);
+			InputStream datS = new FileInputStream(datFile);
+			DataInputStream dat = new DataInputStream(datS);
+			try {
+				while (true) {
+					try {
+						dat.readInt();
+					} catch (EOFException e) {
+						break;
 					}
+					dat.skipBytes(6);
+					// width is display only
+					int width = Short.reverseBytes(dat.readShort());
+					int nlines = Short.reverseBytes(dat.readShort());
+					int wquads = Short.reverseBytes(dat.readShort());
+					dat.skipBytes(6);
+					int id = Short.reverseBytes(dat.readShort());
+					assert id >= 0 && id < 1335 : id;
+					log.info("nlines = " + nlines + ", wquads = " + wquads + ", width = " + width + ", id = " + id);
+					byte[] data = new byte[8 * wquads * nlines];
+					dat.readFully(data);
+
+					File out = new File("data/sprites/" + id + ".dat");
+					FileOutputStream fout = new FileOutputStream(out);
+					DataOutputStream dout = new DataOutputStream(fout);
+					dout.writeInt(id);
+					dout.writeInt(nlines);
+					dout.writeInt(wquads);
+					dout.write(data);
+					dout.close();
+
+					//BufferedImage image = new BufferedImage(8 * wquads, nlines, BufferedImage.TYPE_INT_RGB);
+					// FIXME: interpretation of color values is incorrect
+//				for (int y = 0; y < nlines; y++) {
+//					for (int x = 0; x < wquads * 8; x++) {
+////						byte[] quads = new byte[8];
+////						dat.readFully(quads);
+//
+////						int c = dat.read();
+////						Color col = pal.get(c);
+////						// log.info(c + " = " + col);
+////						int rgb = col.getRGB();
+////						image.setRGB(x, y, rgb);
+//					}
+//				}
+//				ImageIO.write(image, "png", new File("sprite" + i + ".png"));
 				}
-				ImageIO.write(image, "png", new File("sprite" + i + ".png"));
+			} finally {
+				dat.close();
 			}
-		} finally {
-			dat.close();
-			index.close();
 		}
 	}
+
+	// modifies input
+	static private int getByte(int[] chain) {
+		Preconditions.checkArgument(chain.length == 8);
+		int b = 0;
+
+		for (int j = 1; j >= 0; j--) {
+			for (int i = 6; i >= 0; i -= 2) {
+				b = (b << 1) | (chain[i] >> 7);
+				chain[i] = chain[i] << 1;
+			}
+		}
+		return b;
+	}
+//
+//void DecodeSprite(struct Sprite* spr)
+//{
+//    unsigned char chain_buffer[8];
+//    int line_size = spr->wquads * 8;
+//    unsigned char* line_buffer = malloc(line_size);
+//
+//    for(int line = 0; line < spr->nlines; line++)
+//    {
+//        unsigned char* line_ptr = line_buffer;
+//        unsigned char* input_ptr = spr->spr_data + line * line_size;
+//        for(int quad = 0; quad < spr->wquads; quad++)
+//        {
+//            for(int i = 0; i < 8; i += 2)
+//            {
+//                chain_buffer[i] = input_ptr[spr->wquads * i + quad * 2];
+//                chain_buffer[i + 1] = input_ptr[spr->wquads * i + quad * 2 + 1];
+//            }
+//            for(int i = 0; i < 8; i++)
+//            {
+//                *line_ptr++ = GetByte(chain_buffer + (i >> 2));
+//            }
+//        }
+//        memcpy(input_ptr, line_buffer, line_size);
+//    }
+//    free(line_buffer);
+//}
 }
