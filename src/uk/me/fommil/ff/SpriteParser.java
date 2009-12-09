@@ -17,6 +17,7 @@ package uk.me.fommil.ff;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import java.awt.Color;
+import java.awt.image.BufferedImage;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
@@ -29,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
+import javax.imageio.ImageIO;
 
 /**
  * There are 1,334 sprites in SWOS contained across
@@ -224,30 +226,32 @@ public class SpriteParser {
 					byte[] data = new byte[8 * wquads * nlines];
 					dat.readFully(data);
 
-					File out = new File("data/sprites/" + id + ".dat");
-					FileOutputStream fout = new FileOutputStream(out);
-					DataOutputStream dout = new DataOutputStream(fout);
-					dout.writeInt(id);
-					dout.writeInt(nlines);
-					dout.writeInt(wquads);
-					dout.write(data);
-					dout.close();
+//					File out = new File("data/sprites/" + id + ".dat");
+//					FileOutputStream fout = new FileOutputStream(out);
+//					DataOutputStream dout = new DataOutputStream(fout);
+//					dout.writeInt(id);
+//					dout.writeInt(nlines);
+//					dout.writeInt(wquads);
+//					dout.write(data);
+//					dout.close();
 
-					//BufferedImage image = new BufferedImage(8 * wquads, nlines, BufferedImage.TYPE_INT_RGB);
+					decodeSprite(data, wquads, nlines);
+
+					BufferedImage image = new BufferedImage(8 * wquads, nlines, BufferedImage.TYPE_INT_RGB);
 					// FIXME: interpretation of color values is incorrect
-//				for (int y = 0; y < nlines; y++) {
-//					for (int x = 0; x < wquads * 8; x++) {
-////						byte[] quads = new byte[8];
-////						dat.readFully(quads);
-//
-////						int c = dat.read();
-////						Color col = pal.get(c);
-////						// log.info(c + " = " + col);
-////						int rgb = col.getRGB();
-////						image.setRGB(x, y, rgb);
-//					}
-//				}
-//				ImageIO.write(image, "png", new File("sprite" + i + ".png"));
+					for (int y = 0; y < nlines; y++) {
+						for (int x = 0; x < wquads * 8; x++) {
+							byte[] quads = new byte[8];
+							dat.readFully(quads);
+
+							int c = dat.read();
+							Color col = pal.get(c);
+							// log.info(c + " = " + col);
+							int rgb = col.getRGB();
+							image.setRGB(x, y, rgb);
+						}
+					}
+					ImageIO.write(image, "png", new File("sprite" + id + ".png"));
 				}
 			} finally {
 				dat.close();
@@ -255,44 +259,42 @@ public class SpriteParser {
 		}
 	}
 
-	// modifies input
-	static private int getByte(int[] chain) {
-		Preconditions.checkArgument(chain.length == 8);
-		int b = 0;
-
-		for (int j = 1; j >= 0; j--) {
-			for (int i = 6; i >= 0; i -= 2) {
-				b = (b << 1) | (chain[i] >> 7);
-				chain[i] = chain[i] << 1;
-			}
-		}
-		return b;
-	}
+//	// modifies input
+//	static private byte getByte(byte[] chain) {
+//		Preconditions.checkArgument(chain.length == 8, chain.length);
+//		int b = 0;
 //
-//void DecodeSprite(struct Sprite* spr)
-//{
-//    unsigned char chain_buffer[8];
-//    int line_size = spr->wquads * 8;
-//    unsigned char* line_buffer = malloc(line_size);
+//		for (int j = 1; j >= 0; j--) {
+//			for (int i = 6; i >= 0; i -= 2) {
+//				b = (b << 1) | (chain[i] >>> 7);
+//				chain[i] = (byte) (chain[i] << 1);
+//			}
+//		}
+//		return (byte) b;
+//	}
 //
-//    for(int line = 0; line < spr->nlines; line++)
-//    {
-//        unsigned char* line_ptr = line_buffer;
-//        unsigned char* input_ptr = spr->spr_data + line * line_size;
-//        for(int quad = 0; quad < spr->wquads; quad++)
-//        {
-//            for(int i = 0; i < 8; i += 2)
-//            {
-//                chain_buffer[i] = input_ptr[spr->wquads * i + quad * 2];
-//                chain_buffer[i + 1] = input_ptr[spr->wquads * i + quad * 2 + 1];
-//            }
-//            for(int i = 0; i < 8; i++)
-//            {
-//                *line_ptr++ = GetByte(chain_buffer + (i >> 2));
-//            }
-//        }
-//        memcpy(input_ptr, line_buffer, line_size);
-//    }
-//    free(line_buffer);
-//}
+//	static private void decodeSprite(byte[] data, int wquads, int nlines) {
+//		int line_size = wquads * 8;
+//		byte[] line_buffer = new byte[line_size];
+//		byte[] chain = new byte[8];
+//
+//		for (int line = 0; line < nlines; line++) {
+//			int line_ptr = 0;
+//			int input_ptr = line * line_size;
+//			for (int quad = 0; quad < wquads; quad++) {
+//				for (int i = 0; i < 8; i += 2) {
+//					chain[i] = data[input_ptr + wquads * i + quad * 2];
+//					chain[i + 1] = data[input_ptr + wquads * i + quad * 2 + 1];
+//				}
+//				for (int i = 0; i < 8; i++) {
+//					line_buffer[line_ptr] = getByte(chain);//getByte(Arrays.copyOfRange(chain, i >> 2, 8));
+//				}
+//			}
+//			for (int i = 0; i < line_size; i++) {
+//				int n = i + input_ptr;
+//				assert n < data.length;
+//				data[n] = line_buffer[i];
+//			}
+//		}
+//	}
 }
