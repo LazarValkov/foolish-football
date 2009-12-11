@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License along with this file.
  * If not, see <http://www.gnu.org/licenses/>.
  */
-package uk.me.fommil.ff;
+package uk.me.fommil.ff.swos;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Map;
 import java.util.logging.Logger;
+import uk.me.fommil.ff.Main;
+import uk.me.fommil.ff.Tactics;
 import uk.me.fommil.ff.Tactics.BallZone;
 import uk.me.fommil.ff.Tactics.PlayerZone;
 
@@ -138,7 +140,7 @@ public class TacticsParser {
 			for (int x = 0; x < 5; x++) {
 				for (int y = 0; y < 7; y++) {
 					int i = 9 + (p * 35) + (y * 5) + x;
-					int loc = unsignedByteToInt(tac[i]);
+					int loc = SwosUtils.unsignedByteToInt(tac[i]);
 					Preconditions.checkArgument(loc >= 0, Joiner.on(",").join(loc, tactics, p, x, y, i));
 					int px = (loc >> 4) & 0x0F;
 					assert px >= 0 && px < 15 : Joiner.on(",").join(loc, tactics, p, x, y, i, px);
@@ -151,13 +153,5 @@ public class TacticsParser {
 		// ignore the final "pair" and "id" fields
 
 		return tactics;
-	}
-
-	/**
-	 * @param b
-	 * @return
-	 */
-	public static int unsignedByteToInt(byte b) {
-		return (int) b & 0xFF;
 	}
 }

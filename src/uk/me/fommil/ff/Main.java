@@ -14,6 +14,8 @@
  */
 package uk.me.fommil.ff;
 
+import uk.me.fommil.ff.swos.TacticsParser;
+import uk.me.fommil.ff.swos.PitchParser;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
