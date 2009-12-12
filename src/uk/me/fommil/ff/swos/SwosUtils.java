@@ -154,13 +154,7 @@ public final class SwosUtils {
 	public static List<Color> getGamePalette() {
 		if (PAL_GAME != null)
 			return PAL_GAME;
-
-		Color[] palette = new Color[256];
-		for (int i = 0; i < palette.length; i++) {
-			palette[i] = new Color(PAL_GAME_RAW[i * 3], PAL_GAME_RAW[i * 3 + 1], PAL_GAME_RAW[i * 3 + 2]);
-		}
-		PAL_GAME = Collections.unmodifiableList(Arrays.asList(palette));
-		return PAL_GAME;
+		return PAL_GAME = buildPalette(PAL_GAME_RAW);
 	}
 
 	/**
@@ -169,12 +163,15 @@ public final class SwosUtils {
 	public static List<Color> getMenuPalette() {
 		if (PAL_MENU != null)
 			return PAL_MENU;
+		return PAL_MENU = buildPalette(PAL_MENU_RAW);
+	}
 
-		Color[] palette = new Color[256];
-		for (int i = 0; i < palette.length; i++) {
-			palette[i] = new Color(PAL_MENU_RAW[i * 3], PAL_MENU_RAW[i * 3 + 1], PAL_MENU_RAW[i * 3 + 2]);
+	private static List<Color> buildPalette(int[] raw) {
+		Preconditions.checkArgument(raw.length == 256 * 3);
+		Color[] pal = new Color[256];
+		for (int i = 0; i < pal.length; i++) {
+			pal[i] = new Color(raw[i * 3], raw[i * 3 + 1], raw[i * 3 + 2]);
 		}
-		PAL_MENU = Collections.unmodifiableList(Arrays.asList(palette));
-		return PAL_MENU;
+		return Collections.unmodifiableList(Arrays.asList(pal));
 	}
 }
