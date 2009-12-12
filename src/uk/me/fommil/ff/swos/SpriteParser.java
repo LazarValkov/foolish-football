@@ -15,7 +15,6 @@
 package uk.me.fommil.ff.swos;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.DataInputStream;
@@ -25,14 +24,14 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import uk.me.fommil.ff.Main;
 
 /**
  * There are 1,334 sprites in SWOS contained across
- * CHARSET.DAT, SCORE.DAT, TEAM1.DAT, TEAM2.DAT, TEAM3.DAT, GOAL1.DAT, BENCH.DAT.
+ * CHARSET.DAT, SCORE.DAT, TEAM1.DAT, TEAM2.DAT, TEAM3.DAT, GOAL1.DAT, BENCH.DAT. TEAM2.DAT and
+ * TEAM3.DAT are mutually exclusive in the original game.
  * <p>
  * Special thanks to Zlatko Karakas for providing the source code to the SWOS Picture Editor
  * which cracked the file format and a high level description of the NASM code, and to
@@ -72,6 +71,7 @@ public class SpriteParser {
 
 	private static final Logger log = Logger.getLogger(SpriteParser.class.getName());
 	// order to read the sprite files
+	// note that sprites 644 – 946 are different in TEAM2.DAT and TEAM3.DAT
 	private static final List<String> ORDER = Lists.newArrayList("CHARSET.DAT", "SCORE.DAT", "TEAM1.DAT", "TEAM2.DAT", "TEAM3.DAT", "GOAL1.DAT", "BENCH.DAT");
 
 	/**
@@ -121,7 +121,7 @@ public class SpriteParser {
 							image.setRGB(x, y, rgb);
 						}
 					}
-					ImageIO.write(image, "png", new File("data/sprites/" + id + ".png"));
+					ImageIO.write(image, "png", new File("data/sprites/" + name + "-" + id + ".png"));
 				}
 			} finally {
 				dat.close();
