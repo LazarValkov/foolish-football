@@ -64,7 +64,27 @@ import uk.me.fommil.ff.Main;
  * <li>first pixel consists of highest bits from plane 3, 2, 1, 0 respectively</li>
  * <li>second pixel consists of following bits, and so on</li>
  * </ul>
- *
+ * <p>
+ * Colour number 17 in palette is transparent (??). Also note that colours will be converted according
+ * to skin colour of player and dress colour of teams that are playing:
+ * <ul>
+ * <li>0 - nochange</li>
+ * <li>1 - nochange</li>
+ * <li>2 - nochange</li>
+ * <li>3 - nochange</li>
+ * <li>4 - skin color (light shade)</li>
+ * <li>5 - skin color (normal shade)</li>
+ * <li>6 - skin color (dark shade)</li>
+ * <li>7 - turned to zero</li>
+ * <li>8 - nochange</li>
+ * <li>9 - hair color (normal shade)</li>
+ * <li>10 - shirt basic color</li>
+ * <li>11 - shirt stripes color (swapped with 10 when vertical stripes)</li>
+ * <li>12 - hair color (dark shade)</li>
+ * <li>13 - hair color (light shade)</li>
+ * <li>14 - shorts color</li>
+ * <li>15 - socks color</li>
+ * </ul>
  * @author Samuel Halliday
  */
 public class SpriteParser {
@@ -79,6 +99,19 @@ public class SpriteParser {
 	 * @throws IOException
 	 */
 	public static final void main(String[] args) throws IOException {
+		BufferedImage gamePal = new BufferedImage(16, 16, BufferedImage.TYPE_INT_RGB);
+		BufferedImage menuPal = new BufferedImage(16, 16, BufferedImage.TYPE_INT_RGB);
+		for (int i = 0; i < 16; i++) {
+			for (int j = 0; j < 16; j++) {
+				Color c1 = SwosUtils.getGamePalette().get(j * 16 + i);
+				Color c2 = SwosUtils.getMenuPalette().get(j * 16 + i);
+				gamePal.setRGB(i, j, c1.getRGB());
+				menuPal.setRGB(i, j, c2.getRGB());
+			}
+		}
+		ImageIO.write(gamePal, "png", new File("data/sprites/gamepal.png"));
+		ImageIO.write(menuPal, "png", new File("data/sprites/menupal.png"));
+
 		for (String name : ORDER) {
 			File datFile = new File(Main.SWOS.getPath() + File.separator + name);
 			InputStream datS = new FileInputStream(datFile);
@@ -105,10 +138,12 @@ public class SpriteParser {
 					dat.readFully(data);
 					int[][] pixels = decodeSprite(data, wquads, nlines);
 
-					List<Color> pal = id >= 1209 && id <= 1272 ? SwosUtils.getGamePalette() : SwosUtils.getMenuPalette();
+					// List<Color> pal = id >= 1209 && id <= 1272 ? SwosUtils.getGamePalette() : SwosUtils.getMenuPalette();
+					List<Color> pal = SwosUtils.getGamePalette();
 
+					// FIXME: width is sometimes broken and there might be off by one in decoder
 					// TODO: use colour model
-					BufferedImage image = new BufferedImage(width, nlines, BufferedImage.TYPE_INT_RGB);
+					BufferedImage image = new BufferedImage(width, nlines, BufferedImage.TYPE_INT_ARGB);
 					for (int y = 0; y < nlines; y++) {
 						for (int x = 0; x < width; x++) {
 							if (x >= 8 * wquads)
