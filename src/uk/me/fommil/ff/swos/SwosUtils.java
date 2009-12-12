@@ -51,6 +51,16 @@ public final class SwosUtils {
 		}
 		return ints;
 	}
+
+	/**
+	 * Convert an array of {@code ints}s to an array of {@code byte}s which are treated as unsigned.
+	 *
+	 * @param sprite
+	 * @return
+	 */
+	public static byte[] intsToUnsignedBytes(int[] sprite) {
+		throw new UnsupportedOperationException("Not yet implemented");
+	}
 	/* lazy initialisation */
 	private static volatile List<Color> PAL_GAME;
 	private static volatile List<Color> PAL_MENU;
