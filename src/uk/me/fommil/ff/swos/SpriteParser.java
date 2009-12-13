@@ -14,6 +14,7 @@
  */
 package uk.me.fommil.ff.swos;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
@@ -50,7 +51,7 @@ import uk.me.fommil.ff.Main;
  * <li>{@code short} - nlines (height)</li>
  * <li>{@code short} - wquads (number of pixels / 8) in one line</li>
  * <li>{@code short} - the x centre</li>
- * <li>{@code short} - the x centre</li>
+ * <li>{@code short} - the y centre</li>
  * <li>{@code byte} - unknown</li>
  * <li>{@code byte} - nlines/4</li>
  * <li>{@code short} - sprite id</li>
@@ -104,7 +105,7 @@ public class SpriteParser {
 		for (int i = 0; i < 16; i++) {
 			for (int j = 0; j < 16; j++) {
 				Color c1 = SwosUtils.getGamePalette().get(j * 16 + i);
-				Color c2 = SwosUtils.getMenuPalette().get(j * 16 + i);
+				Color c2 = SwosUtils.getPalette().get(j * 16 + i);
 				gamePal.setRGB(i, j, c1.getRGB());
 				menuPal.setRGB(i, j, c2.getRGB());
 			}
@@ -125,30 +126,27 @@ public class SpriteParser {
 						break;
 					}
 					dat.skipBytes(6);
-					// width is display only
 					int width = Short.reverseBytes(dat.readShort());
 					int nlines = Short.reverseBytes(dat.readShort());
 					int wquads = Short.reverseBytes(dat.readShort());
-					dat.skipBytes(6);
+					int xc = Short.reverseBytes(dat.readShort());
+					int yc = Short.reverseBytes(dat.readShort());
+					dat.skipBytes(2);
 					int id = Short.reverseBytes(dat.readShort());
-
 					assert id >= 0 && id < 1335 : id;
-					//log.info("nlines = " + nlines + ", wquads = " + wquads + ", width = " + width + ", id = " + id);
 					byte[] data = new byte[8 * wquads * nlines];
 					dat.readFully(data);
 					int[][] pixels = decodeSprite(data, wquads, nlines);
 
-					// List<Color> pal = id >= 1209 && id <= 1272 ? SwosUtils.getGamePalette() : SwosUtils.getMenuPalette();
-					List<Color> pal = SwosUtils.getGamePalette();
+					List<Color> pal = id >= 1209 && id <= 1272 ? SwosUtils.getGamePalette() : SwosUtils.getPalette();
 
-					// FIXME: width is sometimes broken and there might be off by one in decoder
-					// TODO: use colour model
+					if (id == 304)
+						log.info(Joiner.on(", ").join(id, width, nlines, wquads, xc, yc));
+
 					BufferedImage image = new BufferedImage(width, nlines, BufferedImage.TYPE_INT_ARGB);
-					for (int y = 0; y < nlines; y++) {
-						for (int x = 0; x < width; x++) {
-							if (x >= 8 * wquads)
-								continue;
-							int c = pixels[y][x];
+					for (int x = 0; x < width; x++) {
+						for (int y = 0; y < nlines; y++) {
+							int c = pixels[x][y];
 							if (c == 0)
 								continue;
 							Color col = pal.get(c);
@@ -166,21 +164,22 @@ public class SpriteParser {
 
 	private static int[][] decodeSprite(byte[] data, int wquads, int nlines) {
 		int[] sprite = SwosUtils.unsignedBytesToInts(data);
-		int[][] output_pixels = new int[nlines][wquads * 8];
-		for (int lineIndex = 0; lineIndex < nlines; lineIndex++) {
+		int[][] output_pixels = new int[16 * wquads][nlines];
+		int half = 8 * wquads;
+		for (int line = 0; line < nlines; line++) {
 			int output_pix_index = 0;
-			for (int byte_index = 0; byte_index < wquads; byte_index++) {
-				int offset = wquads * 8 * lineIndex;
+			for (int byte_index = 0; byte_index < half / 4; byte_index++) {
+				int offset = wquads * 8 * line;
 				int byte1 = sprite[offset + byte_index];
-				int byte2 = sprite[offset + byte_index + 2];
-				int byte3 = sprite[offset + byte_index + 4];
-				int byte4 = sprite[offset + byte_index + 6];
+				int byte2 = sprite[offset + byte_index + half / 4];
+				int byte3 = sprite[offset + byte_index + half / 2];
+				int byte4 = sprite[offset + byte_index + 3 * half / 4];
 				for (int i = 0; i < 8; i++) {
-					int pixel = (byte1 & 0x80) >> 7;
-					pixel |= (byte2 & 0x80) >> 6;
-					pixel |= (byte3 & 0x80) >> 5;
-					pixel |= (byte4 & 0x80) >> 4;
-					output_pixels[lineIndex][output_pix_index + i] = pixel;
+					int p1 = (byte1 & 0x80) >> 7;
+					p1 |= (byte2 & 0x80) >> 6;
+					p1 |= (byte3 & 0x80) >> 5;
+					p1 |= (byte4 & 0x80) >> 4;
+					output_pixels[output_pix_index + i][line] = p1;
 					byte1 = (byte1 << 1) & 0xff;
 					byte2 = (byte2 << 1) & 0xff;
 					byte3 = (byte3 << 1) & 0xff;

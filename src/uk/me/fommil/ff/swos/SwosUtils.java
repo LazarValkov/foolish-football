@@ -63,8 +63,8 @@ public final class SwosUtils {
 	}
 	/* lazy initialisation */
 	private static volatile List<Color> PAL_GAME;
-	private static volatile List<Color> PAL_MENU;
-	private static final int[] PAL_MENU_RAW = new int[]{
+	private static volatile List<Color> PAL;
+	private static final int[] PAL_RAW = new int[]{
 		0, 0, 36, 180, 180, 180, 252, 252, 252, 0, 0, 0, 108, 36, 0, 180, 72, 0,
 		252, 108, 0, 108, 108, 108, 36, 36, 36, 72, 72, 72, 252, 0, 0, 0, 0, 252,
 		108, 0, 36, 144, 144, 252, 36, 144, 0, 252, 252, 0, 144, 120, 84, 156, 132,
@@ -159,7 +159,7 @@ public final class SwosUtils {
 	};
 
 	/**
-	 * @return the "game" palette.
+	 * @return the "game" palette - used by the pitch files and rotating R.
 	 */
 	public static List<Color> getGamePalette() {
 		if (PAL_GAME != null)
@@ -168,12 +168,12 @@ public final class SwosUtils {
 	}
 
 	/**
-	 * @return the "menu" palette.
+	 * @return the standard palette.
 	 */
-	public static List<Color> getMenuPalette() {
-		if (PAL_MENU != null)
-			return PAL_MENU;
-		return PAL_MENU = buildPalette(PAL_MENU_RAW);
+	public static List<Color> getPalette() {
+		if (PAL != null)
+			return PAL;
+		return PAL = buildPalette(PAL_RAW);
 	}
 
 	private static List<Color> buildPalette(int[] raw) {
