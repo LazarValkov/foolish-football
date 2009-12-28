@@ -28,6 +28,7 @@ import java.awt.Shape;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
@@ -37,7 +38,9 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
 import java.util.logging.Logger;
+import static java.lang.Math.*;
 import javax.media.j3d.Bounds;
 import javax.swing.JPanel;
 import javax.vecmath.Point3d;
@@ -168,11 +171,19 @@ public class GameMVC extends JPanel {
 
 	@Override
 	public void paint(Graphics g) {
-		Graphics2D g2 = (Graphics2D) g;
-
 		Dimension size = getSize();
 		double w = size.getWidth();
 		double h = size.getHeight();
+
+		Graphics2D g2 = (Graphics2D) g;
+
+		AffineTransform affine = new AffineTransform();
+		double zoom = 2;
+		affine.scale(zoom, zoom);
+		// TODO: wrong division
+		// TODO: consider edge cases
+		affine.translate(-w / (zoom * 2), -h / (zoom * 2));
+		g2.setTransform(affine);
 
 //		g2.setBackground(Color.BLACK);
 //		g2.clearRect(0, 0, size.width, size.height);
@@ -182,15 +193,27 @@ public class GameMVC extends JPanel {
 		Point3d ballLoc = ball.getPosition();
 
 		// view never goes outside the pitch image
-		int xoff = (int) Math.min(pitch.getWidth() - size.width, Math.max(0, ballLoc.x - w / 2.0));
-		int yoff = (int) Math.min(pitch.getHeight() - size.height, Math.max(0, ballLoc.y - h / 2.0));
-		assert xoff >= 0 && yoff >= 0 : xoff + " " + yoff;
-		assert xoff < pitch.getWidth() && yoff < pitch.getHeight() : xoff + " " + yoff;
-		Rectangle2D view = new Rectangle.Double(xoff, yoff, w, h);
+		int xoff = (int) Math.round(ballLoc.x - w / 2.0);
+		int yoff = (int) Math.round(ballLoc.y - h / 2.0);
+		// account for falling off up/left
+		xoff = max(xoff, 0);
+		yoff = max(yoff, 0);
+		// account for falling off down/right
+		// TODO: consider case where window is bigger than pitch graphic
+		xoff = min(xoff, max(0, pitch.getWidth() - size.width));
+		yoff = min(yoff, max(0, pitch.getHeight() - size.height));
 
+		Rectangle2D view = new Rectangle.Double(xoff, yoff, w, h);
 		// draw the pitch
 		// TODO: consider case when the window is bigger than the pitch image
-		g2.drawImage(pitch.getSubimage(xoff, yoff, size.width, size.height), 0, 0, null);
+		try {
+			int pitchWidth = (int) min(w, pitch.getWidth());
+			int pitchHeight = (int) min(h, pitch.getHeight());
+			BufferedImage sub = pitch.getSubimage(xoff, yoff, pitchWidth, pitchHeight);
+			g2.drawImage(sub, 0, 0, null);
+		} catch (Exception e) {
+			log.log(Level.INFO, xoff + " " + yoff + " " + size + " " + pitch.getWidth() + " " + pitch.getHeight(), e);
+		}
 
 		for (int i = 0; i <= 5; i++) {
 			int x = 81 + i * (590 - 81) / 5;
@@ -314,7 +337,7 @@ public class GameMVC extends JPanel {
 	private void updatePhysics() {
 		// autopilot
 		BallZone bz = ball.getZone(PITCH_WIDTH, PITCH_HEIGHT);
-		log.info("BALL " + bz);
+		// log.info("BALL " + bz);
 		Tactics tactics = a.getCurrentTactics();
 		for (PlayerMC p : as) {
 			if (p != selectedA) {
