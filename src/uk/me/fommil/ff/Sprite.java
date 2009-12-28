@@ -51,6 +51,8 @@ public class Sprite {
 		for (int x = 0; x < image.getWidth(); x++) {
 			for (int y = 0; y < image.getHeight(); y++) {
 				int rgb = image.getRGB(x, y);
+				if (rgb == 0)
+					continue;
 				Color c = new Color(rgb);
 				if (replace.containsKey(c)) {
 					c = replace.get(c);

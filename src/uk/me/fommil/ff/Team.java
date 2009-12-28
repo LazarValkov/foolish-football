@@ -15,8 +15,12 @@
 package uk.me.fommil.ff;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import java.awt.Color;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import uk.me.fommil.ff.swos.SwosUtils;
 
 /**
  * Represents a football team, including the list of available {@link Player}s and
@@ -42,6 +46,7 @@ public class Team {
 	public Tactics getCurrentTactics() {
 		return current;
 	}
+
 	public void setCurrentTactics(Tactics tactics) {
 		this.current = tactics;
 	}
@@ -51,5 +56,15 @@ public class Team {
 	 */
 	public List<Player> getPlayers() {
 		return Collections.unmodifiableList(players);
+	}
+
+	public Map<Color, Color> getTeamColors() {
+		Map<Color, Color> colours = Maps.newHashMap();
+		List<Color> pal = SwosUtils.getPalette();
+		colours.put(pal.get(10), Color.RED);
+		colours.put(pal.get(11), Color.RED);
+		colours.put(pal.get(14), Color.WHITE);
+		colours.put(pal.get(15), Color.RED);
+		return colours;
 	}
 }

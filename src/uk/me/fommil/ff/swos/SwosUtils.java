@@ -37,17 +37,17 @@ public final class SwosUtils {
 	 */
 	public static final void main(String[] args) throws IOException {
 		BufferedImage gamePal = new BufferedImage(16, 16, BufferedImage.TYPE_INT_RGB);
-		BufferedImage menuPal = new BufferedImage(16, 16, BufferedImage.TYPE_INT_RGB);
+		BufferedImage pal = new BufferedImage(16, 16, BufferedImage.TYPE_INT_RGB);
 		for (int i = 0; i < 16; i++) {
 			for (int j = 0; j < 16; j++) {
 				Color c1 = SwosUtils.getGamePalette().get(j * 16 + i);
 				Color c2 = SwosUtils.getPalette().get(j * 16 + i);
 				gamePal.setRGB(i, j, c1.getRGB());
-				menuPal.setRGB(i, j, c2.getRGB());
+				pal.setRGB(i, j, c2.getRGB());
 			}
 		}
 		ImageIO.write(gamePal, "png", new File("data/sprites/gamepal.png"));
-		ImageIO.write(menuPal, "png", new File("data/sprites/menupal.png"));
+		ImageIO.write(pal, "png", new File("data/sprites/pal.png"));
 	}
 
 	/**

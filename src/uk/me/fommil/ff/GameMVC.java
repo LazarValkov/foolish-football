@@ -15,9 +15,11 @@
 package uk.me.fommil.ff;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -129,7 +131,7 @@ public class GameMVC extends JPanel {
 		}
 	};
 	private final BufferedImage pitch;
-	private final Map<Integer, Sprite> sprites;
+	private final Map<Integer, Sprite> sprites = Maps.newHashMap();
 
 	/**
 	 * @param a
@@ -157,7 +159,11 @@ public class GameMVC extends JPanel {
 		setFocusable(true);
 		addKeyListener(keyboardInput);
 		new Timer().schedule(ticker, 0L, PERIOD);
-		this.sprites = sprites;
+
+		Map<Color, Color> teamColours = a.getTeamColors();
+		for (int i = 0; i < 76; i++) {
+			this.sprites.put(i, sprites.get(i + 341).copyWithReplace(teamColours));
+		}
 	}
 
 	@Override
@@ -265,21 +271,21 @@ public class GameMVC extends JPanel {
 		int spriteIndex;
 		double angle = pm.getAngle();
 		if (angle <= - 3 * Math.PI / 4) {
-			spriteIndex = 353;
+			spriteIndex = 12;
 		} else if (angle <= -Math.PI / 2) {
-			spriteIndex = 350;
+			spriteIndex = 9;
 		} else if (angle <= -Math.PI / 4) {
-			spriteIndex = 359;
+			spriteIndex = 18;
 		} else if (angle <= 0) {
-			spriteIndex = 341;
+			spriteIndex = 0;
 		} else if (angle <= Math.PI / 4) {
-			spriteIndex = 362;
+			spriteIndex = 21;
 		} else if (angle <= Math.PI / 2) {
-			spriteIndex = 347;
+			spriteIndex = 6;
 		} else if (angle <= 3 * Math.PI / 4) {
-			spriteIndex = 356;
+			spriteIndex = 15;
 		} else {
-			spriteIndex = 344;
+			spriteIndex = 3;
 		}
 
 		// 0/+1/+2 depending on timestamp and motion
@@ -296,8 +302,13 @@ public class GameMVC extends JPanel {
 		Point s = sprite.getCentre();
 		g.drawImage(sprite.getImage(), p.x - s.x / 2 - 1, p.y - s.y / 2, null);
 
-		g.setColor(Color.WHITE);
-		g.drawString(Integer.toString(pm.getShirt()), p.x - 5, p.y - 10);
+		if (pm == selectedA) {
+			g.setColor(Color.WHITE);
+			String shirt = Integer.toString(pm.getShirt());
+			FontMetrics fm = getFontMetrics(getFont());
+			Rectangle2D textsize = fm.getStringBounds(shirt, g);
+			g.drawString(shirt, Math.round(p.x - textsize.getWidth() / 2), p.y - 10);
+		}
 	}
 
 	private void updatePhysics() {
