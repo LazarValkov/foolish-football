@@ -16,9 +16,13 @@ package uk.me.fommil.ff.swos;
 
 import com.google.common.base.Preconditions;
 import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import javax.imageio.ImageIO;
 
 /**
  * Convenience methods for dealing with SWOS data files.
@@ -26,6 +30,25 @@ import java.util.List;
  * @author Samuel Halliday
  */
 public final class SwosUtils {
+
+	/**
+	 * @param args
+	 * @throws IOException
+	 */
+	public static final void main(String[] args) throws IOException {
+		BufferedImage gamePal = new BufferedImage(16, 16, BufferedImage.TYPE_INT_RGB);
+		BufferedImage menuPal = new BufferedImage(16, 16, BufferedImage.TYPE_INT_RGB);
+		for (int i = 0; i < 16; i++) {
+			for (int j = 0; j < 16; j++) {
+				Color c1 = SwosUtils.getGamePalette().get(j * 16 + i);
+				Color c2 = SwosUtils.getPalette().get(j * 16 + i);
+				gamePal.setRGB(i, j, c1.getRGB());
+				menuPal.setRGB(i, j, c2.getRGB());
+			}
+		}
+		ImageIO.write(gamePal, "png", new File("data/sprites/gamepal.png"));
+		ImageIO.write(menuPal, "png", new File("data/sprites/menupal.png"));
+	}
 
 	/**
 	 * Treat a {@code byte} as unsigned and convert to an {@code int}.

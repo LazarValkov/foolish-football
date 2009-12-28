@@ -39,20 +39,10 @@ import javax.vecmath.Vector3d;
 public class PlayerMC {
 
 	// this is mutable, so be careful not to edit it
-	private static final Vector3d UP = new Vector3d(0, -1, 0);
+	private static final Vector3d NORTH = new Vector3d(0, -1, 0);
 	private static final int AUTO = 10;
 
 	// View
-	@Deprecated
-	public void setLocation(Point p) {
-		setPosition(new Point3d(p.x, p.y, 0));
-	}
-
-	@Deprecated
-	public Point getLocation() {
-		return new Point((int) round(s.x), (int) round(s.y));
-	}
-
 	@Deprecated
 	public Point getStep() {
 		return new Point((int) round(v.x), (int) round(v.y));
@@ -63,11 +53,14 @@ public class PlayerMC {
 		return new Rectangle.Double(s.x - 4, s.y - 4, 9, 9);
 	}
 
-	private double getAngle() {
+	/**
+	 * @return the angle relate to NORTH {@code (-PI, + PI]}.
+	 */
+	public double getAngle() {
 		if (facing.x < 0)
-			return -facing.angle(UP);
+			return -facing.angle(NORTH);
 		else
-			return facing.angle(UP);
+			return facing.angle(NORTH);
 	}
 
 	/**

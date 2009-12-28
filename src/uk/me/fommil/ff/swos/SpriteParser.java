@@ -15,19 +15,26 @@
 package uk.me.fommil.ff.swos;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import java.awt.Color;
+import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import uk.me.fommil.ff.Main;
+import uk.me.fommil.ff.Sprite;
 
 /**
  * There are 1,334 sprites in SWOS contained across
@@ -96,74 +103,100 @@ public class SpriteParser {
 	private static final List<String> ORDER = Lists.newArrayList("CHARSET.DAT", "SCORE.DAT", "TEAM1.DAT", "TEAM2.DAT", "TEAM3.DAT", "GOAL1.DAT", "BENCH.DAT");
 
 	/**
+	 * Return a list of all the SWOS sprites, indexed by their sprite number.
+	 * Note that there is ambiguity in the choice of sprites in the
+	 * {@code TEAM1.DAT, TEAM2.DAT, TEAM3.DAT} sprites in the range 
+	 *
+	 * @param SWOS
+	 * @return
+	 * @throws IOException
+	 * @deprecated due to ambiguity in the index number, and lack of centering info
+	 */
+	@Deprecated
+	public static Map<Integer, Sprite> getSprites(File SWOS) throws IOException {
+		Map<Integer, Sprite> sprites = Maps.newHashMap();
+		SpriteParser parser = new SpriteParser();
+		for (String name : ORDER) {
+			File datFile = new File(Main.SWOS.getPath() + File.separator + name);
+			InputStream datS = new FileInputStream(datFile);
+			sprites.putAll(parser.parseDat(datS));
+		}
+		return sprites;
+	}
+
+	/**
 	 * @param args
 	 * @throws IOException
 	 */
 	public static final void main(String[] args) throws IOException {
-//		BufferedImage gamePal = new BufferedImage(16, 16, BufferedImage.TYPE_INT_RGB);
-//		BufferedImage menuPal = new BufferedImage(16, 16, BufferedImage.TYPE_INT_RGB);
-//		for (int i = 0; i < 16; i++) {
-//			for (int j = 0; j < 16; j++) {
-//				Color c1 = SwosUtils.getGamePalette().get(j * 16 + i);
-//				Color c2 = SwosUtils.getPalette().get(j * 16 + i);
-//				gamePal.setRGB(i, j, c1.getRGB());
-//				menuPal.setRGB(i, j, c2.getRGB());
-//			}
-//		}
-//		ImageIO.write(gamePal, "png", new File("data/sprites/gamepal.png"));
-//		ImageIO.write(menuPal, "png", new File("data/sprites/menupal.png"));
-		List<Color> pal = SwosUtils.getPalette();
-
+		SpriteParser parser = new SpriteParser();
 		for (String name : ORDER) {
 			File datFile = new File(Main.SWOS.getPath() + File.separator + name);
 			InputStream datS = new FileInputStream(datFile);
-			DataInputStream dat = new DataInputStream(datS);
-			try {
-				while (true) {
-					try {
-						dat.readInt();
-					} catch (EOFException e) {
-						log.info("read " + name);
-						break;
-					}
-					dat.skipBytes(6);
-					int width = Short.reverseBytes(dat.readShort());
-					int nlines = Short.reverseBytes(dat.readShort());
-					int wquads = Short.reverseBytes(dat.readShort());
-					int xc = Short.reverseBytes(dat.readShort());
-					int yc = Short.reverseBytes(dat.readShort());
-					dat.skipBytes(2);
-					int id = Short.reverseBytes(dat.readShort());
-					assert id >= 0 && id < 1335 : id;
-					byte[] data = new byte[8 * wquads * nlines];
-					dat.readFully(data);
-					int[][] pixels = decodeSprite(data, wquads, nlines);
-
-					// List<Color> pal = id >= 1209 && id <= 1272 ? SwosUtils.getGamePalette() : SwosUtils.getPalette();
-
-					if (id == 304)
-						log.info(Joiner.on(", ").join(id, width, nlines, wquads, xc, yc));
-
-					BufferedImage image = new BufferedImage(width, nlines, BufferedImage.TYPE_INT_ARGB);
-					for (int x = 0; x < width; x++) {
-						for (int y = 0; y < nlines; y++) {
-							int c = pixels[x][y];
-							if (c == 0)
-								continue;
-							Color col = pal.get(c);
-							int rgb = col.getRGB();
-							image.setRGB(x, y, rgb);
-						}
-					}
-					ImageIO.write(image, "png", new File("data/sprites/" + name + "-" + id + ".png"));
-				}
-			} finally {
-				dat.close();
+			Map<Integer, Sprite> sprites = parser.parseDat(datS);
+			for (Entry<Integer, Sprite> e : sprites.entrySet()) {
+				ImageIO.write(e.getValue().getImage(), "png", new File("data/sprites/" + name + "-" + e.getKey() + ".png"));
 			}
 		}
 	}
+	private final List<Color> pal = SwosUtils.getPalette();
 
-	private static int[][] decodeSprite(byte[] data, int wquads, int nlines) {
+	/**
+	 * @param stream
+	 * @return
+	 * @throws IOException
+	 */
+	public Map<Integer, Sprite> parseDat(InputStream stream) throws IOException {
+		Preconditions.checkNotNull(stream);
+		Map<Integer, Sprite> sprites = Maps.newHashMap();
+		DataInputStream dat = new DataInputStream(stream);
+		try {
+			while (true) {
+				try {
+					dat.readInt();
+				} catch (EOFException e) {
+					break;
+				}
+				dat.skipBytes(6);
+				int width = Short.reverseBytes(dat.readShort());
+				int nlines = Short.reverseBytes(dat.readShort());
+				int wquads = Short.reverseBytes(dat.readShort());
+				int xc = Short.reverseBytes(dat.readShort());
+				int yc = Short.reverseBytes(dat.readShort());
+				dat.skipBytes(2);
+				int id = Short.reverseBytes(dat.readShort());
+
+				Preconditions.checkArgument(id >= 0 && id < 1335, id);
+				Preconditions.checkArgument(!sprites.containsKey(id), id);
+
+				byte[] data = new byte[8 * wquads * nlines];
+				dat.readFully(data);
+				int[][] pixels = decodeSprite(data, wquads, nlines);
+
+				// List<Color> pal = id >= 1209 && id <= 1272 ? SwosUtils.getGamePalette() : SwosUtils.getPalette();
+
+				BufferedImage image = new BufferedImage(width, nlines, BufferedImage.TYPE_INT_ARGB);
+				for (int x = 0; x < width; x++) {
+					for (int y = 0; y < nlines; y++) {
+						int c = pixels[x][y];
+						if (c == 0)
+							continue;
+						Color col = pal.get(c);
+						int rgb = col.getRGB();
+						image.setRGB(x, y, rgb);
+					}
+				}
+				Sprite sprite = new Sprite(image, new Point(xc, yc));
+
+				sprites.put(id, sprite);
+			}
+			return sprites;
+		} finally {
+			dat.close();
+		}
+	}
+
+	private int[][] decodeSprite(byte[] data, int wquads, int nlines) {
 		int[] sprite = SwosUtils.unsignedBytesToInts(data);
 		int[][] output_pixels = new int[16 * wquads][nlines];
 		int half = 8 * wquads;

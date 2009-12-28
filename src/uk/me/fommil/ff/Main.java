@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import javax.swing.JFrame;
+import uk.me.fommil.ff.swos.SpriteParser;
 
 /**
  * @author Samuel Halliday
@@ -39,12 +40,14 @@ public class Main {
 		Map<String, Tactics> swosTactics = TacticsParser.getSwosTactics(SWOS);
 		BufferedImage pitch = PitchParser.getPitch(SWOS, 6);
 
+		Map<Integer, Sprite> sprites = SpriteParser.getSprites(SWOS);
+
 		Team a = new Team();
 		a.setCurrentTactics(swosTactics.get("442"));
 		Team b = new Team();
 		b.setCurrentTactics(swosTactics.get("433"));
 
-		GameMVC gv = new GameMVC(a, b, pitch);
+		GameMVC gv = new GameMVC(a, b, pitch, sprites);
 
 		JFrame frame = new JFrame();
 		frame.add(gv);

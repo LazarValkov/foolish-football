@@ -30,11 +30,12 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
-import javax.media.j3d.BoundingPolytope;
 import javax.media.j3d.Bounds;
 import javax.swing.JPanel;
 import javax.vecmath.Point3d;
@@ -59,10 +60,12 @@ public class GameMVC extends JPanel {
 	private final Team a;
 	private final BallMC ball;
 	private final List<PlayerMC> as = Lists.newArrayListWithCapacity(11);
+	private final AtomicLong ticks = new AtomicLong();
 	private final TimerTask ticker = new TimerTask() {
 
 		@Override
 		public synchronized void run() {
+			ticks.incrementAndGet();
 			updatePhysics();
 			repaint();
 		}
@@ -126,12 +129,15 @@ public class GameMVC extends JPanel {
 		}
 	};
 	private final BufferedImage pitch;
+	private final Map<Integer, Sprite> sprites;
 
 	/**
 	 * @param a
 	 * @param b
+	 * @param pitch
+	 * @param sprites
 	 */
-	public GameMVC(Team a, Team b, BufferedImage pitch) {
+	public GameMVC(Team a, Team b, BufferedImage pitch, Map<Integer, Sprite> sprites) {
 		this.pitch = pitch;
 		this.a = a;
 		this.ball = new BallMC();
@@ -151,6 +157,7 @@ public class GameMVC extends JPanel {
 		setFocusable(true);
 		addKeyListener(keyboardInput);
 		new Timer().schedule(ticker, 0L, PERIOD);
+		this.sprites = sprites;
 	}
 
 	@Override
@@ -172,7 +179,7 @@ public class GameMVC extends JPanel {
 		int xoff = (int) Math.min(pitch.getWidth() - size.width, Math.max(0, ballLoc.x - w / 2.0));
 		int yoff = (int) Math.min(pitch.getHeight() - size.height, Math.max(0, ballLoc.y - h / 2.0));
 		assert xoff >= 0 && yoff >= 0 : xoff + " " + yoff;
-		assert xoff < pitch.getWidth() && yoff < pitch.getHeight(): xoff + " " + yoff;
+		assert xoff < pitch.getWidth() && yoff < pitch.getHeight() : xoff + " " + yoff;
 		Rectangle2D view = new Rectangle.Double(xoff, yoff, w, h);
 
 		// draw the pitch
@@ -231,32 +238,66 @@ public class GameMVC extends JPanel {
 		selectedA = closest;
 	}
 
-	// HACK: should really ask view for the sprite
+	// draw a player
 	private void draw(Graphics2D g, Rectangle2D view, PlayerMC pm) {
-		if (pm == selectedA)
-			g.setColor(Color.WHITE);
-		else
-			g.setColor(Color.GREEN);
+		Point3d pos = pm.getPosition();
+		// p is the pixel location of the centre of the player
+		Point p = new Point((int) Math.round(pos.x - view.getX()), (int) Math.round(pos.y - view.getY()));
 
-		int xoff = (int) view.getX();
-		int yoff = (int) view.getY();
-		Point p = pm.getLocation();
-		g.drawOval(p.x - 4 - xoff, p.y - 4 - yoff, 9, 9);
+//		g.setColor(Color.WHITE);
+//		g.drawOval(p.x - 4, p.y - 4, 9, 9);
 
-		Point kv = pm.getStep();
-		g.drawLine(p.x - xoff, p.y - yoff, kv.x + p.x - xoff, kv.y + p.y - yoff);
+//		Point kv = pm.getStep();
+//		g.drawLine(p.x, p.y, kv.x + p.x, kv.y + p.y);
 
-		// draw the bounds, scattergun and not efficient
-		BoundingPolytope bounds = pm.getBounds();
-		for (int x = p.x - 50; x < p.x + 50; x++) {
-			for (int y = p.y - 50; y < p.y + 50; y++) {
-				Point3d test = new Point3d(x, y, 0);
-				if (bounds.intersect(test))
-					g.drawLine(x - xoff, y - yoff, x - xoff, y - yoff);
+//		if (pm == selectedA) {
+//			// draw the bounds, scattergun and not efficient
+//			BoundingPolytope bounds = pm.getBounds();
+//			for (int x = p.x - 50; x < p.x + 50; x++) {
+//				for (int y = p.y - 50; y < p.y + 50; y++) {
+//					Point3d test = new Point3d(x + view.getX(), y + view.getY(), 0); // TODO: use ball height
+//					if (bounds.intersect(test))
+//						g.drawLine(x, y, x, y);
+//				}
+//			}
+//		}
+
+		int spriteIndex;
+		double angle = pm.getAngle();
+		if (angle <= - 3 * Math.PI / 4) {
+			spriteIndex = 353;
+		} else if (angle <= -Math.PI / 2) {
+			spriteIndex = 350;
+		} else if (angle <= -Math.PI / 4) {
+			spriteIndex = 359;
+		} else if (angle <= 0) {
+			spriteIndex = 341;
+		} else if (angle <= Math.PI / 4) {
+			spriteIndex = 362;
+		} else if (angle <= Math.PI / 2) {
+			spriteIndex = 347;
+		} else if (angle <= 3 * Math.PI / 4) {
+			spriteIndex = 356;
+		} else {
+			spriteIndex = 344;
+		}
+
+		// 0/+1/+2 depending on timestamp and motion
+		if (pm.getVelocity().length() > 0) {
+			long t = (ticks.get() * PERIOD) % 500L;
+			if (t < 250) {
+				spriteIndex += 1;
+			} else {
+				spriteIndex += 2;
 			}
 		}
 
-		g.drawString(Integer.toString(pm.getShirt()), p.x - xoff - 5, p.y - yoff - 10);
+		Sprite sprite = sprites.get(spriteIndex);
+		Point s = sprite.getCentre();
+		g.drawImage(sprite.getImage(), p.x - s.x / 2 - 1, p.y - s.y / 2, null);
+
+		g.setColor(Color.WHITE);
+		g.drawString(Integer.toString(pm.getShirt()), p.x - 5, p.y - 10);
 	}
 
 	private void updatePhysics() {
