@@ -156,8 +156,10 @@ public class GameV extends JPanel {
 	 * <ul>
 	 * <li>{@code gVar}: The {@link Point} locations of the {@link Graphics2D} object.</li>
 	 * <li>{@code sVar}: The set of pixels on the screen of those {@link Point}s,
-	 *     the same if there is no {@link AffineTransform} applied.</li>
+	 *     the same as 'g' if there is no {@link AffineTransform} applied.</li>
 	 * <li>{@code pVar}: The {@link Point3d} position of the objects using our physics model.</li>
+	 * <li>{@code vVar}: The {@link Point} view of the physics model (essentially {@code Point}
+	 *     versions of the {@code Point3d} instances).</li>
 	 * </ul>
 	 *
 	 * @param graphics
@@ -174,54 +176,49 @@ public class GameV extends JPanel {
 
 		// we are centred over the ball
 		// g never goes outside the pitch image
-		Point3d pBall = modelController.getBall().getPosition();
-		int gMinX = (int) Math.round(pBall.x - gSize.width / 2.0);
-		int gMinY = (int) Math.round(pBall.y - gSize.height / 2.0);
-		// account for falling off up/left
-		gMinX = max(gMinX, 0);
-		gMinY = max(gMinY, 0);
-		// account for falling off down/right, where screen could be bigger than the pitch image
-		gMinX = min(gMinX, max(0, pitch.getWidth() - gSize.width));
-		gMinY = min(gMinY, max(0, pitch.getHeight() - gSize.height));
-		Rectangle gBounds = new Rectangle(gMinX, gMinY, gSize.width, gSize.height);
+		// TODO: consider making this variable a field
+		Rectangle vBounds = calculateView(gSize);
 
 		// draw the pitch
-		BufferedImage sub = pitch.getSubimage(gMinX, gMinY,
+		BufferedImage sub = pitch.getSubimage(vBounds.x, vBounds.y,
 				min(gSize.width, pitch.getWidth()),
 				min(gSize.height, pitch.getHeight()));
 		g.drawImage(sub, 0, 0, null);
 
 		// draw the ball
-		drawBall(g, gBounds);
+		drawBall(g, vBounds);
 
 		// draw the zones
 		if (debugging) {
 			g.setColor(Color.GREEN);
 			for (int i = 0; i <= 5; i++) {
 				int x = 81 + i * (590 - 81) / 5;
-				g.drawLine(x - gMinX, 129 - gMinY, x - gMinX, 769 - gMinY);
+				Point start = pToG(vBounds, new Point3d(x, 129, 0));
+				Point end = pToG(vBounds, new Point3d(x, 769, 0));
+				g.drawLine(start.x, start.y, end.x, end.y);
 			}
 			for (int i = 0; i <= 7; i++) {
 				int y = 129 + i * (769 - 129) / 7;
-				g.drawLine(81 - gMinX, y - gMinY, 590 - gMinX, y - gMinY);
+				Point start = pToG(vBounds, new Point3d(81, y, 0));
+				Point end = pToG(vBounds, new Point3d(590, y, 0));
+				g.drawLine(start.x, start.y, end.x, end.y);
 			}
 		}
 
 		// draw the players that are in view
 		for (PlayerMC pm : modelController.getPlayers()) {
-			drawPlayer(g, gBounds, pm);
+			drawPlayer(g, vBounds, pm);
 		}
 	}
 
-	private void drawPlayer(Graphics2D g, Rectangle gBounds, PlayerMC pm) {
+	private void drawPlayer(Graphics2D g, Rectangle vBounds, PlayerMC pm) {
 		Point3d pPos = pm.getPosition();
 		// p is the pixel location of the centre of the player
-		Point gPos = pToG(gBounds, pPos);
+		Point gPos = pToG(vBounds, pPos);
 
 		// assumes sprite size
-		Rectangle gPmSprite = new Rectangle(gBounds.x + gPos.x - 20, gBounds.y + gPos.y - 20, 40, 40);
-		if (!gBounds.intersects(gPmSprite)) {
-			// off screen, don't draw
+		Rectangle vPmSprite = new Rectangle(vBounds.x + gPos.x - 20, vBounds.y + gPos.y - 20, 40, 40);
+		if (!vBounds.intersects(vPmSprite)) {
 			return;
 		}
 
@@ -233,7 +230,7 @@ public class GameV extends JPanel {
 				for (int y = (int) (pPos.y - 50); y < pPos.y + 50; y++) {
 					Point3d pTest = new Point3d(x, y, 0); // TODO: use ball height
 					if (pBounds.intersect(pTest)) {
-						Point gP = pToG(gBounds, pTest);
+						Point gP = pToG(vBounds, pTest);
 						g.fillRect(gP.x, gP.y, 1, 1);
 					}
 				}
@@ -281,7 +278,7 @@ public class GameV extends JPanel {
 		}
 	}
 
-	private void drawBall(Graphics2D g, Rectangle gBounds) {
+	private void drawBall(Graphics2D g, Rectangle vBounds) {
 		// 0/+1/+2/+3 depending on timestamp and motion
 		BallMC ball = modelController.getBall();
 		int spriteIndex = 0;
@@ -298,11 +295,27 @@ public class GameV extends JPanel {
 
 		Sprite sprite = ballSprites.get(spriteIndex);
 		Point s = sprite.getCentre();
-		Point gPos = pToG(gBounds, ball.getPosition());
+		Point gPos = pToG(vBounds, ball.getPosition());
 		g.drawImage(sprite.getImage(), gPos.x - s.x / 2 - 1, gPos.y - s.y / 2, null);
 	}
 
-	private Point pToG(Rectangle gView, Point3d p) {
-		return new Point((int) round(p.x - gView.getX()), (int) round(p.y - gView.getY()));
+	private Point pToG(Rectangle vBounds, Point3d p) {
+		return new Point((int) round(p.x - vBounds.getX()), (int) round(p.y - vBounds.getY()));
+	}
+
+	// FIXME: remove the need for 'v' coordinates by returning a java 3d object in 'p' coords
+	// gSize is the drawable graphics, top left of the view being (0, 0) in graphics 'g' coordinates
+	private Rectangle calculateView(Dimension gSize) {
+		// centre over the ball
+		Point3d pBall = modelController.getBall().getPosition();
+		int gMinX = (int) Math.round(pBall.x - gSize.width / 2.0);
+		int gMinY = (int) Math.round(pBall.y - gSize.height / 2.0);
+		// account for falling off up/left
+		gMinX = max(gMinX, 0);
+		gMinY = max(gMinY, 0);
+		// account for falling off down/right, where screen could be bigger than the pitch image
+		gMinX = min(gMinX, max(0, pitch.getWidth() - gSize.width));
+		gMinY = min(gMinY, max(0, pitch.getHeight() - gSize.height));
+		return new Rectangle(gMinX, gMinY, gSize.width, gSize.height);
 	}
 }
