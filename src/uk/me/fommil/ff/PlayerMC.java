@@ -14,12 +14,8 @@
  */
 package uk.me.fommil.ff;
 
-import static java.lang.Math.round;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.Shape;
 import java.util.Collection;
 import java.util.List;
 import java.util.Timer;
@@ -38,20 +34,12 @@ import javax.vecmath.Vector3d;
  */
 public class PlayerMC {
 
+	private static final Logger log = Logger.getLogger(PlayerMC.class.getName());
+
 	// this is mutable, so be careful not to edit it
 	private static final Vector3d NORTH = new Vector3d(0, -1, 0);
+
 	private static final int AUTO = 10;
-
-	// View
-	@Deprecated
-	public Point getStep() {
-		return new Point((int) round(v.x), (int) round(v.y));
-	}
-
-	@Deprecated
-	public Shape getViewBounds() {
-		return new Rectangle.Double(s.x - 4, s.y - 4, 9, 9);
-	}
 
 	/**
 	 * @return the angle relate to NORTH {@code (-PI, + PI]}.
@@ -69,13 +57,21 @@ public class PlayerMC {
 	public enum Action {
 
 		UP, DOWN, LEFT, RIGHT, KICK, TACKLE, HEAD
+
 	};
+
 	private final Player player;
+
 	private final int shirt;
+
 	private Collection<Action> actions;
+
 	private boolean kicking, tackling, heading;
+
 	private Point3d s = new Point3d();
+
 	private Vector3d v = new Vector3d();
+
 	private Vector3d facing = new Vector3d(0, -1, 0);
 
 	/**
@@ -114,7 +110,6 @@ public class PlayerMC {
 		b.transform(affine);
 		return b;
 	}
-	private static final Logger log = Logger.getLogger(PlayerMC.class.getName());
 
 	/**
 	 * @param t with units of seconds
@@ -236,6 +231,11 @@ public class PlayerMC {
 		};
 		heading = true;
 		new Timer().schedule(head, 1000L);
+	}
+
+	@Override
+	public String toString() {
+		return getShirt() + " " + getPosition();
 	}
 
 	// <editor-fold defaultstate="collapsed" desc="BOILERPLATE GETTERS/SETTERS">
