@@ -17,10 +17,12 @@ package uk.me.fommil.ff;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import javax.media.j3d.BoundingBox;
 import javax.vecmath.Point3d;
 
 /**
@@ -40,6 +42,7 @@ public class Tactics {
 	public static class BallZone {
 
 		private final int x;
+
 		private final int y;
 
 		/**
@@ -96,6 +99,7 @@ public class Tactics {
 	public static class PlayerZone {
 
 		private final int x;
+
 		private final int y;
 
 		/**
@@ -132,38 +136,23 @@ public class Tactics {
 
 		/**
 		 * @param upwards true if the team is playing upwards
-		 * @param width
-		 * @param height
-		 * @return the central point represented by this for an image of the given width and height
-		 */
-		@Deprecated
-		public Point getLocation(boolean upwards, int width, int height) {
-			int xx = (width * x) / 15 - 1;
-			int yy = (height * y) / 16 - 1;
-			if (upwards) {
-				yy = height - yy;
-				xx = width - xx;
-			}
-			return new Point(xx, yy);
-		}
-
-		/**
-		 * @param upwards true if the team is playing upwards
-		 * @param width
-		 * @param height
+		 * @param pitch
 		 * @return the central point represented by this for a pitch of the given width and height
 		 */
-		public Point3d getCentre(boolean upwards, double width, double height) {
-			double xx = (width * x) / 15 - 1;
-			double yy = (height * y) / 16 - 1;
+		public Point3d getCentre(boolean upwards, Pitch pitch) {
+			Rectangle p = pitch.getPitchAsRectangle();
+			double xx = (p.width * x) / 15;
+			double yy = (p.height * y) / 16;
 			if (upwards) {
-				yy = height - yy;
-				xx = width - xx;
+				yy = p.height - yy;
+				xx = p.width - xx;
 			}
-			return new Point3d(xx, yy, 0);
+			return new Point3d(xx + p.x, yy + p.y, 0);
 		}
 	}
+
 	private String name;
+
 	private final Map<BallZone, Map<Integer, PlayerZone>> zones = Maps.newHashMapWithExpectedSize(35);
 
 	/**

@@ -14,17 +14,15 @@
  */
 package uk.me.fommil.ff;
 
-import static java.lang.Math.min;
-import static java.lang.Math.round;
 import com.google.common.base.Preconditions;
-import java.awt.Point;
+import java.awt.Rectangle;
 import static java.lang.Math.max;
+import static java.lang.Math.min;
 import static java.lang.Math.signum;
 import static java.lang.Math.abs;
+import static java.lang.Math.round;
 import java.util.Collection;
 import java.util.logging.Logger;
-import javax.media.j3d.BoundingSphere;
-import javax.media.j3d.Bounds;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 import uk.me.fommil.ff.Tactics.BallZone;
@@ -36,17 +34,6 @@ import uk.me.fommil.ff.Tactics.BallZone;
  */
 public class BallMC {
 
-	// View
-	@Deprecated
-	public void setLocation(Point p) {
-		setPosition(new Point3d(p.x, p.y, 0));
-	}
-
-	@Deprecated
-	public Point getLocation() {
-		return new Point((int) round(s.x), (int) round(s.y));
-	}
-
 	/**
 	 * The aftertouch that a ball may exhibit. Directional aftertouch is always relate to
 	 * the direction of motion.
@@ -54,13 +41,20 @@ public class BallMC {
 	public enum Aftertouch {
 
 		LIFT, POWER, LEFT, RIGHT
+
 	}
+
 	private static final Logger log = Logger.getLogger(BallMC.class.getName());
+
 	private Point3d s = new Point3d(0, 0, 0);
+
 	private Vector3d v = new Vector3d();
+
 	private static final double FRICTION = 10;
+
 	private static final double GRAVITY = -10;
 	// aftertouch direction
+
 	private Vector3d aftertouch = new Vector3d();
 
 //	/**
@@ -72,17 +66,19 @@ public class BallMC {
 //		return new BoundingSphere(s, 2);
 //	}
 	/**
-	 * @param width
-	 * @param height
+	 * @param pitch
 	 * @return
 	 */
-	public BallZone getZone(double width, double height) {
-		Preconditions.checkArgument(width > 0);
-		Preconditions.checkArgument(height > 0);
-		int x, y;
+	public BallZone getZone(Pitch pitch) {
+		Preconditions.checkNotNull(pitch);
+		Rectangle p = pitch.getPitchAsRectangle();
 
-		x = (int) (5 * (width - s.x) / width);
-		y = (int) (7 * (height - s.y) / height);
+//		double bx = min(max(s.x, p.x), p.x + p.width);
+//		double by = min(max(s.y, p.y), p.y + p.height);
+
+		int x = (int) (5 * (p.width + p.x - s.x) / p.width);
+		int y = (int) (7 * (p.height + p.y - s.y) / p.height);
+
 		x = max(0, min(x, 4));
 		y = max(0, min(y, 6));
 

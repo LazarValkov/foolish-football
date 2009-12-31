@@ -38,7 +38,7 @@ public class Main {
 	 */
 	public static final void main(String[] args) throws IOException {
 		Map<String, Tactics> swosTactics = TacticsParser.getSwosTactics(SWOS);
-		BufferedImage pitch = PitchParser.getPitch(SWOS, 6);
+		BufferedImage pitchImage = PitchParser.getPitch(SWOS, 6);
 
 		Map<Integer, Sprite> sprites = SpriteParser.getSprites(SWOS);
 
@@ -47,7 +47,10 @@ public class Main {
 		Team b = new Team();
 		b.setCurrentTactics(swosTactics.get("433"));
 
-		GameV gv = new GameV(a, b, pitch, sprites);
+		Pitch pitch = new Pitch();
+		GameMC game = new GameMC(a, pitch);
+		GameV gv = new GameV(game, pitchImage, sprites);
+		game.setView(gv);
 
 		JFrame frame = new JFrame();
 		frame.add(gv);

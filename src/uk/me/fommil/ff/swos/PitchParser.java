@@ -58,21 +58,6 @@ import uk.me.fommil.ff.Main;
  * <p>
  * SWOS can only read a maximum of 296 unique patterns and pitches are
  * comprised of 42 x 53 patterns.
- * <p>
- * The location of the corner flags are pixels (81, 129), (590, 129), (590, 769),
- * (81, 769).
- * <p>
- * The location of the goal posts are (300, 769), (300, 751), (372, 751),
- * (372, 769) and (372, 129), (372, 111), (300, 111), (300, 129). (Note that the posts
- * are wider than single pixels).
- * <p>
- * The locations of the penalty boxes are (193, 129), (478, 129), (193, 216),
- * (478, 216) and (193, 769), (193, 682), (478, 682), (478, 769).
- * <p>
- * The locations of the goal boxes are (273, 769), (273, 740), (398, 740), (398, 769)
- * and (273, 129), (273, 158), (398, 129), (398, 158).
- * <p>
- * The penalty spots are (336, 711) and (336, 187).
  *
  * @author Samuel Halliday
  */
@@ -101,7 +86,7 @@ public class PitchParser {
 	 */
 	public static final void main(String[] args) throws Exception {
 		for (int i = 1; i <= 6; i++) {
-			ImageIO.write(getPitch(Main.SWOS, i), "png", new File("pitch" + i + ".png"));
+			ImageIO.write(getPitch(Main.SWOS, i), "png", new File("data/sprites/pitch" + i + ".png"));
 		}
 	}
 

@@ -35,12 +35,6 @@ import uk.me.fommil.ff.Tactics.PlayerZone;
  */
 public class GameMC {
 
-	@Deprecated
-	private static final int PITCH_WIDTH = 672;
-
-	@Deprecated
-	private static final int PITCH_HEIGHT = 880;
-
 	private static final Logger log = Logger.getLogger(GameMC.class.getName());
 
 	private final boolean debugging = false;
@@ -51,7 +45,7 @@ public class GameMC {
 
 	private final Team a;
 
-	private final BallMC ball;
+	private final BallMC ball = new BallMC();
 
 	private final List<PlayerMC> as = Lists.newArrayListWithCapacity(11);
 
@@ -72,19 +66,22 @@ public class GameMC {
 		}
 	};
 
+	private final Pitch pitch;
+
 	/**
 	 * @param a
 	 * @param b
+	 * @param pitch
 	 */
-	public GameMC(Team a, Team b) {
+	public GameMC(Team a, Pitch pitch) {
 		this.a = a;
-		this.ball = new BallMC();
-		ball.setPosition(new Point3d(PITCH_WIDTH / 2, PITCH_HEIGHT / 2, 0));
-		BallZone bz = ball.getZone(PITCH_WIDTH, PITCH_HEIGHT);
+		this.pitch = pitch;
+		ball.setPosition(pitch.getCentre());
+		BallZone bz = ball.getZone(pitch);
 		List<Player> aPlayers = a.getPlayers();
 		Tactics tactics = a.getCurrentTactics();
 		for (int i = 2; i <= 11; i++) {
-			Point3d p = tactics.getZone(bz, i).getCentre(true, PITCH_WIDTH, PITCH_HEIGHT);
+			Point3d p = tactics.getZone(bz, i).getCentre(true, pitch);
 			PlayerMC pma = new PlayerMC(i, aPlayers.get(i - 2));
 			pma.setPosition(p);
 			as.add(pma);
@@ -104,13 +101,14 @@ public class GameMC {
 //	private PlayerMC selectedA = null;
 	private void updatePhysics() {
 		// autopilot
-		BallZone bz = ball.getZone(PITCH_WIDTH, PITCH_HEIGHT);
+		BallZone bz = ball.getZone(pitch);
+		log.info(bz.toString());
 		// log.info("BALL " + bz);
 		Tactics tactics = a.getCurrentTactics();
 		for (PlayerMC p : as) {
 			if (p != selectedA) {
 				PlayerZone pz = tactics.getZone(bz, p.getShirt());
-				Point3d target = pz.getCentre(true, PITCH_WIDTH, PITCH_HEIGHT);
+				Point3d target = pz.getCentre(true, pitch);
 				p.autoPilot(target);
 			}
 		}
@@ -190,5 +188,9 @@ public class GameMC {
 
 	public long getTimestamp() {
 		return (ticks.get() * PERIOD);
+	}
+
+	public Team getTeamA() {
+		return a;
 	}
 }

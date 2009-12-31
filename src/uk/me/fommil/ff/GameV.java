@@ -37,7 +37,19 @@ import javax.vecmath.Point3d;
 
 /**
  * The view (V) for the game play.
- * 
+ * <p>
+ * There are various different coordinate systems in place when painting.
+ * We use Hungarian Notation to keep us right, because there is no type safety for
+ * {@code int} values.
+ * <ul>
+ * <li>{@code gVar}: The {@link Point} locations of the {@link Graphics2D} object.</li>
+ * <li>{@code sVar}: The set of pixels on the screen of those {@link Point}s,
+ *     the same as 'g' if there is no {@link AffineTransform} applied.</li>
+ * <li>{@code pVar}: The {@link Point3d} position of the objects using our physics model.</li>
+ * <li>{@code vVar}: The {@link Point} view of the physics model (essentially {@code Point}
+ *     versions of the {@code Point3d} instances).</li>
+ * </ul>
+
  * @author Samuel Halliday
  */
 @SuppressWarnings("serial")
@@ -48,7 +60,7 @@ public class GameV extends JPanel {
 	private final boolean debugging = false;
 
 //	private static final Font SHIRT_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 8);
-	private final int zoom = 3;
+	private final int zoom = 1;
 
 	private final Team a;
 
@@ -88,7 +100,7 @@ public class GameV extends JPanel {
 				default:
 					return;
 			}
-			modelController.setPlayerActions(GameV.this.a, actions);
+			game.setPlayerActions(GameV.this.a, actions);
 		}
 
 		@Override
@@ -115,23 +127,21 @@ public class GameV extends JPanel {
 				default:
 					return;
 			}
-			modelController.setPlayerActions(GameV.this.a, actions);
+			game.setPlayerActions(GameV.this.a, actions);
 		}
 	};
 
-	private final GameMC modelController;
+	private final GameMC game;
 
 	/**
-	 * @param a
-	 * @param b
+	 * @param game
 	 * @param pitch
 	 * @param sprites
 	 */
-	public GameV(Team a, Team b, BufferedImage pitch, Map<Integer, Sprite> sprites) {
+	public GameV(GameMC game, BufferedImage pitch, Map<Integer, Sprite> sprites) {
 		this.pitch = pitch;
-		this.a = a;
-		this.modelController = new GameMC(a, b);
-		modelController.setView(this);
+		this.a = game.getTeamA();
+		this.game = game;
 
 		// HACK: eventually take in input controls
 		setFocusable(true);
@@ -149,21 +159,6 @@ public class GameV extends JPanel {
 		}
 	}
 
-	/**
-	 * There are various different coordinate systems in place when painting.
-	 * We use Hungarian Notation to keep us right, because there is no type safety for
-	 * {@code int} values.
-	 * <ul>
-	 * <li>{@code gVar}: The {@link Point} locations of the {@link Graphics2D} object.</li>
-	 * <li>{@code sVar}: The set of pixels on the screen of those {@link Point}s,
-	 *     the same as 'g' if there is no {@link AffineTransform} applied.</li>
-	 * <li>{@code pVar}: The {@link Point3d} position of the objects using our physics model.</li>
-	 * <li>{@code vVar}: The {@link Point} view of the physics model (essentially {@code Point}
-	 *     versions of the {@code Point3d} instances).</li>
-	 * </ul>
-	 *
-	 * @param graphics
-	 */
 	@Override
 	public void paint(Graphics graphics) {
 		Graphics2D g = (Graphics2D) graphics;
@@ -206,7 +201,7 @@ public class GameV extends JPanel {
 		}
 
 		// draw the players that are in view
-		for (PlayerMC pm : modelController.getPlayers()) {
+		for (PlayerMC pm : game.getPlayers()) {
 			drawPlayer(g, vBounds, pm);
 		}
 	}
@@ -222,7 +217,7 @@ public class GameV extends JPanel {
 			return;
 		}
 
-		if (debugging && pm == modelController.getSelected()) {
+		if (debugging && pm == game.getSelected()) {
 			// draw the bounds, scattergun and not efficient
 			g.setColor(Color.WHITE);
 			BoundingPolytope pBounds = pm.getBounds();
@@ -259,7 +254,7 @@ public class GameV extends JPanel {
 
 		// 0/+1/+2 depending on timestamp and motion
 		if (pm.getVelocity().length() > 0) {
-			long t = modelController.getTimestamp() % 500L;
+			long t = game.getTimestamp() % 500L;
 			if (t < 250) {
 				spriteIndex += 1;
 			} else {
@@ -271,7 +266,7 @@ public class GameV extends JPanel {
 		Point s = sprite.getCentre();
 		g.drawImage(sprite.getImage(), gPos.x - s.x / 2 - 1, gPos.y - s.y / 2, null);
 
-		if (pm == modelController.getSelected()) {
+		if (pm == game.getSelected()) {
 			sprite = teamNumberSprites.get(pm.getShirt());
 			s = sprite.getCentre();
 			g.drawImage(sprite.getImage(), gPos.x - s.x / 2 - 1, gPos.y - s.y / 2 - 13, null);
@@ -280,10 +275,10 @@ public class GameV extends JPanel {
 
 	private void drawBall(Graphics2D g, Rectangle vBounds) {
 		// 0/+1/+2/+3 depending on timestamp and motion
-		BallMC ball = modelController.getBall();
+		BallMC ball = game.getBall();
 		int spriteIndex = 0;
 		if (ball.getVelocity().length() > 0) {
-			long t = modelController.getTimestamp() % 600L;
+			long t = game.getTimestamp() % 600L;
 			if (t < 200) {
 				spriteIndex += 1;
 			} else if (t < 400) {
@@ -307,7 +302,7 @@ public class GameV extends JPanel {
 	// gSize is the drawable graphics, top left of the view being (0, 0) in graphics 'g' coordinates
 	private Rectangle calculateView(Dimension gSize) {
 		// centre over the ball
-		Point3d pBall = modelController.getBall().getPosition();
+		Point3d pBall = game.getBall().getPosition();
 		int gMinX = (int) Math.round(pBall.x - gSize.width / 2.0);
 		int gMinY = (int) Math.round(pBall.y - gSize.height / 2.0);
 		// account for falling off up/left
