@@ -97,10 +97,16 @@ public class BallMC {
 		// update position
 		s.x += v.x * t;
 		s.y += v.y * t;
-		// TODO: bounces
-		s.z = max(0, s.z + v.z * t);
-		if (s.z == 0)
-			v.z = 0;
+		s.z += v.z * t;
+		// TODO: more efficient "bounce" logic
+		if (s.z < 0) {
+			s.z = Math.abs(s.z) / 2;
+			v.z = Math.abs(v.z) / 2;
+			if (s.z < 0.5) {
+				s.z = 0;
+				v.z = 0;
+			}
+		}
 
 		// apply friction
 		v.x = signum(v.x) * max(0, abs(v.x) - FRICTION);

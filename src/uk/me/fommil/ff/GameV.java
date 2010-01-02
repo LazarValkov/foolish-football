@@ -60,7 +60,7 @@ public class GameV extends JPanel {
 	private final boolean debugging = false;
 
 //	private static final Font SHIRT_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 8);
-	private final int zoom = 1;
+	private final int zoom = 2;
 
 	private final Team a;
 
@@ -151,7 +151,7 @@ public class GameV extends JPanel {
 		for (int i = 0; i < 76; i++) {
 			teamSprites.put(i, sprites.get(i + 341).copyWithReplace(teamColours));
 		}
-		for (int i = 0; i < 4; i++) {
+		for (int i = 0; i < 5; i++) {
 			ballSprites.put(i, sprites.get(i + 1179));
 		}
 		for (int i = 0; i < 11; i++) {
@@ -287,11 +287,21 @@ public class GameV extends JPanel {
 				spriteIndex += 3;
 			}
 		}
-
-		Sprite sprite = ballSprites.get(spriteIndex);
-		Point s = sprite.getCentre();
-		Point gPos = pToG(vBounds, ball.getPosition());
-		g.drawImage(sprite.getImage(), gPos.x - s.x / 2 - 1, gPos.y - s.y / 2, null);
+		int diff = (int) (10 * ball.getPosition().z);
+		{	// the drop shadow
+			Sprite sprite = ballSprites.get(4);
+			Point s = sprite.getCentre();
+			// TODO: perspective effect by height
+			Point gPos = pToG(vBounds, ball.getPosition());
+			g.drawImage(sprite.getImage(), gPos.x + diff, gPos.y - s.y / 2, null);
+		}
+		{	// the moving ball sprite
+			Sprite sprite = ballSprites.get(spriteIndex);
+			Point s = sprite.getCentre();
+			// TODO: perspective effect by height
+			Point gPos = pToG(vBounds, ball.getPosition());
+			g.drawImage(sprite.getImage(), gPos.x - s.x / 2 - 1 - diff, gPos.y - s.y / 2, null);
+		}
 	}
 
 	private Point pToG(Rectangle vBounds, Point3d p) {

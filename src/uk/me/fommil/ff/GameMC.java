@@ -102,7 +102,7 @@ public class GameMC {
 	private void updatePhysics() {
 		// autopilot
 		BallZone bz = ball.getZone(pitch);
-		log.info(bz.toString());
+//		log.info(bz.toString());
 		// log.info("BALL " + bz);
 		Tactics tactics = a.getCurrentTactics();
 		for (PlayerMC p : as) {
@@ -134,7 +134,7 @@ public class GameMC {
 				// kick the ball
 				Vector3d kick = owner.getVelocity();
 				kick.scale(3);
-				kick.z = 1;
+				kick.z = 4;
 				ball.setVelocity(kick);
 			} else {
 				// dribble the ball
@@ -147,6 +147,12 @@ public class GameMC {
 			pm.tick(PERIOD / 1000.0);
 		}
 		ball.tick(PERIOD / 1000.0);
+
+		// log.info(ball.getPosition().toString());
+		// detectors for various states of the game
+		if (!pitch.getPitch().intersect(ball.getPosition())) {
+			log.info("OUT OF BOUNDS " + pitch.getPitch() + " " + ball.getPosition());
+		}
 	}
 
 	// get the selected player for the given team

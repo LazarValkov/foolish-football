@@ -96,7 +96,7 @@ public class Pitch {
 	// provides infinite z bounds to a rectangle
 	private BoundingBox rectangleTo3d(Rectangle r) {
 		return new BoundingBox(
-				new Point3d(r.x, r.y, Double.NEGATIVE_INFINITY),
-				new Point3d(r.x + r.width, r.y + r.height, Double.POSITIVE_INFINITY));
+				new Point3d(r.x, r.y, 0),
+				new Point3d(r.x + r.width, r.y + r.height, Double.MAX_VALUE));
 	}
 }
