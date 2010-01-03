@@ -50,7 +50,7 @@ public class BallMC {
 
 	private Vector3d v = new Vector3d();
 
-	private static final double FRICTION = 10;
+	private static final double FRICTION = 100;
 
 	private static final double GRAVITY = -10;
 	// aftertouch direction
@@ -109,8 +109,8 @@ public class BallMC {
 		}
 
 		// apply friction
-		v.x = signum(v.x) * max(0, abs(v.x) - FRICTION);
-		v.y = signum(v.y) * max(0, abs(v.y) - FRICTION);
+		v.x = signum(v.x) * max(0, abs(v.x) - t * FRICTION);
+		v.y = signum(v.y) * max(0, abs(v.y) - t * FRICTION);
 	}
 
 	/**

@@ -308,7 +308,7 @@ public class GameV extends JPanel {
 		return new Point((int) round(p.x - vBounds.getX()), (int) round(p.y - vBounds.getY()));
 	}
 
-	// FIXME: remove the need for 'v' coordinates by returning a java 3d object in 'p' coords
+	// TODO: remove the need for 'v' coordinates by returning a java 3d object in 'p' coords
 	// gSize is the drawable graphics, top left of the view being (0, 0) in graphics 'g' coordinates
 	private Rectangle calculateView(Dimension gSize) {
 		// centre over the ball

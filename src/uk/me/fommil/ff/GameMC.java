@@ -37,11 +37,7 @@ public class GameMC {
 
 	private static final Logger log = Logger.getLogger(GameMC.class.getName());
 
-	private final boolean debugging = false;
-
-	private final int zoom = 3;
-
-	private final long PERIOD = 100L;
+	private final long PERIOD = 50L;
 
 	private final Team a;
 
@@ -91,14 +87,16 @@ public class GameMC {
 		new Timer().schedule(ticker, 0L, PERIOD);
 	}
 
+	/**
+	 * @param team
+	 * @param actions
+	 */
 	public void setPlayerActions(Team team, Collection<PlayerMC.Action> actions) {
 		updateSelected(team, actions);
 		selectedA.setActions(actions);
 		// ball.setAftertouches(actions);
 	}
-	// get the selected player for the given team
 
-//	private PlayerMC selectedA = null;
 	private void updatePhysics() {
 		// autopilot
 		BallZone bz = ball.getZone(pitch);
@@ -109,6 +107,7 @@ public class GameMC {
 			if (p != selectedA) {
 				PlayerZone pz = tactics.getZone(bz, p.getShirt());
 				Point3d target = pz.getCentre(true, pitch);
+				// TODO: "magnetic" behaviour when the ball is nearby
 				p.autoPilot(target);
 			}
 		}
