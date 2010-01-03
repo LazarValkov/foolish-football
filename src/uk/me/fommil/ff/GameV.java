@@ -287,20 +287,20 @@ public class GameV extends JPanel {
 				spriteIndex += 3;
 			}
 		}
-		int diff = (int) (10 * ball.getPosition().z);
+		int diff = (int) (4 * ball.getPosition().z);
 		{	// the drop shadow
 			Sprite sprite = ballSprites.get(4);
 			Point s = sprite.getCentre();
 			// TODO: perspective effect by height
 			Point gPos = pToG(vBounds, ball.getPosition());
-			g.drawImage(sprite.getImage(), gPos.x + diff, gPos.y - s.y / 2, null);
+			g.drawImage(sprite.getImage(), gPos.x + diff / 2, gPos.y - s.y / 2 + diff, null);
 		}
 		{	// the moving ball sprite
 			Sprite sprite = ballSprites.get(spriteIndex);
 			Point s = sprite.getCentre();
 			// TODO: perspective effect by height
 			Point gPos = pToG(vBounds, ball.getPosition());
-			g.drawImage(sprite.getImage(), gPos.x - s.x / 2 - 1 - diff, gPos.y - s.y / 2, null);
+			g.drawImage(sprite.getImage(), gPos.x - s.x / 2 - 1 - diff / 2, gPos.y - s.y / 2 - diff, null);
 		}
 	}
 
