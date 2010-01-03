@@ -40,7 +40,7 @@ public class BallMC {
 	 */
 	public enum Aftertouch {
 
-		LIFT, POWER, LEFT, RIGHT
+		UP, DOWN, LEFT, RIGHT
 
 	}
 
@@ -53,18 +53,10 @@ public class BallMC {
 	private static final double FRICTION = 100;
 
 	private static final double GRAVITY = -10;
-	// aftertouch direction
 
+	// aftertouch direction
 	private Vector3d aftertouch = new Vector3d();
 
-//	/**
-//	 * Return the volume in which this player can control the ball.
-//	 *
-//	 * @return
-//	 */
-//	public Bounds getBounds() {
-//		return new BoundingSphere(s, 2);
-//	}
 	/**
 	 * @param pitch
 	 * @return
@@ -94,6 +86,17 @@ public class BallMC {
 		// apply gravity
 		v.z += t * GRAVITY;
 
+		// apply aftertouch
+		// TODO: more appropriate aftertouch
+		if (s.z > 0.5) {
+			Vector3d a = (Vector3d) aftertouch.clone();
+			if (v.z < 0) // no more lift allowed when the ball is coming down
+				a.z = 0;
+			// TODO: scale by height - higher means less effect
+			//a.scale(t);
+			v.add(a);
+		}
+
 		// update position
 		s.x += v.x * t;
 		s.y += v.y * t;
@@ -119,24 +122,25 @@ public class BallMC {
 	 * @param aftertouches
 	 */
 	public void setAftertouches(Collection<Aftertouch> aftertouches) {
-		if (aftertouches.isEmpty() || s.z < 10)
-			return;
-
 		// apply aftertouch
-		Vector3d ats = new Vector3d();
+		aftertouch.scale(0);
 		for (Aftertouch at : aftertouches) {
 			switch (at) {
-				case LIFT:
+				// TODO: consider direction of motion
+				case UP:
+					aftertouch.y = -10;
 					break;
-				case POWER:
+				case DOWN:
+					aftertouch.z = 1;
 					break;
 				case LEFT:
+					aftertouch.x -= 5;
 					break;
 				case RIGHT:
+					aftertouch.x += 5;
 					break;
 			}
 		}
-		aftertouch = ats;
 	}
 
 	// <editor-fold defaultstate="collapsed" desc="BOILERPLATE GETTERS/SETTERS">

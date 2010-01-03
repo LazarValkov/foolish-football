@@ -135,15 +135,15 @@ public class Tactics {
 		}
 
 		/**
-		 * @param upwards true if the team is playing upwards
 		 * @param pitch
+		 * @param facing
 		 * @return the central point represented by this for a pitch of the given width and height
 		 */
-		public Point3d getCentre(boolean upwards, Pitch pitch) {
+		public Point3d getCentre(Pitch pitch, Pitch.Facing facing) {
 			Rectangle p = pitch.getPitchAsRectangle();
 			double xx = (p.width * x) / 15;
 			double yy = (p.height * y) / 16;
-			if (upwards) {
+			if (facing == Pitch.Facing.UP) {
 				yy = p.height - yy;
 				xx = p.width - xx;
 			}

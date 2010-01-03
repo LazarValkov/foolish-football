@@ -15,9 +15,11 @@
 package uk.me.fommil.ff;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicLong;
@@ -25,6 +27,7 @@ import java.util.logging.Logger;
 import javax.media.j3d.Bounds;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
+import uk.me.fommil.ff.PlayerMC.Action;
 import uk.me.fommil.ff.Tactics.BallZone;
 import uk.me.fommil.ff.Tactics.PlayerZone;
 
@@ -77,7 +80,7 @@ public class GameMC {
 		List<Player> aPlayers = a.getPlayers();
 		Tactics tactics = a.getCurrentTactics();
 		for (int i = 2; i <= 11; i++) {
-			Point3d p = tactics.getZone(bz, i).getCentre(true, pitch);
+			Point3d p = tactics.getZone(bz, i).getCentre(pitch, Pitch.Facing.UP);
 			PlayerMC pma = new PlayerMC(i, aPlayers.get(i - 2));
 			pma.setPosition(p);
 			as.add(pma);
@@ -91,10 +94,28 @@ public class GameMC {
 	 * @param team
 	 * @param actions
 	 */
-	public void setPlayerActions(Team team, Collection<PlayerMC.Action> actions) {
+	public void setUserActions(Team team, Collection<PlayerMC.Action> actions) {
 		updateSelected(team, actions);
 		selectedA.setActions(actions);
-		// ball.setAftertouches(actions);
+
+		Set<BallMC.Aftertouch> aftertouches = Sets.newHashSet();
+		for (Action action : actions) {
+			switch (action) {
+				case UP:
+					aftertouches.add(BallMC.Aftertouch.UP);
+					break;
+				case DOWN:
+					aftertouches.add(BallMC.Aftertouch.DOWN);
+					break;
+				case LEFT:
+					aftertouches.add(BallMC.Aftertouch.LEFT);
+					break;
+				case RIGHT:
+					aftertouches.add(BallMC.Aftertouch.RIGHT);
+					break;
+			}
+		}
+		ball.setAftertouches(aftertouches);
 	}
 
 	private void updatePhysics() {
@@ -106,7 +127,7 @@ public class GameMC {
 		for (PlayerMC p : as) {
 			if (p != selectedA) {
 				PlayerZone pz = tactics.getZone(bz, p.getShirt());
-				Point3d target = pz.getCentre(true, pitch);
+				Point3d target = pz.getCentre(pitch, Pitch.Facing.UP);
 				// TODO: "magnetic" behaviour when the ball is nearby
 				p.autoPilot(target);
 			}

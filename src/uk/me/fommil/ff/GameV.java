@@ -100,7 +100,7 @@ public class GameV extends JPanel {
 				default:
 					return;
 			}
-			game.setPlayerActions(GameV.this.a, actions);
+			game.setUserActions(GameV.this.a, actions);
 		}
 
 		@Override
@@ -127,7 +127,7 @@ public class GameV extends JPanel {
 				default:
 					return;
 			}
-			game.setPlayerActions(GameV.this.a, actions);
+			game.setUserActions(GameV.this.a, actions);
 		}
 	};
 
@@ -254,10 +254,10 @@ public class GameV extends JPanel {
 
 		// 0/+1/+2 depending on timestamp and motion
 		if (pm.getVelocity().length() > 0) {
-			long t = game.getTimestamp() % 500L;
-			if (t < 250) {
+			long t = game.getTimestamp() % 600L;
+			if (t < 200) {
 				spriteIndex += 1;
-			} else {
+			} else if (t < 400) {
 				spriteIndex += 2;
 			}
 		}

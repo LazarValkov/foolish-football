@@ -17,8 +17,6 @@ package uk.me.fommil.ff;
 import java.awt.Point;
 import java.awt.Rectangle;
 import javax.media.j3d.BoundingBox;
-import javax.media.j3d.BoundingPolytope;
-import javax.media.j3d.Bounds;
 import javax.vecmath.Point3d;
 
 /**
@@ -48,6 +46,10 @@ import javax.vecmath.Point3d;
  * @author Samuel Halliday
  */
 public class Pitch {
+
+	public enum Facing {
+		UP, DOWN
+	}
 
 	private final Rectangle pitch = new Rectangle(81, 129, 509, 640);
 
