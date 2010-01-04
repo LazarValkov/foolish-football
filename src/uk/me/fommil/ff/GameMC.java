@@ -102,6 +102,8 @@ public class GameMC {
 		}
 	}
 
+	// TODO: don't handle our own clock
+	@Deprecated
 	private final long PERIOD = 50L;
 
 	private final Team a;

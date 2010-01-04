@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
+import static java.lang.Math.*;
 import javax.media.j3d.BoundingPolytope;
 import javax.media.j3d.Transform3D;
 import javax.vecmath.AxisAngle4d;
@@ -37,6 +38,8 @@ public class PlayerMC {
 	private static final Logger log = Logger.getLogger(PlayerMC.class.getName());
 
 	private static final int AUTO = 10;
+
+	private static final double TACKLE_FRICTION = 50;
 
 	/**
 	 * @return the angle relate to NORTH {@code (- PI, + PI]}.
@@ -57,8 +60,6 @@ public class PlayerMC {
 	private final Player player;
 
 	private final int shirt;
-
-	private Collection<Action> actions;
 
 	private boolean kicking, tackling, heading;
 
@@ -112,6 +113,10 @@ public class PlayerMC {
 		Vector3d dv = (Vector3d) v.clone();
 		dv.scale(t);
 		s.add(dv);
+		if (tackling) {
+			v.x = signum(v.x) * max(0, abs(v.x) - t * TACKLE_FRICTION);
+			v.y = signum(v.y) * max(0, abs(v.y) - t * TACKLE_FRICTION);
+		}
 	}
 
 	/**
@@ -159,7 +164,7 @@ public class PlayerMC {
 	 * Controller. Clear the action list.
 	 */
 	public void clearActions() {
-		v = new Vector3d();
+		v.set(new Vector3d());
 	}
 
 	/**
@@ -210,6 +215,7 @@ public class PlayerMC {
 			}
 		};
 		tackling = true;
+		v.scale(5);
 		new Timer().schedule(tackle, 2000L);
 	}
 
@@ -239,6 +245,10 @@ public class PlayerMC {
 
 	public boolean isKicking() {
 		return kicking;
+	}
+
+	public boolean isTackling() {
+		return tackling;
 	}
 
 	public Point3d getPosition() {

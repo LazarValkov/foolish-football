@@ -235,41 +235,56 @@ public class GameV extends JPanel {
 		}
 
 		int spriteIndex = 0;
-		switch (Direction.valueOf(pm.getAngle())) {
-			case DOWN_LEFT:
-				spriteIndex = 12;
-				break;
-			case LEFT:
-				spriteIndex = 9;
-				break;
-			case UP_LEFT:
-				spriteIndex = 18;
-				break;
-			case UP:
-				spriteIndex = 0;
-				break;
-			case UP_RIGHT:
-				spriteIndex = 21;
+		Direction direction = Direction.valueOf(pm.getAngle());
+		switch (direction) {
+			case DOWN:
+				spriteIndex = 1;
 				break;
 			case RIGHT:
-				spriteIndex = 6;
+				spriteIndex = 2;
+				break;
+			case LEFT:
+				spriteIndex = 3;
+				break;
+			case DOWN_LEFT:
+				spriteIndex = 4;
 				break;
 			case DOWN_RIGHT:
-				spriteIndex = 15;
+				spriteIndex = 5;
 				break;
-			case DOWN:
-				spriteIndex = 3;
+			case UP_LEFT:
+				spriteIndex = 6;
+				break;
+			case UP_RIGHT:
+				spriteIndex = 7;
 				break;
 		}
 
-		if (pm.getVelocity().length() > 0) {
+		int dynamic = 0;
+		if (pm.getVelocity().lengthSquared() > 0) {
 			long t = (game.getTimestamp() + pm.getShirt() * 17) % 800L;
 			if (t < 200) {
 			} else if (t < 400) {
-				spriteIndex += 1;
+				dynamic = 1;
 			} else if (t > 600) {
-				spriteIndex += 2;
+				dynamic = 2;
 			}
+		}
+
+		if (pm.isTackling()) {
+			// left and right are swapped
+			switch (direction) {
+				case LEFT:
+					spriteIndex--;
+					break;
+				case RIGHT:
+					spriteIndex++;
+					break;
+			}
+			spriteIndex += 54;
+		} else {
+			spriteIndex *= 3;
+			spriteIndex += dynamic;
 		}
 
 		Sprite sprite = teamSprites.get(spriteIndex);
@@ -291,7 +306,7 @@ public class GameV extends JPanel {
 //		log.info(v + " " + v.length());
 		if (v.lengthSquared() > 0) {
 			long period = max((long) v.length(), 50);
-			log.info(v.length() + " " + period);
+//			log.info(v.length() + " " + period);
 			long t = game.getTimestamp() % period;
 			if (t < period / 4) {
 				spriteIndex += 1;
