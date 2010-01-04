@@ -34,6 +34,8 @@ import javax.media.j3d.BoundingPolytope;
 import static java.lang.Math.*;
 import javax.swing.JPanel;
 import javax.vecmath.Point3d;
+import uk.me.fommil.ff.swos.SwosUtils;
+import uk.me.fommil.ff.swos.SwosUtils.Direction;
 
 /**
  * The view (V) for the game play.
@@ -59,8 +61,7 @@ public class GameV extends JPanel {
 
 	private final boolean debugging = false;
 
-//	private static final Font SHIRT_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 8);
-	private final int zoom = 2;
+	private final int zoom = 1;
 
 	private final Team a;
 
@@ -210,7 +211,6 @@ public class GameV extends JPanel {
 
 	private void drawPlayer(Graphics2D g, Rectangle vBounds, PlayerMC pm) {
 		Point3d pPos = pm.getPosition();
-		// p is the pixel location of the centre of the player
 		Point gPos = pToG(vBounds, pPos);
 
 		// assumes sprite size
@@ -234,29 +234,36 @@ public class GameV extends JPanel {
 			}
 		}
 
-		int spriteIndex;
-		double angle = pm.getAngle();
-		if (angle <= - 3 * Math.PI / 4) {
-			spriteIndex = 12;
-		} else if (angle <= -Math.PI / 2) {
-			spriteIndex = 9;
-		} else if (angle <= -Math.PI / 4) {
-			spriteIndex = 18;
-		} else if (angle <= 0) {
-			spriteIndex = 0;
-		} else if (angle <= Math.PI / 4) {
-			spriteIndex = 21;
-		} else if (angle <= Math.PI / 2) {
-			spriteIndex = 6;
-		} else if (angle <= 3 * Math.PI / 4) {
-			spriteIndex = 15;
-		} else {
-			spriteIndex = 3;
+		int spriteIndex = 0;
+		switch (Direction.valueOf(pm.getAngle())) {
+			case DOWN_LEFT:
+				spriteIndex = 12;
+				break;
+			case LEFT:
+				spriteIndex = 9;
+				break;
+			case UP_LEFT:
+				spriteIndex = 18;
+				break;
+			case UP:
+				spriteIndex = 0;
+				break;
+			case UP_RIGHT:
+				spriteIndex = 21;
+				break;
+			case RIGHT:
+				spriteIndex = 6;
+				break;
+			case DOWN_RIGHT:
+				spriteIndex = 15;
+				break;
+			case DOWN:
+				spriteIndex = 3;
+				break;
 		}
 
-		// 0/+1/+2 depending on timestamp and motion
 		if (pm.getVelocity().length() > 0) {
-			long t = game.getTimestamp() % 800L;
+			long t = (game.getTimestamp() + pm.getShirt() * 17) % 800L;
 			if (t < 200) {
 			} else if (t < 400) {
 				spriteIndex += 1;
@@ -290,7 +297,11 @@ public class GameV extends JPanel {
 				spriteIndex += 3;
 			}
 		}
-		int diff = (int) (2 * ball.getPosition().z);
+		// TODO: calibrate the Z drawing with the sprites
+		double z = ball.getPosition().z;
+//		if (z > 3)
+//			log.info("BALL Z = " + z);
+		int diff = 2 * (int) (z);
 		{	// the drop shadow
 			Sprite sprite = ballSprites.get(4);
 			Point s = sprite.getCentre();
@@ -314,14 +325,13 @@ public class GameV extends JPanel {
 	private Rectangle calculateView(Dimension gSize) {
 		// centre over the ball
 		Point3d pBall = game.getBall().getPosition();
-		int gMinX = (int) Math.round(pBall.x - gSize.width / 2.0);
-		int gMinY = (int) Math.round(pBall.y - gSize.height / 2.0);
-		// account for falling off up/left
-		gMinX = max(gMinX, 0);
-		gMinY = max(gMinY, 0);
-		// account for falling off down/right, where screen could be bigger than the pitch image
-		gMinX = min(gMinX, max(0, pitch.getWidth() - gSize.width));
-		gMinY = min(gMinY, max(0, pitch.getHeight() - gSize.height));
+		int gMinX = (int) round(pBall.x - gSize.width / 2.0);
+		int gMinY = (int) round(pBall.y - gSize.height / 2.0);
+		// account for falling off, where screen could be bigger than the pitch image
+		int unseenWidth = max(0, pitch.getWidth() - gSize.width);
+		gMinX = SwosUtils.bounded(0, gMinX, unseenWidth);
+		int unseenHeight = max(0, pitch.getHeight() - gSize.height);
+		gMinY = SwosUtils.bounded(0, gMinY, unseenHeight);
 		return new Rectangle(gMinX, gMinY, gSize.width, gSize.height);
 	}
 }

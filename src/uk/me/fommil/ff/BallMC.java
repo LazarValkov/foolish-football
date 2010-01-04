@@ -15,17 +15,14 @@
 package uk.me.fommil.ff;
 
 import com.google.common.base.Preconditions;
-import java.awt.Rectangle;
-import static java.lang.Math.max;
-import static java.lang.Math.min;
-import static java.lang.Math.signum;
-import static java.lang.Math.abs;
-import static java.lang.Math.round;
+import static java.lang.Math.*;
 import java.util.Collection;
 import java.util.logging.Logger;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 import uk.me.fommil.ff.Tactics.BallZone;
+import uk.me.fommil.ff.swos.SwosUtils;
+import uk.me.fommil.ff.swos.SwosUtils.Direction;
 
 /**
  * The model (M) and controller (C) for the ball during game play.
@@ -46,17 +43,20 @@ public class BallMC {
 
 	private static final Logger log = Logger.getLogger(BallMC.class.getName());
 
-	private Point3d s = new Point3d(0, 0, 0);
+	private static final double GROUND_FRICTION = 200;
 
-	private Vector3d v = new Vector3d();
+	private static final double AIR_FRICTION = 50;
 
-	// TODO: friction in air
-	private static final double FRICTION = 100;
+	private static final double GRAVITY = 10;
 
-	private static final double GRAVITY = -10;
+	// position
+	private final Point3d s = new Point3d(0, 0, 0);
 
-	// aftertouch direction
-	private Vector3d aftertouch = new Vector3d();
+	// velocity
+	private final Vector3d v = new Vector3d();
+
+	// aftertouch
+	private final Vector3d after = new Vector3d();
 
 	/**
 	 * @param pitch
@@ -64,18 +64,7 @@ public class BallMC {
 	 */
 	public BallZone getZone(Pitch pitch) {
 		Preconditions.checkNotNull(pitch);
-		Rectangle p = pitch.getPitchAsRectangle();
-
-//		double bx = min(max(s.x, p.x), p.x + p.width);
-//		double by = min(max(s.y, p.y), p.y + p.height);
-
-		int x = (int) (5 * (p.width + p.x - s.x) / p.width);
-		int y = (int) (7 * (p.height + p.y - s.y) / p.height);
-
-		x = max(0, min(x, 4));
-		y = max(0, min(y, 6));
-
-		return new BallZone(x, y);
+		return new BallZone(s, pitch);
 	}
 
 	/**
@@ -84,19 +73,17 @@ public class BallMC {
 	 * @param t with units of seconds
 	 */
 	public void tick(double t) {
-		// apply gravity
-		v.z += t * GRAVITY;
+		// gravity
+		if (s.z > 0.01)
+			v.z -= t * GRAVITY;
 
-		// FIXME: aftertouch
-		// apply aftertouch
-		if (s.z > 0.5) {
-			Vector3d a = (Vector3d) aftertouch.clone();
-			if (v.z <= 0 || s.z > 3) {
-				// no more lift or velocity allowed when the ball is coming down or too high
+		// aftertouch
+		if (s.z >= 0.5 && v.z >= 0) {
+			Vector3d a = (Vector3d) after.clone();
+			if (s.z > 3) {
 				a.z = 0;
-				a.y = 0;
 			}
-			//a.scale(t);
+			a.scale(t);
 			v.add(a);
 		}
 
@@ -104,19 +91,29 @@ public class BallMC {
 		s.x += v.x * t;
 		s.y += v.y * t;
 		s.z += v.z * t;
-		// TODO: more efficient "bounce" logic
+
+		// ground bounce
 		if (s.z < 0) {
-			s.z = Math.abs(s.z) / 2;
-			v.z = Math.abs(v.z) / 2;
-			if (s.z < 0.5) {
-				s.z = 0;
-				v.z = 0;
-			}
+			s.z = abs(s.z) / 2;
+			v.z = abs(v.z) / 2;
 		}
 
-		// apply friction
-		v.x = signum(v.x) * max(0, abs(v.x) - t * FRICTION);
-		v.y = signum(v.y) * max(0, abs(v.y) - t * FRICTION);
+		// friction
+		v.x = signum(v.x) * max(0, abs(v.x) - friction(t, s.z));
+		v.y = signum(v.y) * max(0, abs(v.y) - friction(t, s.z));
+
+		// TODO: check "kill small numbers" logic
+		// kill small numbers
+		if (s.z < 0.1) {
+			s.z = 0;
+			v.z = 0;
+		}
+	}
+
+	private double friction(double t, double z) {
+		if (z > 0.1)
+			return AIR_FRICTION * t;
+		return GROUND_FRICTION * t;
 	}
 
 	/**
@@ -124,26 +121,86 @@ public class BallMC {
 	 *
 	 * @param aftertouches
 	 */
-	public void setAftertouches(Collection<Aftertouch> aftertouches) {
-		// apply aftertouch
-		aftertouch.scale(0);
+	public void setAftertouch(Collection<Aftertouch> aftertouches) {
+		// TODO: consider the player who applies the aftertouch
+		Vector3d aftertouch = new Vector3d();
 		for (Aftertouch at : aftertouches) {
 			switch (at) {
-				// TODO: consider direction of motion
-				case DOWN:
-					aftertouch.z = 2;
-					aftertouch.y -= 10;
-					break;
 				case UP:
-					aftertouch.y -= 5;
+					aftertouch.y -= 1;
+					break;
+				case DOWN:
+					aftertouch.y += 1;
 					break;
 				case LEFT:
-					aftertouch.x -= 5;
+					aftertouch.x -= 1;
 					break;
 				case RIGHT:
-					aftertouch.x += 5;
+					aftertouch.x += 1;
 					break;
 			}
+		}
+//		log.info(aftertouches + " " + aftertouch);
+		Direction direction = Direction.valueOf(SwosUtils.getBearing(v));
+		if (v.lengthSquared() == 0 || direction == null) {
+			after.scale(0);
+			return;
+		}
+		// TODO: clean up horrible code duplication
+		double bendy = 100;
+		double power = 10;
+		double power_gravity = 0;
+		double lift = 10;
+		double lift_gravity = 3 * GRAVITY;
+
+		log.info("BALL FACING " + direction + " AFTERTOUCH " + aftertouch);
+		switch (direction) {
+			case UP_RIGHT:
+			case UP_LEFT:
+			case UP:
+				after.x = bendy * aftertouch.x;
+				if (aftertouch.y < 0) {
+					// power shot
+					after.y = -power;
+					after.z = power_gravity;
+				} else if (aftertouch.y > 0) {
+					// lift
+					after.y = -lift;
+					after.z = lift_gravity;
+				}
+				break;
+			case DOWN_LEFT:
+			case DOWN_RIGHT:
+			case DOWN:
+				after.x = bendy * aftertouch.x;
+				if (aftertouch.y > 0) {
+					after.y = power;
+					after.z = power_gravity;
+				} else if (aftertouch.y < 0) {
+					after.y = lift;
+					after.z = lift_gravity;
+				}
+				break;
+			case RIGHT:
+				after.y = bendy * aftertouch.y;
+				if (aftertouch.x > 0) {
+					after.x = power;
+					after.z = power_gravity;
+				} else if (aftertouch.x < 0) {
+					after.x = lift;
+					after.z = lift_gravity;
+				}
+				break;
+			case LEFT:
+				after.y = bendy * aftertouch.y;
+				if (aftertouch.x < 0) {
+					after.x = -power;
+					after.z = power_gravity;
+				} else if (aftertouch.x > 0) {
+					after.x = -lift;
+					after.z = lift_gravity;
+				}
+				break;
 		}
 	}
 
@@ -154,7 +211,7 @@ public class BallMC {
 
 	public void setPosition(Point3d s) {
 		Preconditions.checkNotNull(s);
-		this.s = s;
+		this.s.set(s);
 	}
 
 	public Vector3d getVelocity() {
@@ -163,7 +220,7 @@ public class BallMC {
 
 	public void setVelocity(Vector3d v) {
 		Preconditions.checkNotNull(v);
-		this.v = v;
+		this.v.set(v);
 	}
 	// </editor-fold>
 }

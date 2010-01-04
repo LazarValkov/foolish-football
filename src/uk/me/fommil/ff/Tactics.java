@@ -16,14 +16,13 @@ package uk.me.fommil.ff;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
-import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import javax.media.j3d.BoundingBox;
 import javax.vecmath.Point3d;
+import uk.me.fommil.ff.swos.SwosUtils;
 
 /**
  * Represents the team tactics, which dictates where each {@link Player} should be
@@ -57,15 +56,17 @@ public class Tactics {
 		}
 
 		/**
-		 * @param width
-		 * @param height
-		 * @return the central point represented by this for an image of the given width and height
+		 * @param s
+		 * @param pitch
 		 */
-		@Deprecated
-		public Point getLocation(int width, int height) {
-			int xx = (width * x) / 5 - 1;
-			int yy = (height * y) / 7 - 1;
-			return new Point(xx, yy);
+		public BallZone(Point3d s, Pitch pitch) {
+			Rectangle p = pitch.getPitchAsRectangle();
+
+			int xx = (int) (5 * (p.width + p.x - s.x) / p.width);
+			int yy = (int) (7 * (p.height + p.y - s.y) / p.height);
+
+			this.x = SwosUtils.bounded(0, xx, 4);
+			this.y = SwosUtils.bounded(0, yy, 6);
 		}
 
 		@Override

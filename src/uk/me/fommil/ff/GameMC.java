@@ -115,7 +115,7 @@ public class GameMC {
 					break;
 			}
 		}
-		ball.setAftertouches(aftertouches);
+		ball.setAftertouch(aftertouches);
 	}
 
 	private void updatePhysics() {
@@ -171,7 +171,7 @@ public class GameMC {
 		// log.info(ball.getPosition().toString());
 		// detectors for various states of the game
 		if (!pitch.getPitch().intersect(ball.getPosition())) {
-			log.info("OUT OF BOUNDS " + pitch.getPitch() + " " + ball.getPosition());
+			// log.info("OUT OF BOUNDS " + pitch.getPitch() + " " + ball.getPosition());
 		}
 	}
 
