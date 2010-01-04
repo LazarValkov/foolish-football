@@ -26,7 +26,6 @@ import javax.media.j3d.Transform3D;
 import javax.vecmath.AxisAngle4d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
-import uk.me.fommil.ff.swos.SwosUtils;
 
 /**
  * The model (M) and controller (C) for a {@link Player} during game play.
@@ -43,7 +42,7 @@ public class PlayerMC {
 	 * @return the angle relate to NORTH {@code (- PI, + PI]}.
 	 */
 	public double getAngle() {
-		return SwosUtils.getBearing(facing);
+		return GameMC.getBearing(facing);
 	}
 
 	/**

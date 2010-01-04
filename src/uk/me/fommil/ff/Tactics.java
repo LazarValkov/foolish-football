@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.vecmath.Point3d;
-import uk.me.fommil.ff.swos.SwosUtils;
 
 /**
  * Represents the team tactics, which dictates where each {@link Player} should be
@@ -65,8 +64,8 @@ public class Tactics {
 			int xx = (int) (5 * (p.width + p.x - s.x) / p.width);
 			int yy = (int) (7 * (p.height + p.y - s.y) / p.height);
 
-			this.x = SwosUtils.bounded(0, xx, 4);
-			this.y = SwosUtils.bounded(0, yy, 6);
+			this.x = GameMC.bounded(0, xx, 4);
+			this.y = GameMC.bounded(0, yy, 6);
 		}
 
 		@Override

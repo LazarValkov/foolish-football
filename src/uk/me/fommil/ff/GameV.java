@@ -34,8 +34,8 @@ import javax.media.j3d.BoundingPolytope;
 import static java.lang.Math.*;
 import javax.swing.JPanel;
 import javax.vecmath.Point3d;
-import uk.me.fommil.ff.swos.SwosUtils;
-import uk.me.fommil.ff.swos.SwosUtils.Direction;
+import javax.vecmath.Vector3d;
+import uk.me.fommil.ff.GameMC.Direction;
 
 /**
  * The view (V) for the game play.
@@ -61,7 +61,7 @@ public class GameV extends JPanel {
 
 	private final boolean debugging = false;
 
-	private final int zoom = 1;
+	private final int zoom = 2;
 
 	private final Team a;
 
@@ -287,13 +287,17 @@ public class GameV extends JPanel {
 		// 0/+1/+2/+3 depending on timestamp and motion
 		BallMC ball = game.getBall();
 		int spriteIndex = 0;
-		if (ball.getVelocity().length() > 0) {
-			long t = game.getTimestamp() % 600L;
-			if (t < 200) {
+		Vector3d v = ball.getVelocity();
+//		log.info(v + " " + v.length());
+		if (v.lengthSquared() > 0) {
+			long period = max((long) v.length(), 50);
+			log.info(v.length() + " " + period);
+			long t = game.getTimestamp() % period;
+			if (t < period / 4) {
 				spriteIndex += 1;
-			} else if (t < 400) {
+			} else if (t < period / 2) {
 				spriteIndex += 2;
-			} else {
+			} else if (t < 3 * period / 4) {
 				spriteIndex += 3;
 			}
 		}
@@ -301,7 +305,7 @@ public class GameV extends JPanel {
 		double z = ball.getPosition().z;
 //		if (z > 3)
 //			log.info("BALL Z = " + z);
-		int diff = 2 * (int) (z);
+		int diff = (int) (3 * z);
 		{	// the drop shadow
 			Sprite sprite = ballSprites.get(4);
 			Point s = sprite.getCentre();
@@ -312,7 +316,7 @@ public class GameV extends JPanel {
 			Sprite sprite = ballSprites.get(spriteIndex);
 			Point s = sprite.getCentre();
 			Point gPos = pToG(vBounds, ball.getPosition());
-			g.drawImage(sprite.getImage(), gPos.x - s.x / 2 - 1 + diff / 2, gPos.y - s.y / 2 - 1 - diff, null);
+			g.drawImage(sprite.getImage(), gPos.x - s.x / 2 - 1 - diff / 2, gPos.y - s.y / 2 - 1 - diff, null);
 		}
 	}
 
@@ -329,9 +333,9 @@ public class GameV extends JPanel {
 		int gMinY = (int) round(pBall.y - gSize.height / 2.0);
 		// account for falling off, where screen could be bigger than the pitch image
 		int unseenWidth = max(0, pitch.getWidth() - gSize.width);
-		gMinX = SwosUtils.bounded(0, gMinX, unseenWidth);
+		gMinX = GameMC.bounded(0, gMinX, unseenWidth);
 		int unseenHeight = max(0, pitch.getHeight() - gSize.height);
-		gMinY = SwosUtils.bounded(0, gMinY, unseenHeight);
+		gMinY = GameMC.bounded(0, gMinY, unseenHeight);
 		return new Rectangle(gMinX, gMinY, gSize.width, gSize.height);
 	}
 }

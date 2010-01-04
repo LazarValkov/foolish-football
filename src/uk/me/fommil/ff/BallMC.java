@@ -20,9 +20,9 @@ import java.util.Collection;
 import java.util.logging.Logger;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
+import uk.me.fommil.ff.GameMC.Direction;
 import uk.me.fommil.ff.Tactics.BallZone;
 import uk.me.fommil.ff.swos.SwosUtils;
-import uk.me.fommil.ff.swos.SwosUtils.Direction;
 
 /**
  * The model (M) and controller (C) for the ball during game play.
@@ -58,6 +58,9 @@ public class BallMC {
 	// aftertouch
 	private final Vector3d after = new Vector3d();
 
+	// no aftertouch after a bounce
+	private volatile boolean bounced = false;
+
 	/**
 	 * @param pitch
 	 * @return
@@ -73,12 +76,8 @@ public class BallMC {
 	 * @param t with units of seconds
 	 */
 	public void tick(double t) {
-		// gravity
-		if (s.z > 0.01)
-			v.z -= t * GRAVITY;
-
 		// aftertouch
-		if (s.z >= 0.5 && v.z >= 0) {
+		if (!bounced && s.z >= 0.5 && v.z >= 0 && after.lengthSquared() > 0) {
 			Vector3d a = (Vector3d) after.clone();
 			if (s.z > 3) {
 				a.z = 0;
@@ -94,20 +93,22 @@ public class BallMC {
 
 		// ground bounce
 		if (s.z < 0) {
-			s.z = abs(s.z) / 2;
-			v.z = abs(v.z) / 2;
+			if (abs(v.z) < 1) {
+				s.z = 0;
+				v.z = 0;
+			} else {
+				bounced = true;
+				s.z = abs(s.z) / 2;
+				v.z = abs(v.z) / 2;
+			}
 		}
+		// gravity
+		if (s.z > 0)
+			v.z -= t * GRAVITY;
 
 		// friction
 		v.x = signum(v.x) * max(0, abs(v.x) - friction(t, s.z));
 		v.y = signum(v.y) * max(0, abs(v.y) - friction(t, s.z));
-
-		// TODO: check "kill small numbers" logic
-		// kill small numbers
-		if (s.z < 0.1) {
-			s.z = 0;
-			v.z = 0;
-		}
 	}
 
 	private double friction(double t, double z) {
@@ -141,15 +142,15 @@ public class BallMC {
 			}
 		}
 //		log.info(aftertouches + " " + aftertouch);
-		Direction direction = Direction.valueOf(SwosUtils.getBearing(v));
+		after.scale(0);
+		Direction direction = Direction.valueOf(GameMC.getBearing(v));
 		if (v.lengthSquared() == 0 || direction == null) {
-			after.scale(0);
 			return;
 		}
 		// TODO: clean up horrible code duplication
-		double bendy = 100;
-		double power = 10;
-		double power_gravity = 0;
+		double bendy = 150;
+		double power = 20;
+		double power_gravity = GRAVITY / 2;
 		double lift = 10;
 		double lift_gravity = 3 * GRAVITY;
 
@@ -211,6 +212,7 @@ public class BallMC {
 
 	public void setPosition(Point3d s) {
 		Preconditions.checkNotNull(s);
+		bounced = false;
 		this.s.set(s);
 	}
 
@@ -220,6 +222,7 @@ public class BallMC {
 
 	public void setVelocity(Vector3d v) {
 		Preconditions.checkNotNull(v);
+		bounced = false;
 		this.v.set(v);
 	}
 	// </editor-fold>
