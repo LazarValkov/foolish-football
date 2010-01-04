@@ -98,6 +98,9 @@ public class GameV extends JPanel {
 				case KeyEvent.VK_ENTER:
 					actions.add(PlayerMC.Action.TACKLE);
 					break;
+				case KeyEvent.VK_A:
+					actions.add(PlayerMC.Action.HEAD);
+					break;
 				default:
 					return;
 			}
@@ -125,6 +128,9 @@ public class GameV extends JPanel {
 				case KeyEvent.VK_ENTER:
 					actions.remove(PlayerMC.Action.TACKLE);
 					break;
+				case KeyEvent.VK_A:
+					actions.remove(PlayerMC.Action.HEAD);
+					break;
 				default:
 					return;
 			}
@@ -149,7 +155,7 @@ public class GameV extends JPanel {
 		addKeyListener(keyboardInput);
 
 		Map<Color, Color> teamColours = a.getTeamColors();
-		for (int i = 0; i < 76; i++) {
+		for (int i = 0; i < 101; i++) {
 			teamSprites.put(i, sprites.get(i + 341).copyWithReplace(teamColours));
 		}
 		for (int i = 0; i < 5; i++) {
@@ -282,6 +288,22 @@ public class GameV extends JPanel {
 					break;
 			}
 			spriteIndex += 54;
+		} else if (pm.isHeading()) {
+			spriteIndex += 76;
+			// TODO: better way of dealing with headers
+			if (pm.isHeadingAdvanced()) {
+				spriteIndex += 16;
+			}
+		} else if (pm.isOnGround()) {
+			switch (direction) {
+				case LEFT:
+					spriteIndex--;
+					break;
+				case RIGHT:
+					spriteIndex++;
+					break;
+			}
+			spriteIndex += 62;
 		} else {
 			spriteIndex *= 3;
 			spriteIndex += dynamic;

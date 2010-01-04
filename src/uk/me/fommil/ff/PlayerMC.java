@@ -41,6 +41,8 @@ public class PlayerMC {
 
 	private static final double TACKLE_FRICTION = 50;
 
+	private static final double HEADING_FRICTION = 50;
+
 	/**
 	 * @return the angle relate to NORTH {@code (- PI, + PI]}.
 	 */
@@ -61,13 +63,13 @@ public class PlayerMC {
 
 	private final int shirt;
 
-	private boolean kicking, tackling, heading;
+	private volatile boolean kicking, tackling, heading, headingAdvanced, onGround;
 
-	private Point3d s = new Point3d();
+	private final Point3d s = new Point3d();
 
-	private Vector3d v = new Vector3d();
+	private final Vector3d v = new Vector3d();
 
-	private Vector3d facing = new Vector3d(0, -1, 0);
+	private final Vector3d facing = new Vector3d(0, -1, 0);
 
 	/**
 	 * @param i
@@ -110,12 +112,24 @@ public class PlayerMC {
 	 * @param t with units of seconds
 	 */
 	public void tick(double t) {
+		if (onGround) {
+			v.scale(0);
+			return;
+		}
+
 		Vector3d dv = (Vector3d) v.clone();
 		dv.scale(t);
 		s.add(dv);
+
+		// FIXME: do not use TimerTasks in the models - they are not realtime
+
 		if (tackling) {
 			v.x = signum(v.x) * max(0, abs(v.x) - t * TACKLE_FRICTION);
 			v.y = signum(v.y) * max(0, abs(v.y) - t * TACKLE_FRICTION);
+		}
+		if (heading) {
+			v.x = signum(v.x) * max(0, abs(v.x) - t * HEADING_FRICTION);
+			v.y = signum(v.y) * max(0, abs(v.y) - t * HEADING_FRICTION);
 		}
 	}
 
@@ -125,7 +139,7 @@ public class PlayerMC {
 	 * @param actions
 	 */
 	public void setActions(Collection<Action> actions) {
-		if (kicking || tackling || heading)
+		if (kicking || tackling || heading || onGround)
 			return;
 		double x = 0;
 		double y = 0;
@@ -154,7 +168,7 @@ public class PlayerMC {
 					break;
 			}
 		}
-		v = new Vector3d(x, y, 0);
+		v.set(x, y, 0);
 		if (v.lengthSquared() > 0) {
 			facing.normalize(v);
 		}
@@ -191,7 +205,7 @@ public class PlayerMC {
 	}
 
 	private void kick() {
-		if (kicking || tackling || heading)
+		if (kicking || tackling || heading || onGround)
 			return;
 		TimerTask kick = new TimerTask() {
 
@@ -205,7 +219,7 @@ public class PlayerMC {
 	}
 
 	private void tackle() {
-		if (kicking || tackling || heading)
+		if (kicking || tackling || heading || onGround)
 			return;
 		TimerTask tackle = new TimerTask() {
 
@@ -220,17 +234,29 @@ public class PlayerMC {
 	}
 
 	private void head() {
-		if (kicking || tackling || heading)
+		if (kicking || tackling || heading || onGround)
 			return;
 		TimerTask head = new TimerTask() {
 
 			@Override
 			public void run() {
-				heading = false;
+				if (!headingAdvanced) {
+					headingAdvanced = true;
+					return;
+				}
+				if (!onGround) {
+					heading = false;
+					headingAdvanced = false;
+					onGround = true;
+					return;
+				}
+				onGround = false;
+				cancel();
 			}
 		};
 		heading = true;
-		new Timer().schedule(head, 1000L);
+		v.scale(10);
+		new Timer().schedule(head, 250L, 250L);
 	}
 
 	@Override
@@ -251,13 +277,25 @@ public class PlayerMC {
 		return tackling;
 	}
 
+	public boolean isHeading() {
+		return heading;
+	}
+
+	public boolean isOnGround() {
+		return onGround;
+	}
+
+	public boolean isHeadingAdvanced() {
+		return headingAdvanced;
+	}
+
 	public Point3d getPosition() {
 		return (Point3d) s.clone();
 	}
 
 	public void setPosition(Point3d s) {
 		Preconditions.checkNotNull(s);
-		this.s = s;
+		this.s.set(s);
 	}
 
 	public Vector3d getVelocity() {
