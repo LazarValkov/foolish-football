@@ -143,7 +143,7 @@ public class GameV extends JPanel {
 		this.a = game.getTeamA();
 		this.game = game;
 
-		// HACK: eventually take in input controls
+		// TODO: eventually take in input controls
 		setFocusable(true);
 		addKeyListener(keyboardInput);
 
@@ -162,6 +162,8 @@ public class GameV extends JPanel {
 	@Override
 	public void paint(Graphics graphics) {
 		Graphics2D g = (Graphics2D) graphics;
+
+		// FIXME: intermediatery ScreenShot object to allow highlights and unit testing
 
 		// apply the zoom and calculate the portion of the screen we can see
 		AffineTransform affine = new AffineTransform();
@@ -254,10 +256,11 @@ public class GameV extends JPanel {
 
 		// 0/+1/+2 depending on timestamp and motion
 		if (pm.getVelocity().length() > 0) {
-			long t = game.getTimestamp() % 600L;
+			long t = game.getTimestamp() % 800L;
 			if (t < 200) {
-				spriteIndex += 1;
 			} else if (t < 400) {
+				spriteIndex += 1;
+			} else if (t > 600) {
 				spriteIndex += 2;
 			}
 		}
@@ -287,20 +290,18 @@ public class GameV extends JPanel {
 				spriteIndex += 3;
 			}
 		}
-		int diff = (int) (4 * ball.getPosition().z);
+		int diff = (int) (2 * ball.getPosition().z);
 		{	// the drop shadow
 			Sprite sprite = ballSprites.get(4);
 			Point s = sprite.getCentre();
-			// TODO: perspective effect by height
 			Point gPos = pToG(vBounds, ball.getPosition());
-			g.drawImage(sprite.getImage(), gPos.x + diff / 2, gPos.y - s.y / 2 + diff, null);
+			g.drawImage(sprite.getImage(), gPos.x - s.x / 2 - 1 + diff / 2, gPos.y - s.y / 2 - 1 + diff, null);
 		}
-		{	// the moving ball sprite
+		{	// the moving ball
 			Sprite sprite = ballSprites.get(spriteIndex);
 			Point s = sprite.getCentre();
-			// TODO: perspective effect by height
 			Point gPos = pToG(vBounds, ball.getPosition());
-			g.drawImage(sprite.getImage(), gPos.x - s.x / 2 - 1 - diff / 2, gPos.y - s.y / 2 - diff, null);
+			g.drawImage(sprite.getImage(), gPos.x - s.x / 2 - 1 + diff / 2, gPos.y - s.y / 2 - 1 - diff, null);
 		}
 	}
 

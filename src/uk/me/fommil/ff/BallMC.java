@@ -50,6 +50,7 @@ public class BallMC {
 
 	private Vector3d v = new Vector3d();
 
+	// TODO: friction in air
 	private static final double FRICTION = 100;
 
 	private static final double GRAVITY = -10;
@@ -86,13 +87,15 @@ public class BallMC {
 		// apply gravity
 		v.z += t * GRAVITY;
 
+		// FIXME: aftertouch
 		// apply aftertouch
-		// TODO: more appropriate aftertouch
 		if (s.z > 0.5) {
 			Vector3d a = (Vector3d) aftertouch.clone();
-			if (v.z < 0) // no more lift allowed when the ball is coming down
+			if (v.z <= 0 || s.z > 3) {
+				// no more lift or velocity allowed when the ball is coming down or too high
 				a.z = 0;
-			// TODO: scale by height - higher means less effect
+				a.y = 0;
+			}
 			//a.scale(t);
 			v.add(a);
 		}
@@ -127,11 +130,12 @@ public class BallMC {
 		for (Aftertouch at : aftertouches) {
 			switch (at) {
 				// TODO: consider direction of motion
-				case UP:
-					aftertouch.y = -10;
-					break;
 				case DOWN:
-					aftertouch.z = 1;
+					aftertouch.z = 2;
+					aftertouch.y -= 10;
+					break;
+				case UP:
+					aftertouch.y -= 5;
 					break;
 				case LEFT:
 					aftertouch.x -= 5;
