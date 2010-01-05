@@ -241,7 +241,7 @@ public class GameV extends JPanel {
 		}
 
 		int spriteIndex = 0;
-		Direction direction = Direction.valueOf(pm.getAngle());
+		Direction direction = pm.getDirection();
 		switch (direction) {
 			case DOWN:
 				spriteIndex = 1;
@@ -347,7 +347,7 @@ public class GameV extends JPanel {
 			Sprite sprite = ballSprites.get(4);
 			Point s = sprite.getCentre();
 			Point gPos = pToG(vBounds, ball.getPosition());
-			g.drawImage(sprite.getImage(), gPos.x - s.x / 2 - 1 + diff / 2, gPos.y - s.y / 2 - 1 + diff, null);
+			g.drawImage(sprite.getImage(), gPos.x - s.x / 2 + diff / 2, gPos.y - s.y / 2 + diff, null);
 		}
 		{	// the moving ball
 			Sprite sprite = ballSprites.get(spriteIndex);

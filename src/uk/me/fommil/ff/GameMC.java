@@ -217,7 +217,7 @@ public class GameMC {
 			if (owner.isKicking()) {
 				// kick the ball
 				Vector3d kick = owner.getVelocity();
-				kick.scale(3);
+				kick.scale(2);
 				kick.z = 4;
 				ball.setVelocity(kick);
 			} else {

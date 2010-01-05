@@ -148,9 +148,9 @@ public class BallMC {
 			return;
 		}
 		// TODO: clean up horrible code duplication
-		double bendy = 150;
-		double power = 20;
-		double power_gravity = GRAVITY / 2;
+		double bendy = 100;
+		double power = 100;
+		double power_gravity = GRAVITY / 3;
 		double lift = 10;
 		double lift_gravity = 3 * GRAVITY;
 

@@ -27,6 +27,7 @@ import javax.media.j3d.Transform3D;
 import javax.vecmath.AxisAngle4d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
+import uk.me.fommil.ff.GameMC.Direction;
 
 /**
  * The model (M) and controller (C) for a {@link Player} during game play.
@@ -42,6 +43,14 @@ public class PlayerMC {
 	private static final double TACKLE_FRICTION = 50;
 
 	private static final double HEADING_FRICTION = 50;
+
+	/**
+	 * @return
+	 */
+	public Direction getDirection() {
+		// TODO: refactor into intermediate layer
+		return Direction.valueOf(getAngle());
+	}
 
 	/**
 	 * @return the angle relate to NORTH {@code (- PI, + PI]}.
@@ -95,7 +104,7 @@ public class PlayerMC {
 		Transform3D affine = new Transform3D();
 		Vector3d t = new Vector3d(facing);
 		// centre of bounding box is biased in front of the player
-		t.scale(1);
+		//t.scale(1);
 		t.add(s);
 		affine.setTranslation(t);
 		// defines the scale of the bounding box in x, y, z
