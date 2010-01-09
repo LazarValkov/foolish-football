@@ -20,6 +20,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import javax.swing.JFrame;
 import uk.me.fommil.ff.swos.SpriteParser;
 
@@ -37,6 +39,8 @@ public class Main {
 	 * @throws IOException
 	 */
 	public static final void main(String[] args) throws IOException {
+
+
 		Map<String, Tactics> swosTactics = TacticsParser.getSwosTactics(SWOS);
 		BufferedImage pitchImage = PitchParser.getPitch(SWOS, 6);
 
@@ -48,9 +52,8 @@ public class Main {
 		b.setCurrentTactics(swosTactics.get("433"));
 
 		Pitch pitch = new Pitch();
-		GameMC game = new GameMC(a, pitch);
-		GameV gv = new GameV(game, pitchImage, sprites);
-		game.setView(gv);
+		final GameMC game = new GameMC(a, pitch);
+		final GameV gv = new GameV(game, pitchImage, sprites);
 
 		JFrame frame = new JFrame();
 		frame.add(gv);
@@ -59,6 +62,19 @@ public class Main {
 		frame.setLocationRelativeTo(null);
 		frame.setTitle("Foolish Football");
 		frame.setVisible(true);
+
+		final long period = 50L;
+		TimerTask ticker = new TimerTask() {
+
+			@Override
+			public synchronized void run() {
+				game.tick(period / 1000.0);
+				gv.repaint();
+			}
+		};
+		new Timer().schedule(ticker, 0L, period);
+
+
 
 		assert gv.getKeyListeners().length > 0;
 	}

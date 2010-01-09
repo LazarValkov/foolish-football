@@ -16,19 +16,14 @@ package uk.me.fommil.ff;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 import javax.media.j3d.Bounds;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
-import uk.me.fommil.ff.PlayerMC.Action;
 import uk.me.fommil.ff.Tactics.BallZone;
 import uk.me.fommil.ff.Tactics.PlayerZone;
 
@@ -38,35 +33,6 @@ import uk.me.fommil.ff.Tactics.PlayerZone;
  * @author Samuel Halliday
  */
 public class GameMC {
-
-	private static final Logger log = Logger.getLogger(GameMC.class.getName());
-
-	/**
-	 * @param min
-	 * @param value
-	 * @param max
-	 * @return
-	 */
-	public static int bounded(int min, int value, int max) {
-		Preconditions.checkArgument(max >= min);
-		return Math.max(min, Math.min(value, max));
-	}
-
-	// this is mutable, so be careful not to edit it
-	private static final Vector3d NORTH = new Vector3d(0, -1, 0);
-
-	/**
-	 * @param vector
-	 * @return the angle relate to NORTH {@code (-PI, + PI]}, ignoring {@code z} component.
-	 */
-	public static double getBearing(Vector3d vector) {
-		Vector3d v = (Vector3d) vector.clone();
-		v.z = 0;
-		if (v.x < 0)
-			return -v.angle(NORTH);
-		else
-			return v.angle(NORTH);
-	}
 
 	public enum Direction {
 
@@ -102,9 +68,34 @@ public class GameMC {
 		}
 	}
 
-	// TODO: don't handle our own clock
-	@Deprecated
-	private final long PERIOD = 50L;
+	/**
+	 * @param min
+	 * @param value
+	 * @param max
+	 * @return
+	 */
+	public static int bounded(int min, int value, int max) {
+		Preconditions.checkArgument(max >= min);
+		return Math.max(min, Math.min(value, max));
+	}
+
+	private static final Logger log = Logger.getLogger(GameMC.class.getName());
+
+	// this is mutable, so be careful not to edit it
+	private static final Vector3d NORTH = new Vector3d(0, -1, 0);
+
+	/**
+	 * @param vector
+	 * @return the angle relate to NORTH {@code (-PI, + PI]}, ignoring {@code z} component.
+	 */
+	public static double getBearing(Vector3d vector) {
+		Vector3d v = (Vector3d) vector.clone();
+		v.z = 0;
+		if (v.x < 0)
+			return -v.angle(NORTH);
+		else
+			return v.angle(NORTH);
+	}
 
 	private final Team a;
 
@@ -114,26 +105,14 @@ public class GameMC {
 
 	private final AtomicLong ticks = new AtomicLong();
 
-	private PlayerMC selectedA;
-
-	private volatile GameV view = null;
-
-	private final TimerTask ticker = new TimerTask() {
-
-		@Override
-		public synchronized void run() {
-			ticks.incrementAndGet();
-			updatePhysics();
-			if (view != null)
-				view.repaint();
-		}
-	};
-
 	private final Pitch pitch;
+
+	private PlayerMC selected;
+
+	private double time;
 
 	/**
 	 * @param a
-	 * @param b
 	 * @param pitch
 	 */
 	public GameMC(Team a, Pitch pitch) {
@@ -149,47 +128,29 @@ public class GameMC {
 			pma.setPosition(p);
 			as.add(pma);
 		}
-		selectedA = as.get(9);
-
-		new Timer().schedule(ticker, 0L, PERIOD);
+		selected = as.get(9);
 	}
 
 	/**
 	 * @param team
 	 * @param actions
+	 * @param aftertouches
 	 */
-	public void setUserActions(Team team, Collection<PlayerMC.Action> actions) {
-		updateSelected(team, actions);
-		selectedA.setActions(actions);
-
-		Set<BallMC.Aftertouch> aftertouches = Sets.newHashSet();
-		for (Action action : actions) {
-			switch (action) {
-				case UP:
-					aftertouches.add(BallMC.Aftertouch.UP);
-					break;
-				case DOWN:
-					aftertouches.add(BallMC.Aftertouch.DOWN);
-					break;
-				case LEFT:
-					aftertouches.add(BallMC.Aftertouch.LEFT);
-					break;
-				case RIGHT:
-					aftertouches.add(BallMC.Aftertouch.RIGHT);
-					break;
-			}
-		}
+	public void setUserActions(Team team, Collection<PlayerMC.Action> actions, Collection<BallMC.Aftertouch> aftertouches) {
+		updateSelected(actions);
+		selected.setActions(actions);
 		ball.setAftertouch(aftertouches);
 	}
 
-	private void updatePhysics() {
+	public void tick(double seconds) {
+		time += seconds;
 		// autopilot
 		BallZone bz = ball.getZone(pitch);
 //		log.info(bz.toString());
 		// log.info("BALL " + bz);
 		Tactics tactics = a.getCurrentTactics();
 		for (PlayerMC p : as) {
-			if (p != selectedA) {
+			if (p != selected) {
 				PlayerZone pz = tactics.getZone(bz, p.getShirt());
 				Point3d target = pz.getCentre(pitch, Pitch.Facing.UP);
 				// TODO: "magnetic" behaviour when the ball is nearby
@@ -213,7 +174,7 @@ public class GameMC {
 			PlayerMC owner = candidate.get(new Random().nextInt(candidate.size()));
 			// always give control to the operator
 			// TODO: fix delay when handing over control
-			selectedA = owner;
+			selected = owner;
 			if (owner.isKicking()) {
 				// kick the ball
 				Vector3d kick = owner.getVelocity();
@@ -228,9 +189,9 @@ public class GameMC {
 		}
 
 		for (PlayerMC pm : as) {
-			pm.tick(PERIOD / 1000.0);
+			pm.tick(seconds);
 		}
-		ball.tick(PERIOD / 1000.0);
+		ball.tick(seconds);
 
 		// log.info(ball.getPosition().toString());
 		// detectors for various states of the game
@@ -241,17 +202,15 @@ public class GameMC {
 		}
 	}
 
-	// get the selected player for the given team
-	private void updateSelected(Team team, Collection<PlayerMC.Action> actions) {
-		assert team == a;
-		assert selectedA != null;
+	private void updateSelected(Collection<PlayerMC.Action> actions) {
+		assert selected != null;
 
 		if (!actions.contains(PlayerMC.Action.KICK))
 			return;
 
 		// set the closed player
-		PlayerMC closest = selectedA;
-		double distance = selectedA.getPosition().distanceSquared(ball.getPosition());
+		PlayerMC closest = selected;
+		double distance = selected.getPosition().distanceSquared(ball.getPosition());
 		for (PlayerMC model : as) {
 			double ds2 = model.getPosition().distanceSquared(ball.getPosition());
 			if (ds2 < distance) {
@@ -259,11 +218,7 @@ public class GameMC {
 				closest = model;
 			}
 		}
-		selectedA = closest;
-	}
-
-	public void setView(GameV view) {
-		this.view = view;
+		selected = closest;
 	}
 
 	public BallMC getBall() {
@@ -275,11 +230,11 @@ public class GameMC {
 	}
 
 	public PlayerMC getSelected() {
-		return selectedA;
+		return selected;
 	}
 
-	public long getTimestamp() {
-		return (ticks.get() * PERIOD);
+	public double getTimestamp() {
+		return time;
 	}
 
 	public Team getTeamA() {

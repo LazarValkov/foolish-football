@@ -22,7 +22,6 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 import uk.me.fommil.ff.GameMC.Direction;
 import uk.me.fommil.ff.Tactics.BallZone;
-import uk.me.fommil.ff.swos.SwosUtils;
 
 /**
  * The model (M) and controller (C) for the ball during game play.
@@ -78,6 +77,7 @@ public class BallMC {
 	 * @param t with units of seconds
 	 */
 	public void tick(double t) {
+		// TODO: aftertouch needs a lot more thought
 		// aftertouch
 		if (!bounced && s.z >= 0.5 && after.lengthSquared() > 0 && (v.z >= 0 || v.length() > 75)) {
 			Vector3d a = (Vector3d) after.clone();

@@ -29,6 +29,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 import javax.media.j3d.BoundingPolytope;
 import static java.lang.Math.*;
@@ -36,6 +37,7 @@ import javax.swing.JPanel;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 import uk.me.fommil.ff.GameMC.Direction;
+import uk.me.fommil.ff.PlayerMC.Action;
 
 /**
  * The view (V) for the game play.
@@ -104,7 +106,7 @@ public class GameV extends JPanel {
 				default:
 					return;
 			}
-			game.setUserActions(GameV.this.a, actions);
+			updateActions(actions);
 		}
 
 		@Override
@@ -134,7 +136,28 @@ public class GameV extends JPanel {
 				default:
 					return;
 			}
-			game.setUserActions(GameV.this.a, actions);
+			updateActions(actions);
+		}
+
+		private void updateActions(Collection<Action> actions) {
+			Set<BallMC.Aftertouch> aftertouches = Sets.newHashSet();
+			for (Action action : actions) {
+				switch (action) {
+					case UP:
+						aftertouches.add(BallMC.Aftertouch.UP);
+						break;
+					case DOWN:
+						aftertouches.add(BallMC.Aftertouch.DOWN);
+						break;
+					case LEFT:
+						aftertouches.add(BallMC.Aftertouch.LEFT);
+						break;
+					case RIGHT:
+						aftertouches.add(BallMC.Aftertouch.RIGHT);
+						break;
+				}
+			}
+			game.setUserActions(GameV.this.a, actions, aftertouches);
 		}
 	};
 
@@ -181,7 +204,7 @@ public class GameV extends JPanel {
 		// we are centred over the ball
 		// g never goes outside the pitch image
 		// TODO: consider making this variable a field
-		Rectangle vBounds = calculateView(gSize);
+		Rectangle vBounds = calculateWindow(gSize);
 
 		// draw the pitch
 		BufferedImage sub = pitch.getSubimage(vBounds.x, vBounds.y,
@@ -268,7 +291,8 @@ public class GameV extends JPanel {
 
 		int dynamic = 0;
 		if (pm.getVelocity().lengthSquared() > 0) {
-			long t = (game.getTimestamp() + pm.getShirt() * 17) % 800L;
+			long ts = (long) (1000L * game.getTimestamp());
+			long t = (ts + pm.getShirt() * 17) % 800L;
 			if (t < 200) {
 			} else if (t < 400) {
 				dynamic = 1;
@@ -329,7 +353,7 @@ public class GameV extends JPanel {
 		if (v.lengthSquared() > 0) {
 			long period = max((long) v.length(), 50);
 //			log.info(v.length() + " " + period);
-			long t = game.getTimestamp() % period;
+			long t = (long) ((1000L * game.getTimestamp()) % period);
 			if (t < period / 4) {
 				spriteIndex += 1;
 			} else if (t < period / 2) {
@@ -363,7 +387,7 @@ public class GameV extends JPanel {
 
 	// TODO: remove the need for 'v' coordinates by returning a java 3d object in 'p' coords
 	// gSize is the drawable graphics, top left of the view being (0, 0) in graphics 'g' coordinates
-	private Rectangle calculateView(Dimension gSize) {
+	private Rectangle calculateWindow(Dimension gSize) {
 		// centre over the ball
 		Point3d pBall = game.getBall().getPosition();
 		int gMinX = (int) round(pBall.x - gSize.width / 2.0);

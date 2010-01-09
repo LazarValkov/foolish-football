@@ -36,6 +36,21 @@ import uk.me.fommil.ff.GameMC.Direction;
  */
 public class PlayerMC {
 
+	/**
+	 * The actions that a player can perform.
+	 */
+	public enum Action {
+
+		UP, DOWN, LEFT, RIGHT, KICK, TACKLE, HEAD
+
+	};
+
+	public enum PlayerMode {
+
+		RUN, KICK, HEAD_START, HEAD_MID, HEAD_END, GROUND
+
+	}
+
 	private static final Logger log = Logger.getLogger(PlayerMC.class.getName());
 
 	private static final int AUTO = 10;
@@ -58,15 +73,6 @@ public class PlayerMC {
 	public double getAngle() {
 		return GameMC.getBearing(facing);
 	}
-
-	/**
-	 * The actions that a player can perform.
-	 */
-	public enum Action {
-
-		UP, DOWN, LEFT, RIGHT, KICK, TACKLE, HEAD
-
-	};
 
 	private final Player player;
 
