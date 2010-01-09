@@ -18,8 +18,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import java.util.Collection;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.logging.Logger;
 import static java.lang.Math.*;
 import javax.media.j3d.BoundingPolytope;
@@ -27,7 +25,6 @@ import javax.media.j3d.Transform3D;
 import javax.vecmath.AxisAngle4d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
-import uk.me.fommil.ff.GameMC.Direction;
 
 /**
  * The model (M) and controller (C) for a {@link Player} during game play.
@@ -47,7 +44,7 @@ public class PlayerMC {
 
 	public enum PlayerMode {
 
-		RUN, KICK, HEAD_START, HEAD_MID, HEAD_END, GROUND
+		RUN, KICK, TACKLE, HEAD_START, HEAD_MID, HEAD_END, GROUND
 
 	}
 
@@ -59,32 +56,21 @@ public class PlayerMC {
 
 	private static final double HEADING_FRICTION = 50;
 
-	/**
-	 * @return
-	 */
-	public Direction getDirection() {
-		// TODO: refactor into intermediate layer
-		return Direction.valueOf(getAngle());
-	}
-
-	/**
-	 * @return the angle relate to NORTH {@code (- PI, + PI]}.
-	 */
-	public double getAngle() {
-		return GameMC.getBearing(facing);
-	}
-
 	private final Player player;
 
 	private final int shirt;
-
-	private volatile boolean kicking, tackling, heading, headingAdvanced, onGround;
 
 	private final Point3d s = new Point3d();
 
 	private final Vector3d v = new Vector3d();
 
 	private final Vector3d facing = new Vector3d(0, -1, 0);
+
+	private volatile PlayerMode mode = PlayerMode.RUN;
+
+	private volatile double time;
+
+	private volatile double timestamp = Double.NaN; // of last mode switch
 
 	/**
 	 * @param i
@@ -127,24 +113,48 @@ public class PlayerMC {
 	 * @param t with units of seconds
 	 */
 	public void tick(double t) {
-		if (onGround) {
+		time += t;
+//		log.info(s + " " + v);
+		assert mode != null;
+		if (mode == PlayerMode.GROUND) {
 			v.scale(0);
-			return;
+		} else {
+			Vector3d dv = (Vector3d) v.clone();
+			dv.scale(t);
+			s.add(dv);
 		}
 
-		Vector3d dv = (Vector3d) v.clone();
-		dv.scale(t);
-		s.add(dv);
-
-		// FIXME: do not use TimerTasks in the models - they are not realtime
-
-		if (tackling) {
-			v.x = signum(v.x) * max(0, abs(v.x) - t * TACKLE_FRICTION);
-			v.y = signum(v.y) * max(0, abs(v.y) - t * TACKLE_FRICTION);
-		}
-		if (heading) {
-			v.x = signum(v.x) * max(0, abs(v.x) - t * HEADING_FRICTION);
-			v.y = signum(v.y) * max(0, abs(v.y) - t * HEADING_FRICTION);
+		switch (mode) {
+			case TACKLE:
+				v.x = signum(v.x) * max(0, abs(v.x) - t * TACKLE_FRICTION);
+				v.y = signum(v.y) * max(0, abs(v.y) - t * TACKLE_FRICTION);
+				if (time - timestamp > 3) {
+					mode = PlayerMode.RUN;
+					timestamp = Double.NaN;
+				}
+				break;
+			case HEAD_START:
+			case HEAD_MID:
+			case HEAD_END:
+				if (mode == PlayerMode.HEAD_START && time - timestamp > 1) {
+					mode = PlayerMode.HEAD_MID;
+					timestamp = time;
+				} else if (mode == PlayerMode.HEAD_MID && time - timestamp > 1) {
+					mode = PlayerMode.HEAD_END;
+					timestamp = time;
+				} else if (mode == PlayerMode.HEAD_END && time - timestamp > 1) {
+					mode = PlayerMode.GROUND;
+					timestamp = time;
+				}
+				v.x = signum(v.x) * max(0, abs(v.x) - t * HEADING_FRICTION);
+				v.y = signum(v.y) * max(0, abs(v.y) - t * HEADING_FRICTION);
+				break;
+			case GROUND:
+				if (time - timestamp > 3) {
+					mode = PlayerMode.RUN;
+					timestamp = Double.NaN;
+				}
+				break;
 		}
 	}
 
@@ -154,36 +164,47 @@ public class PlayerMC {
 	 * @param actions
 	 */
 	public void setActions(Collection<Action> actions) {
-		if (kicking || tackling || heading || onGround)
+//		log.info(actions.toString());
+//		log.info(mode.toString());
+		if (mode != PlayerMode.RUN)
 			return;
-		double x = 0;
-		double y = 0;
+		assert Double.isNaN(timestamp);
+		Vector3d newV = new Vector3d();
 		for (Action action : actions) {
 			switch (action) {
 				case UP:
-					y -= 50;
+					newV.y -= 1;
 					break;
 				case DOWN:
-					y += 50;
+					newV.y += 1;
 					break;
 				case LEFT:
-					x -= 50;
+					newV.x -= 1;
 					break;
 				case RIGHT:
-					x += 50;
+					newV.x += 1;
 					break;
 				case KICK:
-					kick();
+					timestamp = time;
+					mode = PlayerMode.KICK;
 					break;
 				case TACKLE:
-					tackle();
+					timestamp = time;
+					mode = PlayerMode.TACKLE;
+					v.scale(5);
 					break;
 				case HEAD:
-					head();
+					timestamp = time;
+					mode = PlayerMode.HEAD_START;
+					v.scale(10);
 					break;
 			}
 		}
-		v.set(x, y, 0);
+		if (newV.lengthSquared() > 0) {
+			newV.normalize(); // TODO: is there a more effecient way?
+			newV.scale(50);
+		}
+		v.set(newV);
 		if (v.lengthSquared() > 0) {
 			facing.normalize(v);
 		}
@@ -193,7 +214,7 @@ public class PlayerMC {
 	 * Controller. Clear the action list.
 	 */
 	public void clearActions() {
-		v.set(new Vector3d());
+		v.scale(0);
 	}
 
 	/**
@@ -219,59 +240,11 @@ public class PlayerMC {
 		setActions(auto);
 	}
 
-	private void kick() {
-		if (kicking || tackling || heading || onGround)
-			return;
-		TimerTask kick = new TimerTask() {
-
-			@Override
-			public void run() {
-				kicking = false;
-			}
-		};
-		kicking = true;
-		new Timer().schedule(kick, 100L);
-	}
-
-	private void tackle() {
-		if (kicking || tackling || heading || onGround)
-			return;
-		TimerTask tackle = new TimerTask() {
-
-			@Override
-			public void run() {
-				tackling = false;
-			}
-		};
-		tackling = true;
-		v.scale(5);
-		new Timer().schedule(tackle, 2000L);
-	}
-
-	private void head() {
-		if (kicking || tackling || heading || onGround)
-			return;
-		TimerTask head = new TimerTask() {
-
-			@Override
-			public void run() {
-				if (!headingAdvanced) {
-					headingAdvanced = true;
-					return;
-				}
-				if (!onGround) {
-					heading = false;
-					headingAdvanced = false;
-					onGround = true;
-					return;
-				}
-				onGround = false;
-				cancel();
-			}
-		};
-		heading = true;
-		v.scale(10);
-		new Timer().schedule(head, 250L, 250L);
+	/**
+	 * @return the angle relate to NORTH {@code (- PI, + PI]}.
+	 */
+	public double getAngle() {
+		return GameMC.getBearing(facing);
 	}
 
 	@Override
@@ -284,24 +257,8 @@ public class PlayerMC {
 		return shirt;
 	}
 
-	public boolean isKicking() {
-		return kicking;
-	}
-
-	public boolean isTackling() {
-		return tackling;
-	}
-
-	public boolean isHeading() {
-		return heading;
-	}
-
-	public boolean isOnGround() {
-		return onGround;
-	}
-
-	public boolean isHeadingAdvanced() {
-		return headingAdvanced;
+	public PlayerMode getMode() {
+		return mode;
 	}
 
 	public Point3d getPosition() {

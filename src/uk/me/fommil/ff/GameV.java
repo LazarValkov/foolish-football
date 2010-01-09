@@ -29,7 +29,6 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Logger;
 import javax.media.j3d.BoundingPolytope;
 import static java.lang.Math.*;
@@ -37,7 +36,6 @@ import javax.swing.JPanel;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 import uk.me.fommil.ff.GameMC.Direction;
-import uk.me.fommil.ff.PlayerMC.Action;
 
 /**
  * The view (V) for the game play.
@@ -79,20 +77,26 @@ public class GameV extends JPanel {
 
 		private final Collection<PlayerMC.Action> actions = Sets.newHashSet();
 
+		private final Collection<BallMC.Aftertouch> aftertouches = Sets.newHashSet();
+
 		@Override
 		public void keyPressed(KeyEvent e) {
 			switch (e.getKeyCode()) {
 				case KeyEvent.VK_LEFT:
 					actions.add(PlayerMC.Action.LEFT);
+					aftertouches.add(BallMC.Aftertouch.LEFT);
 					break;
 				case KeyEvent.VK_RIGHT:
 					actions.add(PlayerMC.Action.RIGHT);
+					aftertouches.add(BallMC.Aftertouch.RIGHT);
 					break;
 				case KeyEvent.VK_UP:
 					actions.add(PlayerMC.Action.UP);
+					aftertouches.add(BallMC.Aftertouch.UP);
 					break;
 				case KeyEvent.VK_DOWN:
 					actions.add(PlayerMC.Action.DOWN);
+					aftertouches.add(BallMC.Aftertouch.DOWN);
 					break;
 				case KeyEvent.VK_SPACE:
 					actions.add(PlayerMC.Action.KICK);
@@ -106,7 +110,7 @@ public class GameV extends JPanel {
 				default:
 					return;
 			}
-			updateActions(actions);
+			updateActions();
 		}
 
 		@Override
@@ -114,15 +118,19 @@ public class GameV extends JPanel {
 			switch (e.getKeyCode()) {
 				case KeyEvent.VK_LEFT:
 					actions.remove(PlayerMC.Action.LEFT);
+					aftertouches.remove(BallMC.Aftertouch.LEFT);
 					break;
 				case KeyEvent.VK_RIGHT:
 					actions.remove(PlayerMC.Action.RIGHT);
+					aftertouches.remove(BallMC.Aftertouch.RIGHT);
 					break;
 				case KeyEvent.VK_UP:
 					actions.remove(PlayerMC.Action.UP);
+					aftertouches.remove(BallMC.Aftertouch.UP);
 					break;
 				case KeyEvent.VK_DOWN:
 					actions.remove(PlayerMC.Action.DOWN);
+					aftertouches.remove(BallMC.Aftertouch.DOWN);
 					break;
 				case KeyEvent.VK_SPACE:
 					actions.remove(PlayerMC.Action.KICK);
@@ -136,27 +144,10 @@ public class GameV extends JPanel {
 				default:
 					return;
 			}
-			updateActions(actions);
+			updateActions();
 		}
 
-		private void updateActions(Collection<Action> actions) {
-			Set<BallMC.Aftertouch> aftertouches = Sets.newHashSet();
-			for (Action action : actions) {
-				switch (action) {
-					case UP:
-						aftertouches.add(BallMC.Aftertouch.UP);
-						break;
-					case DOWN:
-						aftertouches.add(BallMC.Aftertouch.DOWN);
-						break;
-					case LEFT:
-						aftertouches.add(BallMC.Aftertouch.LEFT);
-						break;
-					case RIGHT:
-						aftertouches.add(BallMC.Aftertouch.RIGHT);
-						break;
-				}
-			}
+		private void updateActions() {
 			game.setUserActions(GameV.this.a, actions, aftertouches);
 		}
 	};
@@ -264,7 +255,7 @@ public class GameV extends JPanel {
 		}
 
 		int spriteIndex = 0;
-		Direction direction = pm.getDirection();
+		Direction direction = Direction.valueOf(pm.getAngle());
 		switch (direction) {
 			case DOWN:
 				spriteIndex = 1;
@@ -301,36 +292,40 @@ public class GameV extends JPanel {
 			}
 		}
 
-		if (pm.isTackling()) {
-			// left and right are swapped
-			switch (direction) {
-				case LEFT:
-					spriteIndex--;
-					break;
-				case RIGHT:
-					spriteIndex++;
-					break;
-			}
-			spriteIndex += 54;
-		} else if (pm.isHeading()) {
-			spriteIndex += 76;
-			// TODO: better way of dealing with headers
-			if (pm.isHeadingAdvanced()) {
-				spriteIndex += 16;
-			}
-		} else if (pm.isOnGround()) {
-			switch (direction) {
-				case LEFT:
-					spriteIndex--;
-					break;
-				case RIGHT:
-					spriteIndex++;
-					break;
-			}
-			spriteIndex += 62;
-		} else {
-			spriteIndex *= 3;
-			spriteIndex += dynamic;
+		switch (pm.getMode()) {
+			case TACKLE:			// left and right are swapped
+				switch (direction) {
+					case LEFT:
+						spriteIndex--;
+						break;
+					case RIGHT:
+						spriteIndex++;
+						break;
+				}
+				spriteIndex += 54;
+				break;
+			case HEAD_START:
+			case HEAD_MID:
+			case HEAD_END:
+				spriteIndex += 76;
+//			if (pm.isHeadingAdvanced()) {
+//				spriteIndex += 16;
+//			}
+				break;
+			case GROUND:
+				switch (direction) {
+					case LEFT:
+						spriteIndex--;
+						break;
+					case RIGHT:
+						spriteIndex++;
+						break;
+				}
+				spriteIndex += 62;
+				break;
+			default:
+				spriteIndex *= 3;
+				spriteIndex += dynamic;
 		}
 
 		Sprite sprite = teamSprites.get(spriteIndex);

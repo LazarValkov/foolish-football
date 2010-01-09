@@ -137,13 +137,14 @@ public class GameMC {
 	 * @param aftertouches
 	 */
 	public void setUserActions(Team team, Collection<PlayerMC.Action> actions, Collection<BallMC.Aftertouch> aftertouches) {
+		log.info("USER: " + actions);
 		updateSelected(actions);
 		selected.setActions(actions);
 		ball.setAftertouch(aftertouches);
 	}
 
-	public void tick(double seconds) {
-		time += seconds;
+	public void tick(double dt) {
+		time += dt;
 		// autopilot
 		BallZone bz = ball.getZone(pitch);
 //		log.info(bz.toString());
@@ -175,7 +176,7 @@ public class GameMC {
 			// always give control to the operator
 			// TODO: fix delay when handing over control
 			selected = owner;
-			if (owner.isKicking()) {
+			if (owner.getMode() == PlayerMC.PlayerMode.KICK) {
 				// kick the ball
 				Vector3d kick = owner.getVelocity();
 				kick.scale(2.5);
@@ -189,9 +190,9 @@ public class GameMC {
 		}
 
 		for (PlayerMC pm : as) {
-			pm.tick(seconds);
+			pm.tick(dt);
 		}
-		ball.tick(seconds);
+		ball.tick(dt);
 
 		// log.info(ball.getPosition().toString());
 		// detectors for various states of the game

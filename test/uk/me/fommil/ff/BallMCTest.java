@@ -26,9 +26,14 @@ import static org.junit.Assert.*;
  */
 public class BallMCTest {
 
-	final Pitch pitch = new Pitch();
+	private final Pitch pitch = new Pitch();
 
-	final double dt = 50L / 1000.0;
+	private final double dt = 50L / 1000.0;
+
+	@Test
+	public void testGravity() throws Exception {
+		fail("test not written");
+	}
 
 	@Test
 	public void testNoKick() {
@@ -45,7 +50,6 @@ public class BallMCTest {
 	@Test
 	public void testGroundKicks() {
 		Point3d centre = pitch.getCentre();
-		List<BallMC> balls = createBalls(10, centre);
 		List<Vector3d> velocities = Lists.newArrayList();
 		velocities.add(new Vector3d(10, 0, 0)); // 0 right
 		velocities.add(new Vector3d(0, 10, 0)); // 1 down
@@ -57,6 +61,7 @@ public class BallMCTest {
 		velocities.add(new Vector3d(-10, 10, 0)); // 7 down left
 		velocities.add(new Vector3d(500, 0, 0)); // 8 right, fast
 		velocities.add(new Vector3d(0, 500, 0)); // 9 down, fast
+		List<BallMC> balls = createBalls(velocities.size(), centre);
 		for (int i = 0; i < balls.size(); i++) {
 			balls.get(i).setVelocity(velocities.get(i));
 		}
@@ -82,17 +87,17 @@ public class BallMCTest {
 			assertTrue(centre.x > positions.get(7).x);
 			assertTrue(centre.y < positions.get(7).y);
 
-			assertTrue(velocities.get(0).x < velocities.get(8).x);
-			assertTrue(velocities.get(1).y < velocities.get(9).y);
+			assertTrue(positions.get(0).x < positions.get(8).x);
+			assertTrue(positions.get(1).y < positions.get(9).y);
 
-			assertEquals(velocities.get(0).x, velocities.get(4).x);
-			assertEquals(velocities.get(0).x, velocities.get(6).x);
-			assertEquals(velocities.get(1).y, velocities.get(4).y);
-			assertEquals(velocities.get(1).y, velocities.get(7).y);
-			assertEquals(velocities.get(2).x, velocities.get(5).x);
-			assertEquals(velocities.get(2).x, velocities.get(7).x);
-			assertEquals(velocities.get(3).y, velocities.get(5).y);
-			assertEquals(velocities.get(3).y, velocities.get(6).y);
+			assertEquals(positions.get(0).x, positions.get(4).x);
+			assertEquals(positions.get(0).x, positions.get(6).x);
+			assertEquals(positions.get(1).y, positions.get(4).y);
+			assertEquals(positions.get(1).y, positions.get(7).y);
+			assertEquals(positions.get(2).x, positions.get(5).x);
+			assertEquals(positions.get(2).x, positions.get(7).x);
+			assertEquals(positions.get(3).y, positions.get(5).y);
+			assertEquals(positions.get(3).y, positions.get(6).y);
 		}
 
 		for (BallMC ball : balls) {
@@ -103,7 +108,6 @@ public class BallMCTest {
 	@Test
 	public void testAirKicks() {
 		Point3d centre = pitch.getCentre();
-		List<BallMC> balls = createBalls(10, centre);
 		List<Vector3d> velocities = Lists.newArrayList();
 		velocities.add(new Vector3d(10, 0, 10)); // 0 right
 		velocities.add(new Vector3d(0, 10, 10)); // 1 down
@@ -115,6 +119,7 @@ public class BallMCTest {
 		velocities.add(new Vector3d(-10, 10, 10)); // 7 down left
 		velocities.add(new Vector3d(500, 0, 100)); // 8 right, fast
 		velocities.add(new Vector3d(0, 500, 100)); // 9 down, fast
+		List<BallMC> balls = createBalls(velocities.size(), centre);
 		for (int i = 0; i < balls.size(); i++) {
 			balls.get(i).setVelocity(velocities.get(i));
 		}
@@ -140,17 +145,17 @@ public class BallMCTest {
 			assertTrue(centre.x > positions.get(7).x);
 			assertTrue(centre.y < positions.get(7).y);
 
-			assertTrue(velocities.get(0).x < velocities.get(8).x);
-			assertTrue(velocities.get(1).y < velocities.get(9).y);
+			assertTrue(positions.get(0).x < positions.get(8).x);
+			assertTrue(positions.get(1).y < positions.get(9).y);
 
-			assertEquals(velocities.get(0).x, velocities.get(4).x);
-			assertEquals(velocities.get(0).x, velocities.get(6).x);
-			assertEquals(velocities.get(1).y, velocities.get(4).y);
-			assertEquals(velocities.get(1).y, velocities.get(7).y);
-			assertEquals(velocities.get(2).x, velocities.get(5).x);
-			assertEquals(velocities.get(2).x, velocities.get(7).x);
-			assertEquals(velocities.get(3).y, velocities.get(5).y);
-			assertEquals(velocities.get(3).y, velocities.get(6).y);
+			assertEquals(positions.get(0).x, positions.get(4).x);
+			assertEquals(positions.get(0).x, positions.get(6).x);
+			assertEquals(positions.get(1).y, positions.get(4).y);
+			assertEquals(positions.get(1).y, positions.get(7).y);
+			assertEquals(positions.get(2).x, positions.get(5).x);
+			assertEquals(positions.get(2).x, positions.get(7).x);
+			assertEquals(positions.get(3).y, positions.get(5).y);
+			assertEquals(positions.get(3).y, positions.get(6).y);
 		}
 
 		for (BallMC ball : balls) {
@@ -161,29 +166,29 @@ public class BallMCTest {
 
 	@Test
 	public void testBendyAftertouch() {
-		fail();
+		fail("test not written");
 	}
 
 	@Test
 	public void testPowerAftertouch() {
-		fail();
+		fail("test not written");
 	}
 
 	@Test
 	public void testLiftAftertouch() {
-		fail();
+		fail("test not written");
 	}
 
 	@Test
 	public void testZone() {
-		fail();
+		fail("test not written");
 	}
 
-	private List<BallMC> createBalls(int number, Point3d centre) {
+	private List<BallMC> createBalls(int number, Point3d position) {
 		List<BallMC> balls = Lists.newArrayList();
 		for (int i = 0; i < number; i++) {
 			BallMC ball = new BallMC();
-			ball.setPosition(centre);
+			ball.setPosition(position);
 			balls.add(ball);
 		}
 		return balls;
