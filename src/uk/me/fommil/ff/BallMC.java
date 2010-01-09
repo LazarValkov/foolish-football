@@ -31,6 +31,8 @@ import uk.me.fommil.ff.swos.SwosUtils;
  */
 public class BallMC {
 
+	private static final double MAX_SPEED = 125;
+
 	/**
 	 * The aftertouch that a ball may exhibit. Directional aftertouch is always relate to
 	 * the direction of motion.
@@ -45,7 +47,7 @@ public class BallMC {
 
 	private static final double GROUND_FRICTION = 200;
 
-	private static final double AIR_FRICTION = 50;
+	private static final double AIR_FRICTION = 30;
 
 	private static final double GRAVITY = 10;
 
@@ -77,9 +79,9 @@ public class BallMC {
 	 */
 	public void tick(double t) {
 		// aftertouch
-		if (!bounced && s.z >= 0.5 && v.z >= 0 && after.lengthSquared() > 0) {
+		if (!bounced && s.z >= 0.5 && after.lengthSquared() > 0 && (v.z >= 0 || v.length() > 75)) {
 			Vector3d a = (Vector3d) after.clone();
-			if (s.z > 3) {
+			if (s.z > 3 || v.z < 0) {
 				a.z = 0;
 			}
 			a.scale(t);
@@ -109,6 +111,13 @@ public class BallMC {
 		// friction
 		v.x = signum(v.x) * max(0, abs(v.x) - friction(t, s.z));
 		v.y = signum(v.y) * max(0, abs(v.y) - friction(t, s.z));
+
+		// maximum
+		double speed = v.length();
+		if (speed > MAX_SPEED) {
+			log.info("SPEED " + speed);
+			v.scale(MAX_SPEED / speed);
+		}
 	}
 
 	private double friction(double t, double z) {
@@ -148,24 +157,26 @@ public class BallMC {
 			return;
 		}
 		// TODO: clean up horrible code duplication
-		double bendy = 100;
-		double power = 100;
+		double power = 200;
 		double power_gravity = GRAVITY / 3;
-		double lift = 10;
+		double power_bendy = 200;
+		double lift = 20;
 		double lift_gravity = 3 * GRAVITY;
+		double lift_bendy = 50;
 
-		log.info("BALL FACING " + direction + " AFTERTOUCH " + aftertouch);
+		// log.info("BALL FACING " + direction + " AFTERTOUCH " + aftertouch);
 		switch (direction) {
 			case UP_RIGHT:
 			case UP_LEFT:
 			case UP:
-				after.x = bendy * aftertouch.x;
 				if (aftertouch.y < 0) {
 					// power shot
+					after.x = power_bendy * aftertouch.x;
 					after.y = -power;
 					after.z = power_gravity;
 				} else if (aftertouch.y > 0) {
 					// lift
+					after.x = lift_bendy * aftertouch.x;
 					after.y = -lift;
 					after.z = lift_gravity;
 				}
@@ -173,32 +184,35 @@ public class BallMC {
 			case DOWN_LEFT:
 			case DOWN_RIGHT:
 			case DOWN:
-				after.x = bendy * aftertouch.x;
 				if (aftertouch.y > 0) {
+					after.x = power_bendy * aftertouch.x;
 					after.y = power;
 					after.z = power_gravity;
 				} else if (aftertouch.y < 0) {
+					after.x = lift_bendy * aftertouch.x;
 					after.y = lift;
 					after.z = lift_gravity;
 				}
 				break;
 			case RIGHT:
-				after.y = bendy * aftertouch.y;
 				if (aftertouch.x > 0) {
 					after.x = power;
+					after.y = power_bendy * aftertouch.y;
 					after.z = power_gravity;
 				} else if (aftertouch.x < 0) {
 					after.x = lift;
+					after.y = lift_bendy * aftertouch.y;
 					after.z = lift_gravity;
 				}
 				break;
 			case LEFT:
-				after.y = bendy * aftertouch.y;
 				if (aftertouch.x < 0) {
 					after.x = -power;
+					after.y = power_bendy * aftertouch.y;
 					after.z = power_gravity;
 				} else if (aftertouch.x > 0) {
 					after.x = -lift;
+					after.y = lift_bendy * aftertouch.y;
 					after.z = lift_gravity;
 				}
 				break;
