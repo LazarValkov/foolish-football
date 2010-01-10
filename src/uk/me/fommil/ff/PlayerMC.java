@@ -54,7 +54,7 @@ public class PlayerMC {
 
 	private static final double TACKLE_FRICTION = 50;
 
-	private static final double HEADING_FRICTION = 50;
+	private static final double HEADING_FRICTION = 20;
 
 	private final Player player;
 
@@ -125,29 +125,25 @@ public class PlayerMC {
 		}
 
 		switch (mode) {
+			case KICK:
+				changeModeIfTimeExpired(0.1, PlayerMode.RUN);
+				break;
 			case TACKLE:
 				v.x = signum(v.x) * max(0, abs(v.x) - t * TACKLE_FRICTION);
 				v.y = signum(v.y) * max(0, abs(v.y) - t * TACKLE_FRICTION);
-				if (time - timestamp > 3) {
-					mode = PlayerMode.RUN;
-					timestamp = Double.NaN;
-				}
+				changeModeIfTimeExpired(3, PlayerMode.RUN);
 				break;
 			case HEAD_START:
 			case HEAD_MID:
 			case HEAD_END:
-				if (mode == PlayerMode.HEAD_START && time - timestamp > 1) {
-					mode = PlayerMode.HEAD_MID;
-					timestamp = time;
-				} else if (mode == PlayerMode.HEAD_MID && time - timestamp > 1) {
-					mode = PlayerMode.HEAD_END;
-					timestamp = time;
-				} else if (mode == PlayerMode.HEAD_END && time - timestamp > 1) {
-					mode = PlayerMode.GROUND;
-					timestamp = time;
-				}
 				v.x = signum(v.x) * max(0, abs(v.x) - t * HEADING_FRICTION);
 				v.y = signum(v.y) * max(0, abs(v.y) - t * HEADING_FRICTION);
+				if (mode == PlayerMode.HEAD_START)
+					changeModeIfTimeExpired(0.1, PlayerMode.HEAD_MID);
+				else if (mode == PlayerMode.HEAD_MID)
+					changeModeIfTimeExpired(0.1, PlayerMode.HEAD_END);
+				else if (mode == PlayerMode.HEAD_END)
+					changeModeIfTimeExpired(0.5, PlayerMode.GROUND);
 				break;
 			case GROUND:
 				if (time - timestamp > 3) {
@@ -164,11 +160,21 @@ public class PlayerMC {
 	 * @param actions
 	 */
 	public void setActions(Collection<Action> actions) {
-//		log.info(actions.toString());
-//		log.info(mode.toString());
+//		log.info(shirt + " " + mode + " " + actions);
 		if (mode != PlayerMode.RUN)
 			return;
 		assert Double.isNaN(timestamp);
+		if (actions.contains(Action.KICK)) {
+			ifMovingChangeModeAndScaleVelocity(PlayerMode.KICK, 1);
+			return;
+		} else if (actions.contains(Action.TACKLE)) {
+			ifMovingChangeModeAndScaleVelocity(PlayerMode.TACKLE, 1.5);
+			return;
+		} else if (actions.contains(Action.HEAD)) {
+			ifMovingChangeModeAndScaleVelocity(PlayerMode.HEAD_START, 1.5);
+			return;
+		}
+
 		Vector3d newV = new Vector3d();
 		for (Action action : actions) {
 			switch (action) {
@@ -184,24 +190,10 @@ public class PlayerMC {
 				case RIGHT:
 					newV.x += 1;
 					break;
-				case KICK:
-					timestamp = time;
-					mode = PlayerMode.KICK;
-					break;
-				case TACKLE:
-					timestamp = time;
-					mode = PlayerMode.TACKLE;
-					v.scale(5);
-					break;
-				case HEAD:
-					timestamp = time;
-					mode = PlayerMode.HEAD_START;
-					v.scale(10);
-					break;
 			}
 		}
 		if (newV.lengthSquared() > 0) {
-			newV.normalize(); // TODO: is there a more effecient way?
+			newV.normalize(); // TODO: is there a more efficient way?
 			newV.scale(50);
 		}
 		v.set(newV);
@@ -249,7 +241,25 @@ public class PlayerMC {
 
 	@Override
 	public String toString() {
-		return getShirt() + " " + getPosition();
+		return shirt + ", mode = " + mode + ", s = " + s + ", v = " + v;
+	}
+
+	private void ifMovingChangeModeAndScaleVelocity(PlayerMode playerMode, double scale) {
+		if (v.lengthSquared() > 0) {
+			timestamp = time;
+			mode = playerMode;
+			v.scale(scale);
+		}
+	}
+
+	private void changeModeIfTimeExpired(double t, PlayerMode playerMode) {
+		if (time - timestamp > t) {
+			mode = playerMode;
+			if (playerMode == PlayerMode.RUN)
+				timestamp = Double.NaN;
+			else
+				timestamp = time;
+		}
 	}
 
 	// <editor-fold defaultstate="collapsed" desc="BOILERPLATE GETTERS/SETTERS">

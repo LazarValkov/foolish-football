@@ -61,7 +61,7 @@ public class GameV extends JPanel {
 
 	private final boolean debugging = false;
 
-	private final int zoom = 2;
+	private final int zoom = 3;
 
 	private final Team a;
 
@@ -80,7 +80,7 @@ public class GameV extends JPanel {
 		private final Collection<BallMC.Aftertouch> aftertouches = Sets.newHashSet();
 
 		@Override
-		public void keyPressed(KeyEvent e) {
+		public synchronized void keyPressed(KeyEvent e) {
 			switch (e.getKeyCode()) {
 				case KeyEvent.VK_LEFT:
 					actions.add(PlayerMC.Action.LEFT);
@@ -114,7 +114,7 @@ public class GameV extends JPanel {
 		}
 
 		@Override
-		public void keyReleased(KeyEvent e) {
+		public synchronized void keyReleased(KeyEvent e) {
 			switch (e.getKeyCode()) {
 				case KeyEvent.VK_LEFT:
 					actions.remove(PlayerMC.Action.LEFT);
@@ -305,12 +305,13 @@ public class GameV extends JPanel {
 				spriteIndex += 54;
 				break;
 			case HEAD_START:
-			case HEAD_MID:
-			case HEAD_END:
 				spriteIndex += 76;
-//			if (pm.isHeadingAdvanced()) {
-//				spriteIndex += 16;
-//			}
+				break;
+			case HEAD_MID:
+				spriteIndex += 84; // FIXME
+				break;
+			case HEAD_END:
+				spriteIndex += 92; // FIXME
 				break;
 			case GROUND:
 				switch (direction) {

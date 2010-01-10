@@ -137,8 +137,9 @@ public class GameMC {
 	 * @param aftertouches
 	 */
 	public void setUserActions(Team team, Collection<PlayerMC.Action> actions, Collection<BallMC.Aftertouch> aftertouches) {
-		log.info("USER: " + actions);
+//		log.info("USER: " + actions);
 		updateSelected(actions);
+		log.info(selected.toString());
 		selected.setActions(actions);
 		ball.setAftertouch(aftertouches);
 	}
@@ -146,15 +147,20 @@ public class GameMC {
 	public void tick(double dt) {
 		time += dt;
 		// autopilot
+		Point3d bp = ball.getPosition();
 		BallZone bz = ball.getZone(pitch);
 //		log.info(bz.toString());
 		// log.info("BALL " + bz);
 		Tactics tactics = a.getCurrentTactics();
 		for (PlayerMC p : as) {
 			if (p != selected) {
-				PlayerZone pz = tactics.getZone(bz, p.getShirt());
-				Point3d target = pz.getCentre(pitch, Pitch.Facing.UP);
-				// TODO: "magnetic" behaviour when the ball is nearby
+				Point3d target;
+				if (bp.distance(p.getPosition()) < 50) {
+					target = bp;
+				} else {
+					PlayerZone pz = tactics.getZone(bz, p.getShirt());
+					target = pz.getCentre(pitch, Pitch.Facing.UP);
+				}
 				p.autoPilot(target);
 			}
 		}
@@ -176,16 +182,18 @@ public class GameMC {
 			// always give control to the operator
 			// TODO: fix delay when handing over control
 			selected = owner;
-			if (owner.getMode() == PlayerMC.PlayerMode.KICK) {
-				// kick the ball
-				Vector3d kick = owner.getVelocity();
-				kick.scale(2.5);
-				kick.z = 4;
-				ball.setVelocity(kick);
-			} else {
-				// dribble the ball
-				Vector3d kick = owner.getVelocity();
-				ball.setVelocity(kick);
+			Vector3d kick = owner.getVelocity();
+			switch (owner.getMode()) {
+				case KICK:
+				case HEAD_START:
+				case HEAD_MID:
+				case HEAD_END:
+					kick.scale(2.5);
+					kick.z = 4;
+					ball.setVelocity(kick);
+					break;
+				default:
+					ball.setVelocity(kick);
 			}
 		}
 
