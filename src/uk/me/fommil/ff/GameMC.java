@@ -206,8 +206,10 @@ public class GameMC {
 		// detectors for various states of the game
 		if (!pitch.getPitch().intersect(ball.getPosition())) {
 			log.info("OUT OF BOUNDS " + pitch.getPitch() + " " + ball.getPosition());
-			ball.setPosition(pitch.getCentre());
+			//ball.setPosition(pitch.getCentre());
 			ball.setVelocity(new Vector3d());
+			selected.setPosition(ball.getPosition());
+			selected.setMode(PlayerMC.PlayerMode.THROW);
 		}
 	}
 

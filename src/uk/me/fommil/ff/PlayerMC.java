@@ -46,7 +46,8 @@ public class PlayerMC {
 	public enum PlayerMode {
 
 		RUN, KICK, TACKLE, HEAD_START, HEAD_MID, HEAD_END, GROUND, INJURED,
-		// TODO CELEBRATE, PUNISH, THROW_IN
+		THROW,
+		// TODO CELEBRATE, PUNISH
 	}
 
 	private static final Logger log = Logger.getLogger(PlayerMC.class.getName());
@@ -117,12 +118,15 @@ public class PlayerMC {
 		time += t;
 //		log.info(s + " " + v);
 		assert mode != null;
-		if (mode == PlayerMode.GROUND) {
-			v.scale(0);
-		} else {
-			Vector3d dv = (Vector3d) v.clone();
-			dv.scale(t);
-			s.add(dv);
+		switch (mode) {
+			case GROUND:
+			case THROW:
+				v.scale(0);
+				break;
+			default:
+				Vector3d dv = (Vector3d) v.clone();
+				dv.scale(t);
+				s.add(dv);
 		}
 
 		switch (mode) {
@@ -164,8 +168,13 @@ public class PlayerMC {
 	 */
 	public void setActions(Collection<Action> actions) {
 //		log.info(shirt + " " + mode + " " + actions);
-		if (mode != PlayerMode.RUN)
-			return;
+		switch (mode) {
+			case RUN:
+			case THROW:
+				break;
+			default:
+				return;
+		}
 		assert Double.isNaN(timestamp);
 		if (actions.contains(Action.KICK)) {
 			ifMovingChangeModeAndScaleVelocity(PlayerMode.KICK, 1);
@@ -272,6 +281,10 @@ public class PlayerMC {
 
 	public PlayerMode getMode() {
 		return mode;
+	}
+
+	public void setMode(PlayerMode mode) {
+		this.mode = mode;
 	}
 
 	public Point3d getPosition() {

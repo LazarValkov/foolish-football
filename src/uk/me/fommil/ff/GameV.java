@@ -317,21 +317,27 @@ public class GameV extends JPanel {
 			case INJURED:
 				spriteIndex = 70;
 				if (direction == Direction.RIGHT)
-					spriteIndex += 2; {
+					spriteIndex += 2;
 				spriteIndex += t < 400 ? 0 : 1;
-			}
-			break;
+				break;
+			case THROW:
+				spriteIndex += 30;
+				if (t < 200) {
+				} else if (t < 400) {
+					spriteIndex += 1;
+				} else if (t > 600) {
+					spriteIndex += 2;
+				}
+				break;
 			default:
 				spriteIndex *= 3;
 				if (pm.getVelocity().lengthSquared() > 0) {
-					int dynamic = 0;
 					if (t < 200) {
 					} else if (t < 400) {
-						dynamic = 1;
+						spriteIndex += 1;
 					} else if (t > 600) {
-						dynamic = 2;
+						spriteIndex += 2;
 					}
-					spriteIndex += dynamic;
 				}
 
 
