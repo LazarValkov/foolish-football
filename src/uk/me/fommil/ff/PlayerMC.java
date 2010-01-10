@@ -18,6 +18,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import java.util.Collection;
 import java.util.List;
+import java.util.Random;
 import java.util.logging.Logger;
 import static java.lang.Math.*;
 import javax.media.j3d.BoundingPolytope;
@@ -44,7 +45,7 @@ public class PlayerMC {
 
 	public enum PlayerMode {
 
-		RUN, KICK, TACKLE, HEAD_START, HEAD_MID, HEAD_END, GROUND
+		RUN, KICK, TACKLE, HEAD_START, HEAD_MID, HEAD_END, GROUND, INJURED
 
 	}
 
@@ -146,11 +147,13 @@ public class PlayerMC {
 					changeModeIfTimeExpired(0.5, PlayerMode.GROUND);
 				break;
 			case GROUND:
-				if (time - timestamp > 3) {
-					mode = PlayerMode.RUN;
-					timestamp = Double.NaN;
-				}
+				if (new Random().nextBoolean())
+					changeModeIfTimeExpired(2, PlayerMode.RUN);
+				else
+					changeModeIfTimeExpired(2, PlayerMode.INJURED);
 				break;
+			case INJURED:
+				changeModeIfTimeExpired(5, PlayerMode.RUN);
 		}
 	}
 

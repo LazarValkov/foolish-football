@@ -280,18 +280,8 @@ public class GameV extends JPanel {
 				break;
 		}
 
-		int dynamic = 0;
-		if (pm.getVelocity().lengthSquared() > 0) {
-			long ts = (long) (1000L * game.getTimestamp());
-			long t = (ts + pm.getShirt() * 17) % 800L;
-			if (t < 200) {
-			} else if (t < 400) {
-				dynamic = 1;
-			} else if (t > 600) {
-				dynamic = 2;
-			}
-		}
-
+		long ts = (long) (1000L * game.getTimestamp());
+		long t = (ts + pm.getShirt() * 17) % 800L;
 		switch (pm.getMode()) {
 			case TACKLE:			// left and right are swapped
 				switch (direction) {
@@ -324,9 +314,28 @@ public class GameV extends JPanel {
 				}
 				spriteIndex += 62;
 				break;
+			case INJURED:
+				spriteIndex = 70;
+				if (direction == Direction.RIGHT)
+					spriteIndex += 2; {
+				spriteIndex += t < 400 ? 0 : 1;
+			}
+			break;
 			default:
 				spriteIndex *= 3;
-				spriteIndex += dynamic;
+				if (pm.getVelocity().lengthSquared() > 0) {
+					int dynamic = 0;
+					if (t < 200) {
+					} else if (t < 400) {
+						dynamic = 1;
+					} else if (t > 600) {
+						dynamic = 2;
+					}
+					spriteIndex += dynamic;
+				}
+
+
+
 		}
 
 		Sprite sprite = teamSprites.get(spriteIndex);

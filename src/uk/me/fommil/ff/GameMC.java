@@ -219,8 +219,17 @@ public class GameMC {
 
 		// set the closed player
 		PlayerMC closest = selected;
-		double distance = selected.getPosition().distanceSquared(ball.getPosition());
+//		double distance = selected.getPosition().distanceSquared(ball.getPosition());
+		double distance = Double.MAX_VALUE;
 		for (PlayerMC model : as) {
+			switch (model.getMode()) {
+				case GROUND:
+				case INJURED:
+				case HEAD_START:
+				case HEAD_MID:
+				case HEAD_END:
+					continue;
+			}
 			double ds2 = model.getPosition().distanceSquared(ball.getPosition());
 			if (ds2 < distance) {
 				distance = ds2;
