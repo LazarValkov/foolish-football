@@ -321,12 +321,10 @@ public class GameV extends JPanel {
 				spriteIndex += t < 400 ? 0 : 1;
 				break;
 			case THROW:
+				spriteIndex *= 3;
 				spriteIndex += 30;
-				if (t < 200) {
-				} else if (t < 400) {
+				if (t > 400) {
 					spriteIndex += 1;
-				} else if (t > 600) {
-					spriteIndex += 2;
 				}
 				break;
 			default:

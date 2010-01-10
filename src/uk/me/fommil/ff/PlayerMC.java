@@ -121,7 +121,7 @@ public class PlayerMC {
 		switch (mode) {
 			case GROUND:
 			case THROW:
-				v.scale(0);
+				//v.scale(0);
 				break;
 			default:
 				Vector3d dv = (Vector3d) v.clone();
@@ -175,7 +175,7 @@ public class PlayerMC {
 			default:
 				return;
 		}
-		assert Double.isNaN(timestamp);
+		assert Double.isNaN(timestamp) : mode;
 		if (actions.contains(Action.KICK)) {
 			ifMovingChangeModeAndScaleVelocity(PlayerMode.KICK, 1);
 			return;
@@ -274,6 +274,11 @@ public class PlayerMC {
 		}
 	}
 
+	public void setThrowIn() {
+		mode = PlayerMode.THROW;
+		timestamp = Double.NaN;
+	}
+
 	// <editor-fold defaultstate="collapsed" desc="BOILERPLATE GETTERS/SETTERS">
 	public int getShirt() {
 		return shirt;
@@ -281,10 +286,6 @@ public class PlayerMC {
 
 	public PlayerMode getMode() {
 		return mode;
-	}
-
-	public void setMode(PlayerMode mode) {
-		this.mode = mode;
 	}
 
 	public Point3d getPosition() {

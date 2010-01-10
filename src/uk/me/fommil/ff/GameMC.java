@@ -192,7 +192,8 @@ public class GameMC {
 					kick.z = 4;
 					ball.setVelocity(kick);
 					break;
-				default:
+				case RUN:
+				case TACKLE:
 					ball.setVelocity(kick);
 			}
 		}
@@ -208,8 +209,11 @@ public class GameMC {
 			log.info("OUT OF BOUNDS " + pitch.getPitch() + " " + ball.getPosition());
 			//ball.setPosition(pitch.getCentre());
 			ball.setVelocity(new Vector3d());
+			Point3d position = ball.getPosition();
+			position.z = 0;
+			ball.setPosition(position);
 			selected.setPosition(ball.getPosition());
-			selected.setMode(PlayerMC.PlayerMode.THROW);
+			selected.setThrowIn();
 		}
 	}
 
