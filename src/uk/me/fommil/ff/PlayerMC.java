@@ -45,8 +45,8 @@ public class PlayerMC {
 
 	public enum PlayerMode {
 
-		RUN, KICK, TACKLE, HEAD_START, HEAD_MID, HEAD_END, GROUND, INJURED
-
+		RUN, KICK, TACKLE, HEAD_START, HEAD_MID, HEAD_END, GROUND, INJURED,
+		// TODO CELEBRATE, PUNISH, THROW_IN
 	}
 
 	private static final Logger log = Logger.getLogger(PlayerMC.class.getName());

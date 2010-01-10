@@ -217,9 +217,7 @@ public class GameMC {
 		if (!actions.contains(PlayerMC.Action.KICK))
 			return;
 
-		// set the closed player
 		PlayerMC closest = selected;
-//		double distance = selected.getPosition().distanceSquared(ball.getPosition());
 		double distance = Double.MAX_VALUE;
 		for (PlayerMC model : as) {
 			switch (model.getMode()) {
