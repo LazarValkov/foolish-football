@@ -141,8 +141,8 @@ public class Tactics {
 		 */
 		public Point3d getCentre(Pitch pitch, Pitch.Facing facing) {
 			Rectangle p = pitch.getPitchAsRectangle();
-			double xx = (p.width * x) / 15;
-			double yy = (p.height * y) / 16;
+			double xx = (p.width * x) / 15.0;
+			double yy = (p.height * y) / 16.0;
 			if (facing == Pitch.Facing.UP) {
 				yy = p.height - yy;
 				xx = p.width - xx;
@@ -221,8 +221,6 @@ public class Tactics {
 				builder.append("=====\n");
 				Map<Integer, PlayerZone> z = getZones(bz);
 				Collection<PlayerZone> zs = z.values();
-				if (z == null)
-					continue;
 				for (int yy = 15; yy >= 0; yy--) {
 					for (int xx = 14; xx >= 0; xx--) {
 						PlayerZone pz = new PlayerZone(xx, yy);

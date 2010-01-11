@@ -32,7 +32,7 @@ public class PlayerMCTest {
 
 	private final Pitch pitch = new Pitch();
 
-	private final double dt = 50L / 1000.0;
+	private static final double dt = 50L / 1000.0;
 
 	@Test
 	public void testKick() throws Exception {

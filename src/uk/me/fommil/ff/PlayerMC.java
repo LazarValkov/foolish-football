@@ -74,6 +74,8 @@ public class PlayerMC {
 
 	private volatile double timestamp = Double.NaN; // of last mode switch
 
+	private final Random random = new Random();
+
 	/**
 	 * @param i
 	 * @param player
@@ -151,7 +153,7 @@ public class PlayerMC {
 					changeModeIfTimeExpired(0.5, PlayerMode.GROUND);
 				break;
 			case GROUND:
-				if (new Random().nextBoolean())
+				if (random.nextBoolean())
 					changeModeIfTimeExpired(2, PlayerMode.RUN);
 				else
 					changeModeIfTimeExpired(2, PlayerMode.INJURED);
