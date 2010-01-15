@@ -35,7 +35,6 @@ import static java.lang.Math.*;
 import javax.swing.JPanel;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
-import uk.me.fommil.ff.Direction;
 
 /**
  * The view (V) for the game play.
@@ -61,7 +60,7 @@ public class GameV extends JPanel {
 
 	private final boolean debugging = false;
 
-	private final int zoom = 3;
+	private final int zoom = 4;
 
 	private final Team a;
 
@@ -187,7 +186,7 @@ public class GameV extends JPanel {
 	public void paint(Graphics graphics) {
 		Graphics2D g = (Graphics2D) graphics;
 
-		// FIXME: intermediatery ScreenShot object to allow highlights and unit testing
+		// TODO: intermediatery ScreenShot object to allow highlights
 
 		// apply the zoom and calculate the portion of the screen we can see
 		AffineTransform affine = new AffineTransform();
@@ -202,10 +201,12 @@ public class GameV extends JPanel {
 
 		// draw the pitch
 		BufferedImage sub = pitch.getSubimage(vBounds.x, vBounds.y,
-				min(gSize.width + 1, pitch.getWidth()),
-				min(gSize.height + 1, pitch.getHeight()));
+				min(gSize.width, pitch.getWidth() + 1),
+				min(gSize.height, pitch.getHeight() + 1));
 		// extra padding is for when a partial pixel is shown
 		g.drawImage(sub, 0, 0, null);
+
+		// FIXME: draw all sprites top to bottom to get layering correct
 
 		// draw the ball
 		drawBall(g, vBounds);

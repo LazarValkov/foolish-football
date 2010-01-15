@@ -16,11 +16,16 @@ package uk.me.fommil.ff;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.List;
 import java.util.Random;
+import java.util.Stack;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
+import javax.media.j3d.BoundingBox;
 import javax.media.j3d.Bounds;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
@@ -97,7 +102,7 @@ public class GameMC {
 		for (PlayerMC p : as) {
 			if (p != selected) {
 				Point3d target;
-				if (bp.distance(p.getPosition()) < 50) {
+				if (bp.distance(p.getPosition()) < Math.min(100, bp.distance(selected.getPosition()))) {
 					target = bp;
 				} else {
 					PlayerZone pz = tactics.getZone(bz, p.getShirt());
@@ -147,15 +152,29 @@ public class GameMC {
 
 		// log.info(ball.getPosition().toString());
 		// detectors for various states of the game
-		if (!pitch.getPitch().intersect(ball.getPosition())) {
-			log.info("OUT OF BOUNDS " + pitch.getPitch() + " " + ball.getPosition());
-			//ball.setPosition(pitch.getCentre());
+		BoundingBox p = pitch.getPitch();
+		Point3d lower = new Point3d();
+		p.getLower(lower);
+		Point3d upper = new Point3d();
+		p.getUpper(upper);
+
+		if (bp.x < lower.x || bp.x > upper.x) {
+//			log.info("OUT OF BOUNDS " + pitch.getPitch() + " " + ball.getPosition());
 			ball.setVelocity(new Vector3d());
 			Point3d position = ball.getPosition();
 			position.z = 0;
 			ball.setPosition(position);
 			selected.setPosition(ball.getPosition());
 			selected.setThrowIn();
+		}
+
+		if (bp.y <= upper.y || bp.y >= lower.y) {
+			if (pitch.getGoalNetTop().intersect(bp)) {
+				Vector3d v = ball.getVelocity();
+//				v.scale(0.5);
+				v.y = Math.abs(v.y);
+				ball.setVelocity(v);
+			}
 		}
 	}
 

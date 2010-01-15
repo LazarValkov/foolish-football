@@ -17,6 +17,7 @@ package uk.me.fommil.ff;
 import java.awt.Point;
 import java.awt.Rectangle;
 import javax.media.j3d.BoundingBox;
+import javax.vecmath.Point2d;
 import javax.vecmath.Point3d;
 
 /**
@@ -66,8 +67,8 @@ public class Pitch {
 	private final Rectangle goalLineBottom = new Rectangle(300, 769, 71, 1);
 
 	// TODO nets need more thought
-//	private final Rectangle goalNetTop = new Rectangle(300, 111, 71, 18);
-//
+	private final Rectangle goalNetTop = new Rectangle(300, 111, 71, 18);
+
 //	private final Rectangle goalNetBottom = new Rectangle(300, 751, 71, 18);
 	// TODO posts need more thought
 //	private final Rectangle goalPostTopLeft = new Rectangle(,,2,1);
@@ -84,7 +85,11 @@ public class Pitch {
 	private final Point centreSpot = new Point(336, 449);
 
 	public BoundingBox getPitch() {
-		return rectangleTo3d(pitch);
+		return rectangleTo3d(pitch, new Point2d(0, Double.MAX_VALUE));
+	}
+
+	public BoundingBox getGoalNetTop() {
+		return rectangleTo3d(goalNetTop, new Point2d(0, 3));
 	}
 
 	public Rectangle getPitchAsRectangle() {
@@ -96,9 +101,9 @@ public class Pitch {
 	}
 
 	// provides infinite z bounds to a rectangle
-	private BoundingBox rectangleTo3d(Rectangle r) {
+	private BoundingBox rectangleTo3d(Rectangle r, Point2d h) {
 		return new BoundingBox(
-				new Point3d(r.x, r.y, 0),
-				new Point3d(r.x + r.width, r.y + r.height, Double.MAX_VALUE));
+				new Point3d(r.x, r.y, h.x),
+				new Point3d(r.x + r.width, r.y + r.height, h.y));
 	}
 }
