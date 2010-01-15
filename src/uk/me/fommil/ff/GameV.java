@@ -35,7 +35,7 @@ import static java.lang.Math.*;
 import javax.swing.JPanel;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
-import uk.me.fommil.ff.GameMC.Direction;
+import uk.me.fommil.ff.Direction;
 
 /**
  * The view (V) for the game play.
@@ -403,9 +403,9 @@ public class GameV extends JPanel {
 		int gMinY = (int) round(pBall.y - gSize.height / 2.0);
 		// account for falling off, where screen could be bigger than the pitch image
 		int unseenWidth = max(0, pitch.getWidth() - gSize.width);
-		gMinX = GameMC.bounded(0, gMinX, unseenWidth);
+		gMinX = Utils.bounded(0, gMinX, unseenWidth);
 		int unseenHeight = max(0, pitch.getHeight() - gSize.height);
-		gMinY = GameMC.bounded(0, gMinY, unseenHeight);
+		gMinY = Utils.bounded(0, gMinY, unseenHeight);
 		return new Rectangle(gMinX, gMinY, gSize.width, gSize.height);
 	}
 }

@@ -20,7 +20,6 @@ import java.util.Collection;
 import java.util.logging.Logger;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
-import uk.me.fommil.ff.GameMC.Direction;
 import uk.me.fommil.ff.Tactics.BallZone;
 
 /**
@@ -152,7 +151,7 @@ public class BallMC {
 		}
 //		log.info(aftertouches + " " + aftertouch);
 		after.scale(0);
-		Direction direction = Direction.valueOf(GameMC.getBearing(v));
+		Direction direction = Direction.valueOf(Utils.getBearing(v));
 		if (v.lengthSquared() == 0 || direction == null) {
 			return;
 		}

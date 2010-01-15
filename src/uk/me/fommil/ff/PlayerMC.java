@@ -250,7 +250,7 @@ public class PlayerMC {
 	 * @return the angle relate to NORTH {@code (- PI, + PI]}.
 	 */
 	public double getAngle() {
-		return GameMC.getBearing(facing);
+		return Utils.getBearing(facing);
 	}
 
 	@Override

@@ -64,8 +64,8 @@ public class Tactics {
 			int xx = (int) (5 * (p.width + p.x - s.x) / p.width);
 			int yy = (int) (7 * (p.height + p.y - s.y) / p.height);
 
-			this.x = GameMC.bounded(0, xx, 4);
-			this.y = GameMC.bounded(0, yy, 6);
+			this.x = Utils.bounded(0, xx, 4);
+			this.y = Utils.bounded(0, yy, 6);
 		}
 
 		@Override

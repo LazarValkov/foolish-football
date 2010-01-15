@@ -34,68 +34,10 @@ import uk.me.fommil.ff.Tactics.PlayerZone;
  */
 public class GameMC {
 
-	public enum Direction {
-
-		UP, DOWN, LEFT, RIGHT, UP_RIGHT, UP_LEFT, DOWN_RIGHT, DOWN_LEFT;
-
-		/**
-		 * @param angle
-		 * @return
-		 */
-		public static Direction valueOf(double angle) {
-			if (Double.isNaN(angle))
-				return null;
-			Preconditions.checkArgument(angle <= Math.PI && angle > -Math.PI, angle);
-
-			// TODO: rotate by a few degrees counter clockwise
-			if (angle <= - 3 * Math.PI / 4 + Math.PI / 8) {
-				return DOWN_LEFT;
-			} else if (angle <= -Math.PI / 2 + Math.PI / 8) {
-				return LEFT;
-			} else if (angle <= -Math.PI / 4 + Math.PI / 8) {
-				return UP_LEFT;
-			} else if (angle <= 0 + Math.PI / 8) {
-				return UP;
-			} else if (angle <= Math.PI / 4 + Math.PI / 8) {
-				return UP_RIGHT;
-			} else if (angle <= Math.PI / 2 + Math.PI / 8) {
-				return RIGHT;
-			} else if (angle <= 3 * Math.PI / 4 + Math.PI / 8) {
-				return DOWN_RIGHT;
-			} else {
-				return DOWN;
-			}
-		}
-	}
-
-	/**
-	 * @param min
-	 * @param value
-	 * @param max
-	 * @return
-	 */
-	public static int bounded(int min, int value, int max) {
-		Preconditions.checkArgument(max >= min);
-		return Math.max(min, Math.min(value, max));
-	}
-
 	private static final Logger log = Logger.getLogger(GameMC.class.getName());
 
 	// this is mutable, so be careful not to edit it
 	private static final Vector3d NORTH = new Vector3d(0, -1, 0);
-
-	/**
-	 * @param vector
-	 * @return the angle relate to NORTH {@code (-PI, + PI]}, ignoring {@code z} component.
-	 */
-	public static double getBearing(Vector3d vector) {
-		Vector3d v = (Vector3d) vector.clone();
-		v.z = 0;
-		if (v.x < 0)
-			return -v.angle(NORTH);
-		else
-			return v.angle(NORTH);
-	}
 
 	private final Team a;
 
