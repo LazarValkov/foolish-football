@@ -199,8 +199,9 @@ public class GameV extends JPanel {
 
 		// draw the pitch
 		BufferedImage sub = pitch.getSubimage(vBounds.x, vBounds.y,
-				min(gSize.width, pitch.getWidth()),
-				min(gSize.height, pitch.getHeight()));
+				min(gSize.width + 1, pitch.getWidth()),
+				min(gSize.height + 1, pitch.getHeight()));
+		// extra padding is for when a partial pixel is shown
 		g.drawImage(sub, 0, 0, null);
 
 		// draw the ball
