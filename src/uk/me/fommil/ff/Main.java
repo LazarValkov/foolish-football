@@ -14,6 +14,8 @@
  */
 package uk.me.fommil.ff;
 
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import uk.me.fommil.ff.swos.TacticsParser;
 import uk.me.fommil.ff.swos.PitchParser;
 import java.awt.image.BufferedImage;
@@ -61,6 +63,7 @@ public class Main {
 		frame.setSize(800, 600);
 		frame.setLocationRelativeTo(null);
 		frame.setTitle("Foolish Football");
+		frame.setUndecorated(true);
 		frame.setVisible(true);
 
 		final long period = 50L;
@@ -74,8 +77,10 @@ public class Main {
 		};
 		new Timer().schedule(ticker, 0L, period);
 
-
-
 		assert gv.getKeyListeners().length > 0;
+
+		GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+		GraphicsDevice[] gs = ge.getScreenDevices();
+		gs[0].setFullScreenWindow(frame);
 	}
 }

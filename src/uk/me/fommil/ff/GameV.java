@@ -141,6 +141,9 @@ public class GameV extends JPanel {
 				case KeyEvent.VK_A:
 					actions.remove(PlayerMC.Action.HEAD);
 					break;
+				case KeyEvent.VK_ESCAPE:
+					System.exit(0);
+					break;
 				default:
 					return;
 			}
