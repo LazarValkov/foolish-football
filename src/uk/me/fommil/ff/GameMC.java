@@ -14,15 +14,10 @@
  */
 package uk.me.fommil.ff;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Deque;
 import java.util.List;
 import java.util.Random;
-import java.util.Stack;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 import javax.media.j3d.BoundingBox;
@@ -86,7 +81,7 @@ public class GameMC {
 	public void setUserActions(Team team, Collection<PlayerMC.Action> actions, Collection<BallMC.Aftertouch> aftertouches) {
 //		log.info("USER: " + actions);
 		updateSelected(actions);
-		log.info(selected.toString());
+//		log.info(selected.toString());
 		selected.setActions(actions);
 		ball.setAftertouch(aftertouches);
 	}
@@ -153,10 +148,8 @@ public class GameMC {
 		// log.info(ball.getPosition().toString());
 		// detectors for various states of the game
 		BoundingBox p = pitch.getPitch();
-		Point3d lower = new Point3d();
-		p.getLower(lower);
-		Point3d upper = new Point3d();
-		p.getUpper(upper);
+		Point3d lower = Utils.getLower(p);
+		Point3d upper = Utils.getUpper(p);
 
 		if (bp.x < lower.x || bp.x > upper.x) {
 //			log.info("OUT OF BOUNDS " + pitch.getPitch() + " " + ball.getPosition());
@@ -169,11 +162,19 @@ public class GameMC {
 		}
 
 		if (bp.y <= upper.y || bp.y >= lower.y) {
-			if (pitch.getGoalNetTop().intersect(bp)) {
+			BoundingBox bulk = pitch.getGoalNetTop();
+			if (bulk.intersect(bp)) {
 				Vector3d v = ball.getVelocity();
-//				v.scale(0.5);
-				v.y = Math.abs(v.y);
-				ball.setVelocity(v);
+				if (v.length() > 0) {
+					Point3d entry = Utils.entryPoint(bulk, bp, v, 0.01);
+					ball.setPosition(entry); // ?? losing energy
+					Vector3d rebound = Utils.rebound(bulk, entry, v);
+//					Vector3d surface = Utils.entrySurface(bulk, entry);
+//					log.info("Collision " + entry + " on surface " + surface);
+
+					rebound.scale(0.5);
+					ball.setVelocity(rebound);
+				}
 			}
 		}
 	}

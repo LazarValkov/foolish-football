@@ -16,6 +16,9 @@ package uk.me.fommil.ff;
 
 import com.google.common.base.Preconditions;
 import java.util.logging.Logger;
+import javax.media.j3d.BoundingBox;
+import javax.media.j3d.Bounds;
+import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 
 /**
@@ -51,5 +54,85 @@ public class Utils {
 			return -v.angle(NORTH);
 		else
 			return v.angle(NORTH);
+	}
+
+	public static Point3d entryPoint(Bounds bulk, Point3d s, Vector3d v, double ds) {
+		Preconditions.checkNotNull(bulk);
+		Preconditions.checkNotNull(s);
+		Preconditions.checkNotNull(v);
+		Preconditions.checkArgument(bulk.intersect(s));
+		Preconditions.checkArgument(v.length() > 0);
+
+		// really dumb maths, take the velocity and work back to the point where
+		// the object entered the intersection. Numerical, brute force approach
+		// TODO: analytical solution for BoundingBox
+		Vector3d r = (Vector3d) v.clone();
+		Utils.reverse(r);
+		r.normalize();
+		r.scale(ds);
+		Point3d s2 = (Point3d) s.clone();
+
+		do {
+			s2.add(r);
+		} while (bulk.intersect(s2));
+		return s2;
+	}
+
+	public static Vector3d entrySurface(BoundingBox box, Point3d s) {
+		Preconditions.checkNotNull(box);
+		Preconditions.checkNotNull(s);
+		Preconditions.checkArgument(!box.intersect(s));
+		Point3d lower = getLower(box);
+		Point3d upper = getUpper(box);
+
+		if (s.x < lower.x || s.x > upper.x)
+			return new Vector3d(0, 1, 1);
+		else if (s.y < lower.y || s.y > upper.y)
+			return new Vector3d(1, 0, 1);
+		else if (s.z < lower.z || s.z > upper.z)
+			return new Vector3d(1, 1, 0);
+		throw new UnsupportedOperationException("extreme case failure");
+	}
+
+	public static Point3d getLower(BoundingBox box) {
+		Preconditions.checkNotNull(box);
+		Point3d lower = new Point3d();
+		box.getLower(lower);
+		return lower;
+	}
+
+	public static Point3d getUpper(BoundingBox box) {
+		Preconditions.checkNotNull(box);
+		Point3d upper = new Point3d();
+		box.getUpper(upper);
+		return upper;
+	}
+
+	private static void reverse(Vector3d vector) {
+		Preconditions.checkNotNull(vector);
+		vector.x = 0 - vector.x;
+		vector.y = 0 - vector.y;
+		vector.z = 0 - vector.z;
+	}
+
+	public static Vector3d rebound(BoundingBox box, Point3d s, Vector3d v) {
+		Preconditions.checkNotNull(box);
+		Preconditions.checkNotNull(s);
+		Preconditions.checkNotNull(v);
+		Preconditions.checkArgument(!box.intersect(s));
+
+		Point3d lower = getLower(box);
+		Point3d upper = getUpper(box);
+
+		Vector3d vec = new Vector3d(v);
+		if (s.x < lower.x || s.x > upper.x)
+			vec.x = 0 - vec.x;
+		else if (s.y < lower.y || s.y > upper.y)
+			vec.y = 0 - vec.y;
+		else if (s.z < lower.z || s.z > upper.z)
+			vec.z = 0 - vec.z;
+		else
+			throw new UnsupportedOperationException("extreme case failure");
+		return vec;
 	}
 }
