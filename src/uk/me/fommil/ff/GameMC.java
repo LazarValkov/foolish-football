@@ -138,7 +138,6 @@ public class GameMC {
 					ball.setVelocity(kick);
 			}
 		}
-		Point3d bNewP = ball.getPosition();
 
 		for (PlayerMC pm : as) {
 			pm.tick(dt);
@@ -149,6 +148,7 @@ public class GameMC {
 		Point3d lower = Utils.getLower(p);
 		Point3d upper = Utils.getUpper(p);
 
+		Point3d bNewP = ball.getPosition();
 		if (bNewP.x < lower.x || bNewP.x > upper.x) {
 			ball.setVelocity(new Vector3d());
 			bNewP.z = 0;
@@ -158,7 +158,14 @@ public class GameMC {
 		}
 
 		if (bNewP.y >= upper.y || bNewP.y <= lower.y) {
-			goalTop.bounce(ball, bp);
+			Point3d bouncePos = ball.getPosition();
+			Vector3d bounceVel = ball.getVelocity();
+			goalTop.bounce(bouncePos, bounceVel, bp);
+			if (!bouncePos.equals(ball.getPosition())) {
+				ball.setPosition(bouncePos);
+				ball.setVelocity(bounceVel);
+			}
+
 			if (goalTop.inside(ball.getPosition()))
 				log.fine("GOAL!!!!");
 			else

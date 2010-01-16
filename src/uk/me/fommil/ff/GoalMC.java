@@ -72,32 +72,18 @@ public class GoalMC {
 		}
 	}
 
-	public void bounce(BallMC ball, Point3d oldPosition) {
-		Point3d p = ball.getPosition();
+	public void bounce(Point3d p, Vector3d v, Point3d oldPosition) {
 		if (!Utils.intersect(bbox, oldPosition, p))
 			return;
-
-		// FIXME: sometimes the ball is able to go through the walls
-
-		log.info("COLLISION " + oldPosition + ", " + p + " with " + bbox);
-		Vector3d v = ball.getVelocity();
-		Point3d exit = Utils.exitPoint(bbox, p, v, 0.1);
-		Point3d s = (Point3d) exit.clone();
-
 		for (BoundingBox box : Lists.newArrayList(roof, west, east, back)) {
-			bounce(s, v, box);
-		}
-		if (!s.equals(exit)) {
-			ball.setPosition(s);
-			ball.setVelocity(v);
+			bounce(oldPosition, p, v, box);
 		}
 	}
 
-	public void bounce(Point3d s, Vector3d v, BoundingBox box) {
-		if (!box.intersect(s) || v.length() == 0) {
+	public void bounce(Point3d oldS, Point3d s, Vector3d v, BoundingBox box) {
+		if (v.length() == 0 || !Utils.intersect(box, oldS, s))
 			return;
-		}
-		log.info("Bouncing off " + box);
+		s.set(Utils.exitPoint(box, s, v, 0.1)); // ?? energy loss
 		s.set(Utils.entryPoint(box, s, v, 0.1)); // ?? energy loss
 		v.set(Utils.rebound(box, s, v));
 		v.scale(0.5);
