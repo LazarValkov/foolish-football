@@ -114,7 +114,7 @@ public class BallMC {
 		// maximum
 		double speed = v.length();
 		if (speed > MAX_SPEED) {
-			log.info("SPEED " + speed);
+//			log.info("SPEED " + speed);
 			v.scale(MAX_SPEED / speed);
 		}
 	}

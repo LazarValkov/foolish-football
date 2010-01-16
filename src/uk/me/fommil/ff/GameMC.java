@@ -153,13 +153,14 @@ public class GameMC {
 		}
 
 		if (bp.y <= upper.y || bp.y >= lower.y) {
-			BoundingBox bulk = pitch.getGoalNetTop();
-			if (bulk.intersect(bp)) {
+			BoundingBox outer = pitch.getGoalNetTopOutside();
+			BoundingBox inner = pitch.getGoalNetTopInside();
+			if (outer.intersect(bp) && !inner.intersect(bp)) {
 				Vector3d v = ball.getVelocity();
 				if (v.length() > 0) {
-					Point3d entry = Utils.entryPoint(bulk, bp, v, 0.01);
+					Point3d entry = Utils.entryPoint(outer, bp, v, 0.01);
 					ball.setPosition(entry); // ?? losing energy
-					Vector3d rebound = Utils.rebound(bulk, entry, v);
+					Vector3d rebound = Utils.rebound(outer, entry, v);
 					rebound.scale(0.5);
 					ball.setVelocity(rebound);
 				}
