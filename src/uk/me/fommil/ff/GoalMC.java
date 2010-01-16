@@ -16,7 +16,6 @@ package uk.me.fommil.ff;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import java.util.logging.Logger;
 import javax.media.j3d.BoundingBox;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
@@ -27,8 +26,6 @@ import javax.vecmath.Vector3d;
  * @author Samuel Halliday
  */
 public class GoalMC {
-
-	private static final Logger log = Logger.getLogger(GoalMC.class.getName());
 
 	private final BoundingBox roof, west, east, back, bbox;
 
@@ -66,10 +63,6 @@ public class GoalMC {
 			backUpper.y = lower.y + posts;
 		}
 		back = new BoundingBox(backLower, backUpper);
-
-		for (BoundingBox box : Lists.newArrayList(roof, west, east, back)) {
-			log.info(box.toString());
-		}
 	}
 
 	public void bounce(Point3d p, Vector3d v, Point3d oldPosition) {
@@ -80,7 +73,7 @@ public class GoalMC {
 		}
 	}
 
-	public void bounce(Point3d oldS, Point3d s, Vector3d v, BoundingBox box) {
+	private void bounce(Point3d oldS, Point3d s, Vector3d v, BoundingBox box) {
 		if (v.length() == 0 || !Utils.intersect(box, oldS, s))
 			return;
 		s.set(Utils.exitPoint(box, s, v, 0.1)); // ?? energy loss
