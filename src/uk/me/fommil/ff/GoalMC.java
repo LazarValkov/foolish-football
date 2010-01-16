@@ -77,22 +77,28 @@ public class GoalMC {
 		if (!Utils.intersect(bbox, oldPosition, p))
 			return;
 
-		log.info("COLLISION " + p + " with " + bbox);
+		// FIXME: sometimes the ball is able to go through the walls
+
+		log.info("COLLISION " + oldPosition + ", " + p + " with " + bbox);
 		Vector3d v = ball.getVelocity();
-		Point3d s = Utils.exitPoint(bbox, p, v, 0.01);
+		Point3d exit = Utils.exitPoint(bbox, p, v, 0.1);
+		Point3d s = (Point3d) exit.clone();
 
 		for (BoundingBox box : Lists.newArrayList(roof, west, east, back)) {
 			bounce(s, v, box);
 		}
-		ball.setPosition(s);
-		ball.setVelocity(v);
+		if (!s.equals(exit)) {
+			ball.setPosition(s);
+			ball.setVelocity(v);
+		}
 	}
 
 	public void bounce(Point3d s, Vector3d v, BoundingBox box) {
 		if (!box.intersect(s) || v.length() == 0) {
 			return;
 		}
-		s.set(Utils.entryPoint(box, s, v, 0.01)); // ?? energy loss
+		log.info("Bouncing off " + box);
+		s.set(Utils.entryPoint(box, s, v, 0.1)); // ?? energy loss
 		v.set(Utils.rebound(box, s, v));
 		v.scale(0.5);
 	}

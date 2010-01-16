@@ -359,27 +359,21 @@ public class GameV extends JPanel {
 	}
 
 	private void drawBall(Graphics2D g, Rectangle vBounds) {
-		// 0/+1/+2/+3 depending on timestamp and motion
 		BallMC ball = game.getBall();
 		int spriteIndex = 0;
 		Vector3d v = ball.getVelocity();
-//		log.info(v + " " + v.length());
 		if (v.lengthSquared() > 0) {
-			long period = max((long) v.length(), 50);
-//			log.info(v.length() + " " + period);
-			long t = (long) ((1000L * game.getTimestamp()) % period);
-			if (t < period / 4) {
+			long t = (long) ((1000L * game.getTimestamp()) % 800L);
+			if (t < 200) {
 				spriteIndex += 1;
-			} else if (t < period / 2) {
+			} else if (t < 400) {
 				spriteIndex += 2;
-			} else if (t < 3 * period / 4) {
+			} else if (t < 600) {
 				spriteIndex += 3;
 			}
 		}
 		// TODO: calibrate the Z drawing with the sprites
 		double z = ball.getPosition().z;
-//		if (z > 3)
-//			log.info("BALL Z = " + z);
 		int diff = (int) (3 * z);
 		{	// the drop shadow
 			Sprite sprite = ballSprites.get(4);

@@ -196,7 +196,7 @@ public class Utils {
 			s2.add(r);
 			c++;
 			if (c > 10000)
-				throw new RuntimeException("too many loops");
+				throw new RuntimeException("too many loops " + box + " " + s + " " + v);
 		} while (!box.intersect(s2));
 		return s2;
 	}
@@ -216,6 +216,6 @@ public class Utils {
 
 		Vector3d ds = new Vector3d(end);
 		ds.sub(start);
-		return !(bounds.intersect(start, ds) && bounds.intersect(end, Utils.reverse(ds)));
+		return bounds.intersect(start, ds) && bounds.intersect(end, Utils.reverse(ds));
 	}
 }

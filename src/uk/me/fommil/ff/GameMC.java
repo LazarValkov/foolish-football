@@ -117,6 +117,7 @@ public class GameMC {
 		}
 		// TODO: better resolution of contended owner (e.g. by skill, tackling state)
 		// TODO: physics rebounding off players
+		// TODO: physics restrictions to stop players walking through walls
 		// TODO: getForce for kick/heading/dribbling strength
 		if (!candidate.isEmpty()) {
 			PlayerMC owner = candidate.get(random.nextInt(candidate.size()));
@@ -159,7 +160,9 @@ public class GameMC {
 		if (bNewP.y >= upper.y || bNewP.y <= lower.y) {
 			goalTop.bounce(ball, bp);
 			if (goalTop.inside(ball.getPosition()))
-				log.info("GOAL!!!!");
+				log.fine("GOAL!!!!");
+			else
+				log.fine("CORNER/GOAL KICK");
 		}
 	}
 
