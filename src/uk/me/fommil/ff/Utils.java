@@ -56,6 +56,15 @@ public class Utils {
 			return v.angle(NORTH);
 	}
 
+	/**
+	 * @param bulk
+	 * @param s
+	 * @param v
+	 * @param ds
+	 * @return
+	 * @deprecated TODO create a simple object oriented physics engine
+	 */
+	@Deprecated
 	public static Point3d entryPoint(Bounds bulk, Point3d s, Vector3d v, double ds) {
 		Preconditions.checkNotNull(bulk);
 		Preconditions.checkNotNull(s);
@@ -78,6 +87,13 @@ public class Utils {
 		return s2;
 	}
 
+	/**
+	 * @param box
+	 * @param s
+	 * @return
+	 * @deprecated TODO create a simple object oriented physics engine
+	 */
+	@Deprecated
 	public static Vector3d entrySurface(BoundingBox box, Point3d s) {
 		Preconditions.checkNotNull(box);
 		Preconditions.checkNotNull(s);
@@ -115,6 +131,14 @@ public class Utils {
 		vector.z = 0 - vector.z;
 	}
 
+	/**
+	 * @param box
+	 * @param s
+	 * @param v
+	 * @return
+	 * @deprecated TODO create a simple object oriented physics engine
+	 */
+	@Deprecated
 	public static Vector3d rebound(BoundingBox box, Point3d s, Vector3d v) {
 		Preconditions.checkNotNull(box);
 		Preconditions.checkNotNull(s);

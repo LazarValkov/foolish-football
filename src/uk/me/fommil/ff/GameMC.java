@@ -16,14 +16,15 @@ package uk.me.fommil.ff;
 
 import com.google.common.collect.Lists;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 import javax.media.j3d.BoundingBox;
 import javax.media.j3d.Bounds;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
+import uk.me.fommil.ff.PlayerMC.Action;
 import uk.me.fommil.ff.Tactics.BallZone;
 import uk.me.fommil.ff.Tactics.PlayerZone;
 
@@ -36,22 +37,21 @@ public class GameMC {
 
 	private static final Logger log = Logger.getLogger(GameMC.class.getName());
 
-	// this is mutable, so be careful not to edit it
-	private static final Vector3d NORTH = new Vector3d(0, -1, 0);
-
 	private final Team a;
 
 	private final BallMC ball = new BallMC();
 
 	private final List<PlayerMC> as = Lists.newArrayListWithCapacity(11);
 
-	private final AtomicLong ticks = new AtomicLong();
-
 	private final Pitch pitch;
 
 	private PlayerMC selected;
 
 	private double time;
+
+	private final Random random = new Random();
+
+	private Collection<Action> actions = Collections.emptyList();
 
 	/**
 	 * @param a
@@ -79,20 +79,18 @@ public class GameMC {
 	 * @param aftertouches
 	 */
 	public void setUserActions(Team team, Collection<PlayerMC.Action> actions, Collection<BallMC.Aftertouch> aftertouches) {
-//		log.info("USER: " + actions);
-		updateSelected(actions);
-//		log.info(selected.toString());
-		selected.setActions(actions);
+		this.actions = actions;
+		if (actions.contains(PlayerMC.Action.KICK))
+			updateSelected(null);
+		else
+			selected.setActions(actions);
 		ball.setAftertouch(aftertouches);
 	}
 
 	public void tick(double dt) {
 		time += dt;
-		// autopilot
 		Point3d bp = ball.getPosition();
 		BallZone bz = ball.getZone(pitch);
-//		log.info(bz.toString());
-		// log.info("BALL " + bz);
 		Tactics tactics = a.getCurrentTactics();
 		for (PlayerMC p : as) {
 			if (p != selected) {
@@ -107,24 +105,20 @@ public class GameMC {
 			}
 		}
 
-		// sprite collision detection for ball movement and player states
-		// detect who has rights to the ball
 		List<PlayerMC> candidate = Lists.newArrayList();
 		Point3d b = ball.getPosition();
 		for (PlayerMC pm : as) {
 			Bounds pmb = pm.getBounds();
 			if (pm.getPosition().distance(b) < 100 && pmb.intersect(b)) {
-				//log.info("POTENTIAL OWNER " + pm);
 				candidate.add(pm);
 			}
 		}
 		// TODO: better resolution of contended owner (e.g. by skill, tackling state)
+		// TODO: physics rebounding off players
 		if (!candidate.isEmpty()) {
-			PlayerMC owner = candidate.get(new Random().nextInt(candidate.size()));
-			// always give control to the operator
-			// TODO: fix delay when handing over control
-			selected = owner;
-			Vector3d kick = owner.getVelocity();
+			PlayerMC owner = candidate.get(random.nextInt(candidate.size()));
+			updateSelected(owner);
+			Vector3d kick = owner.getVelocity(); // FIXME: this should be getForce or similar
 			switch (owner.getMode()) {
 				case KICK:
 				case HEAD_START:
@@ -145,14 +139,11 @@ public class GameMC {
 		}
 		ball.tick(dt);
 
-		// log.info(ball.getPosition().toString());
-		// detectors for various states of the game
 		BoundingBox p = pitch.getPitch();
 		Point3d lower = Utils.getLower(p);
 		Point3d upper = Utils.getUpper(p);
 
 		if (bp.x < lower.x || bp.x > upper.x) {
-//			log.info("OUT OF BOUNDS " + pitch.getPitch() + " " + ball.getPosition());
 			ball.setVelocity(new Vector3d());
 			Point3d position = ball.getPosition();
 			position.z = 0;
@@ -169,9 +160,6 @@ public class GameMC {
 					Point3d entry = Utils.entryPoint(bulk, bp, v, 0.01);
 					ball.setPosition(entry); // ?? losing energy
 					Vector3d rebound = Utils.rebound(bulk, entry, v);
-//					Vector3d surface = Utils.entrySurface(bulk, entry);
-//					log.info("Collision " + entry + " on surface " + surface);
-
 					rebound.scale(0.5);
 					ball.setVelocity(rebound);
 				}
@@ -179,30 +167,30 @@ public class GameMC {
 		}
 	}
 
-	private void updateSelected(Collection<PlayerMC.Action> actions) {
+	private void updateSelected(PlayerMC closest) {
 		assert selected != null;
 
-		if (!actions.contains(PlayerMC.Action.KICK))
-			return;
-
-		PlayerMC closest = selected;
-		double distance = Double.MAX_VALUE;
-		for (PlayerMC model : as) {
-			switch (model.getMode()) {
-				case GROUND:
-				case INJURED:
-				case HEAD_START:
-				case HEAD_MID:
-				case HEAD_END:
-					continue;
-			}
-			double ds2 = model.getPosition().distanceSquared(ball.getPosition());
-			if (ds2 < distance) {
-				distance = ds2;
-				closest = model;
+		if (closest == null) {
+			closest = selected;
+			double distance = Double.MAX_VALUE;
+			for (PlayerMC model : as) {
+				switch (model.getMode()) {
+					case GROUND:
+					case INJURED:
+					case HEAD_START:
+					case HEAD_MID:
+					case HEAD_END:
+						continue;
+				}
+				double ds2 = model.getPosition().distanceSquared(ball.getPosition());
+				if (ds2 < distance) {
+					distance = ds2;
+					closest = model;
+				}
 			}
 		}
 		selected = closest;
+		selected.setActions(actions);
 	}
 
 	public BallMC getBall() {
