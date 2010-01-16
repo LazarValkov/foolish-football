@@ -36,8 +36,12 @@ public class GoalMCTest {
 
 	@Test
 	public void testBounce() throws Exception {
-		BoundingBox bbox = pitch.getGoalNetTop();
-		GoalMC goal = new GoalMC(bbox, 2, Direction.DOWN);
+		testBounceDelegate(pitch.getGoalNetTop(), Direction.DOWN);
+		testBounceDelegate(pitch.getGoalNetBottom(), Direction.UP);
+	}
+
+	public void testBounceDelegate(BoundingBox bbox, Direction direction) throws Exception {
+		GoalMC goal = new GoalMC(bbox, 2, direction);
 		Point3d lower = Utils.getLower(bbox);
 		Point3d upper = Utils.getUpper(bbox);
 
@@ -59,10 +63,11 @@ public class GoalMCTest {
 		for (Vector3d v : velocities) {
 			Vector3d vu = (Vector3d) v.clone();
 			vu.normalize();
-			vu.scale(75);
+			vu.scale(50);
 			Point3d p = new Point3d(vu);
 			p.negate();
 			p.add(cog);
+			p.z = 2;
 			positions.add(p);
 		}
 		List<BallMC> balls = Lists.newArrayList();
@@ -94,10 +99,12 @@ public class GoalMCTest {
 		assertTrue(balls.get(1).getPosition().y < lower.y);
 		assertTrue(balls.get(2).getPosition().x > upper.x);
 		assertTrue(balls.get(3).getPosition().y > lower.y);
+
 		assertTrue(balls.get(4).getPosition().y < lower.y);
 		assertTrue(balls.get(5).getPosition().y > upper.y);
 		assertTrue(balls.get(6).getPosition().y > upper.y);
 		assertTrue(balls.get(7).getPosition().y < lower.y);
+
 		assertTrue(balls.get(8).getPosition().x < lower.x);
 		assertTrue(balls.get(9).getPosition().y > upper.y);
 	}

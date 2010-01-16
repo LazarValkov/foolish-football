@@ -53,7 +53,7 @@ public class GameMC {
 
 	private Collection<Action> actions = Collections.emptyList();
 
-	private final GoalMC goalTop;
+	private final GoalMC goalTop, goalBottom;
 
 	/**
 	 * @param a
@@ -74,6 +74,8 @@ public class GameMC {
 		}
 		selected = as.get(9);
 		goalTop = new GoalMC(pitch.getGoalNetTop(), 2, Direction.DOWN);
+		goalBottom = new GoalMC(pitch.getGoalNetBottom(), 2, Direction.UP);
+		log.info(goalBottom.toString());
 	}
 
 	/**
@@ -161,6 +163,7 @@ public class GameMC {
 			Point3d bouncePos = ball.getPosition();
 			Vector3d bounceVel = ball.getVelocity();
 			goalTop.bounce(bouncePos, bounceVel, bp);
+			goalBottom.bounce(bouncePos, bounceVel, bp);
 			if (!bouncePos.equals(ball.getPosition())) {
 				ball.setPosition(bouncePos);
 				ball.setVelocity(bounceVel);
@@ -168,6 +171,8 @@ public class GameMC {
 
 			if (goalTop.inside(ball.getPosition()))
 				log.fine("GOAL!!!!");
+			else if (goalBottom.inside(ball.getPosition()))
+				log.fine("OWN GOAL!!!!");
 			else
 				log.fine("CORNER/GOAL KICK");
 		}

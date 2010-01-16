@@ -16,6 +16,7 @@ package uk.me.fommil.ff;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import java.util.logging.Logger;
 import javax.media.j3d.BoundingBox;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
@@ -26,6 +27,8 @@ import javax.vecmath.Vector3d;
  * @author Samuel Halliday
  */
 public class GoalMC {
+
+	private static final Logger log = Logger.getLogger(GoalMC.class.getName());
 
 	private final BoundingBox roof, west, east, back, bbox;
 
@@ -68,6 +71,7 @@ public class GoalMC {
 	public void bounce(Point3d p, Vector3d v, Point3d oldPosition) {
 		if (!Utils.intersect(bbox, oldPosition, p))
 			return;
+		log.info("COLLISION DETECTED");
 		for (BoundingBox box : Lists.newArrayList(roof, west, east, back)) {
 			bounce(oldPosition, p, v, box);
 		}
@@ -90,5 +94,10 @@ public class GoalMC {
 				return false;
 		}
 		return true;
+	}
+
+	@Override
+	public String toString() {
+		return Lists.newArrayList(roof, west, east, back).toString();
 	}
 }

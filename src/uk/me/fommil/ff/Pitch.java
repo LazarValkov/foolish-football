@@ -54,33 +54,25 @@ public class Pitch {
 
 	private final Rectangle pitch = new Rectangle(81, 129, 509, 640);
 
-	private final Rectangle penaltyBoxTop = new Rectangle(193, 129, 285, 87);
-
-	private final Rectangle penaltyBoxBottom = new Rectangle(193, 682, 285, 87);
-
-	private final Rectangle goalBoxTop = new Rectangle(273, 129, 125, 29);
-
-	private final Rectangle goalBoxBottom = new Rectangle(273, 740, 125, 29);
-
-	private final Rectangle goalLineTop = new Rectangle(300, 129, 71, 1);
-
-	private final Rectangle goalLineBottom = new Rectangle(300, 769, 71, 1);
-
-	// TODO nets need more thought
-	private final Rectangle goalNetTop = new Rectangle(300, 111, 71, 18);
-
-//	private final Rectangle goalNetBottom = new Rectangle(300, 751, 71, 18);
-	// TODO posts need more thought
-//	private final Rectangle goalPostTopLeft = new Rectangle(,,2,1);
+//	private final Rectangle penaltyBoxTop = new Rectangle(193, 129, 285, 87);
 //
-//	private final Rectangle goalPostTopRight = new Rectangle(,,2,1);
+//	private final Rectangle penaltyBoxBottom = new Rectangle(193, 682, 285, 87);
 //
-//	private final Rectangle goalPostBottomLeft = new Rectangle(,,2,1);
+//	private final Rectangle goalBoxTop = new Rectangle(273, 129, 125, 29);
 //
-//	private final Rectangle goalPostBottomRight = new Rectangle(,,2,1);
-	private final Point penaltySpotTop = new Point(336, 187);
+//	private final Rectangle goalBoxBottom = new Rectangle(273, 740, 125, 29);
+//
+//	private final Rectangle goalLineTop = new Rectangle(300, 129, 71, 1);
+//
+//	private final Rectangle goalLineBottom = new Rectangle(300, 769, 71, 1);
 
-	private final Point penaltySpotBottom = new Point(336, 711);
+	private final Rectangle goalNetTop = new Rectangle(300, 117, 71, 12);
+
+	private final Rectangle goalNetBottom = new Rectangle(300, 769, 71, 12);
+
+//	private final Point penaltySpotTop = new Point(336, 187);
+//
+//	private final Point penaltySpotBottom = new Point(336, 711);
 
 	private final Point centreSpot = new Point(336, 449);
 
@@ -92,8 +84,8 @@ public class Pitch {
 		return rectangleTo3d(goalNetTop, new Point2d(0, 30)); // FIXME: z of goal post
 	}
 
-	public Rectangle getGoalNetTopAsRectangle() {
-		return goalNetTop;
+	public BoundingBox getGoalNetBottom() {
+		return rectangleTo3d(goalNetBottom, new Point2d(0, 30)); // FIXME: z of goal post
 	}
 
 	public Rectangle getPitchAsRectangle() {
