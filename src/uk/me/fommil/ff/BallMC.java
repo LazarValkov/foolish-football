@@ -18,6 +18,7 @@ import com.google.common.base.Preconditions;
 import static java.lang.Math.*;
 import java.util.Collection;
 import java.util.logging.Logger;
+import javax.media.j3d.BoundingSphere;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 import uk.me.fommil.ff.Tactics.BallZone;

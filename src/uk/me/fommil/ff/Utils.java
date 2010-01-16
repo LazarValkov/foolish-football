@@ -81,8 +81,12 @@ public class Utils {
 		r.scale(ds);
 		Point3d s2 = (Point3d) s.clone();
 
+		int c = 0;
 		do {
 			s2.add(r);
+			c++;
+			if (c > 10000)
+				throw new RuntimeException("too many loops");
 		} while (bulk.intersect(s2));
 		return s2;
 	}
@@ -124,11 +128,13 @@ public class Utils {
 		return upper;
 	}
 
-	private static void reverse(Vector3d vector) {
+	// inline but also returns vector
+	public static Vector3d reverse(Vector3d vector) {
 		Preconditions.checkNotNull(vector);
 		vector.x = 0 - vector.x;
 		vector.y = 0 - vector.y;
 		vector.z = 0 - vector.z;
+		return vector;
 	}
 
 	/**
@@ -158,5 +164,58 @@ public class Utils {
 		else
 			throw new UnsupportedOperationException("extreme case failure");
 		return vec;
+	}
+
+	/**
+	 * @param box 
+	 * @param s might have passed through the box in the last step
+	 * @param v 
+	 * @param ds
+	 * @return a point that is inside the box, will be the exit point if passed through
+	 * @deprecated TODO create a simple object oriented physics engine
+	 */
+	@Deprecated
+	public static Point3d exitPoint(BoundingBox box, Point3d s, Vector3d v, double ds) {
+		Preconditions.checkNotNull(box);
+		Preconditions.checkNotNull(s);
+		Preconditions.checkNotNull(v);
+		if (box.intersect(s) || v.length() == 0)
+			return s;
+
+		// really dumb maths, take the velocity and work back to the point where
+		// the object exited the intersection. Numerical, brute force approach
+		// TODO: analytical solution for BoundingBox
+		Vector3d r = (Vector3d) v.clone();
+		Utils.reverse(r);
+		r.normalize();
+		r.scale(ds);
+		Point3d s2 = (Point3d) s.clone();
+
+		int c = 0;
+		do {
+			s2.add(r);
+			c++;
+			if (c > 10000)
+				throw new RuntimeException("too many loops");
+		} while (!box.intersect(s2));
+		return s2;
+	}
+
+	/**
+	 * @param bounds
+	 * @param start
+	 * @param end
+	 * @return
+	 * @deprecated TODO create a simple object oriented physics engine
+	 */
+	@Deprecated
+	public static boolean intersect(Bounds bounds, Point3d start, Point3d end) {
+		Preconditions.checkNotNull(bounds);
+		Preconditions.checkNotNull(start);
+		Preconditions.checkNotNull(end);
+
+		Vector3d ds = new Vector3d(end);
+		ds.sub(start);
+		return !(bounds.intersect(start, ds) && bounds.intersect(end, Utils.reverse(ds)));
 	}
 }

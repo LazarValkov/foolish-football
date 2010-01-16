@@ -303,10 +303,10 @@ public class GameV extends JPanel {
 				spriteIndex += 76;
 				break;
 			case HEAD_MID:
-				spriteIndex += 84; // FIXME
+				spriteIndex += 84;
 				break;
 			case HEAD_END:
-				spriteIndex += 92; // FIXME
+				spriteIndex += 92;
 				break;
 			case GROUND:
 				switch (direction) {

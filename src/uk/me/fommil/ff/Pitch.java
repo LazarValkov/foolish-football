@@ -67,8 +67,7 @@ public class Pitch {
 	private final Rectangle goalLineBottom = new Rectangle(300, 769, 71, 1);
 
 	// TODO nets need more thought
-	private final Rectangle goalNetTopOutside = new Rectangle(300, 111, 73, 18);
-	private final Rectangle goalNetTopInside = new Rectangle(302, 111, 69, 18);
+	private final Rectangle goalNetTop = new Rectangle(300, 111, 71, 18);
 
 //	private final Rectangle goalNetBottom = new Rectangle(300, 751, 71, 18);
 	// TODO posts need more thought
@@ -89,12 +88,12 @@ public class Pitch {
 		return rectangleTo3d(pitch, new Point2d(0, Double.MAX_VALUE));
 	}
 
-	public BoundingBox getGoalNetTopOutside() {
-		return rectangleTo3d(goalNetTopOutside, new Point2d(0, 3));
+	public BoundingBox getGoalNetTop() {
+		return rectangleTo3d(goalNetTop, new Point2d(0, 30)); // FIXME: z of goal post
 	}
 
-	public BoundingBox getGoalNetTopInside() {
-		return rectangleTo3d(goalNetTopInside, new Point2d(0, 2.5));
+	public Rectangle getGoalNetTopAsRectangle() {
+		return goalNetTop;
 	}
 
 	public Rectangle getPitchAsRectangle() {

@@ -53,6 +53,8 @@ public class GameMC {
 
 	private Collection<Action> actions = Collections.emptyList();
 
+	private final GoalMC goalTop;
+
 	/**
 	 * @param a
 	 * @param pitch
@@ -71,6 +73,7 @@ public class GameMC {
 			as.add(pma);
 		}
 		selected = as.get(9);
+		goalTop = new GoalMC(pitch.getGoalNetTop(), 2, Direction.DOWN);
 	}
 
 	/**
@@ -79,7 +82,7 @@ public class GameMC {
 	 * @param aftertouches
 	 */
 	public void setUserActions(Team team, Collection<PlayerMC.Action> actions, Collection<BallMC.Aftertouch> aftertouches) {
-		this.actions = actions;
+		this.actions = Lists.newArrayList(actions);
 		if (actions.contains(PlayerMC.Action.KICK))
 			updateSelected(null);
 		else
@@ -106,19 +109,20 @@ public class GameMC {
 		}
 
 		List<PlayerMC> candidate = Lists.newArrayList();
-		Point3d b = ball.getPosition();
 		for (PlayerMC pm : as) {
 			Bounds pmb = pm.getBounds();
-			if (pm.getPosition().distance(b) < 100 && pmb.intersect(b)) {
+			if (pm.getPosition().distance(bp) < 100 && pmb.intersect(bp)) {
 				candidate.add(pm);
 			}
 		}
 		// TODO: better resolution of contended owner (e.g. by skill, tackling state)
 		// TODO: physics rebounding off players
+		// TODO: getForce for kick/heading/dribbling strength
 		if (!candidate.isEmpty()) {
 			PlayerMC owner = candidate.get(random.nextInt(candidate.size()));
 			updateSelected(owner);
-			Vector3d kick = owner.getVelocity(); // FIXME: this should be getForce or similar
+			Vector3d kick = owner.getVelocity();
+			kick.z += ball.getVelocity().z;
 			switch (owner.getMode()) {
 				case KICK:
 				case HEAD_START:
@@ -133,6 +137,7 @@ public class GameMC {
 					ball.setVelocity(kick);
 			}
 		}
+		Point3d bNewP = ball.getPosition();
 
 		for (PlayerMC pm : as) {
 			pm.tick(dt);
@@ -143,28 +148,18 @@ public class GameMC {
 		Point3d lower = Utils.getLower(p);
 		Point3d upper = Utils.getUpper(p);
 
-		if (bp.x < lower.x || bp.x > upper.x) {
+		if (bNewP.x < lower.x || bNewP.x > upper.x) {
 			ball.setVelocity(new Vector3d());
-			Point3d position = ball.getPosition();
-			position.z = 0;
-			ball.setPosition(position);
-			selected.setPosition(ball.getPosition());
+			bNewP.z = 0;
+			ball.setPosition(bNewP);
+			selected.setPosition(bNewP);
 			selected.setThrowIn();
 		}
 
-		if (bp.y <= upper.y || bp.y >= lower.y) {
-			BoundingBox outer = pitch.getGoalNetTopOutside();
-			BoundingBox inner = pitch.getGoalNetTopInside();
-			if (outer.intersect(bp) && !inner.intersect(bp)) {
-				Vector3d v = ball.getVelocity();
-				if (v.length() > 0) {
-					Point3d entry = Utils.entryPoint(outer, bp, v, 0.01);
-					ball.setPosition(entry); // ?? losing energy
-					Vector3d rebound = Utils.rebound(outer, entry, v);
-					rebound.scale(0.5);
-					ball.setVelocity(rebound);
-				}
-			}
+		if (bNewP.y >= upper.y || bNewP.y <= lower.y) {
+			goalTop.bounce(ball, bp);
+			if (goalTop.inside(ball.getPosition()))
+				log.info("GOAL!!!!");
 		}
 	}
 

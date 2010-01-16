@@ -123,6 +123,7 @@ public class PlayerMC {
 		switch (mode) {
 			case GROUND:
 			case THROW:
+			case INJURED:
 				//v.scale(0);
 				break;
 			default:
