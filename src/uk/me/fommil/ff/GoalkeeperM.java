@@ -15,6 +15,7 @@
 package uk.me.fommil.ff;
 
 import javax.vecmath.Vector3d;
+import static java.lang.Math.*;
 
 /**
  * The model (M) for a goalkeeper.
@@ -51,6 +52,8 @@ public class GoalkeeperM extends PlayerMC {
 				Vector3d dv = (Vector3d) v.clone();
 				dv.scale(t);
 				s.add(dv);
+				v.x = signum(v.x) * max(0, abs(v.x) - friction(t, s.z));
+				v.y = signum(v.y) * max(0, abs(v.y) - friction(t, s.z));
 		}
 
 		switch (mode) {
@@ -69,22 +72,22 @@ public class GoalkeeperM extends PlayerMC {
 
 		switch (gkState) {
 			case DIVE_START:
-				changeGkModeIfTimeExpired(0.1, GoalkeeperState.DIVE_MID);
+				changeGkModeIfTimeExpired(0.2, GoalkeeperState.DIVE_MID);
 				break;
 			case DIVE_MID:
-				changeGkModeIfTimeExpired(0.1, GoalkeeperState.DIVE_PEAK);
+				changeGkModeIfTimeExpired(0.2, GoalkeeperState.DIVE_PEAK);
 				break;
 			case DIVE_PEAK:
-				changeGkModeIfTimeExpired(0.1, GoalkeeperState.FALL_START);
+				changeGkModeIfTimeExpired(0.2, GoalkeeperState.FALL_START);
 				break;
 			case FALL_START:
-				changeGkModeIfTimeExpired(0.1, GoalkeeperState.FALL_MID);
+				changeGkModeIfTimeExpired(0.2, GoalkeeperState.FALL_MID);
 				break;
 			case FALL_MID:
-				changeGkModeIfTimeExpired(0.1, GoalkeeperState.FALL_END);
+				changeGkModeIfTimeExpired(0.2, GoalkeeperState.FALL_END);
 				break;
 			case FALL_END:
-				changeGkModeIfTimeExpired(0.1, null);
+				changeGkModeIfTimeExpired(1, null);
 				break;
 			default:
 				if (random.nextInt(100) < 10) {
@@ -95,9 +98,9 @@ public class GoalkeeperM extends PlayerMC {
 		}
 	}
 
-
 	// TODO: no code duplication
 	private volatile double timestamp = Double.NaN; // of last mode switch
+
 	@Deprecated
 	protected void changeGkModeIfTimeExpired(double t, GoalkeeperState gkState) {
 		if (time - timestamp > t) {
@@ -108,4 +111,18 @@ public class GoalkeeperM extends PlayerMC {
 				timestamp = time;
 		}
 	}
+
+	@Deprecated
+	private double friction(double t, double z) {
+		if (z > 0.1)
+			return AIR_FRICTION * t;
+		return GROUND_FRICTION * t;
+	}
+
+	private static final double GROUND_FRICTION = 200;
+
+	private static final double AIR_FRICTION = 30;
+
+	private static final double GRAVITY = 10;
+
 }

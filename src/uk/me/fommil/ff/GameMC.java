@@ -78,6 +78,10 @@ public class GameMC {
 		goalTop = new GoalMC(pitch.getGoalNetTop(), 2, Direction.DOWN);
 		goalBottom = new GoalMC(pitch.getGoalNetBottom(), 2, Direction.UP);
 		goalkeeper = new GoalkeeperM(1, aPlayers.get(0));
+
+		BoundingBox net = pitch.getGoalNetBottom();
+		Point3d netLower = Utils.getLower(net);
+		goalkeeper.setPosition(new Point3d(netLower.x + 25, netLower.y, 0));
 	}
 
 	/**
