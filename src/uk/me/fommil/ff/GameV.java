@@ -29,6 +29,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Logger;
 import javax.media.j3d.BoundingPolytope;
 import static java.lang.Math.*;
@@ -74,6 +75,8 @@ public class GameV extends JPanel {
 	private final Map<Integer, Sprite> teamNumberSprites = Maps.newHashMap();
 
 	private final Map<Integer, Sprite> goalkeeperSprites = Maps.newHashMap();
+
+	private final Map<Point3d, Sprite> objectSprites = Maps.newHashMap();
 
 	private final KeyListener keyboardInput = new KeyAdapter() {
 
@@ -186,6 +189,14 @@ public class GameV extends JPanel {
 		for (int i = 0; i < 57; i++) {
 			goalkeeperSprites.put(i, sprites.get(i + 947));
 		}
+
+		// TODO: deal with nets/flags better
+		objectSprites.put(new Point3d(300, 117, 0), sprites.get(1205));
+		objectSprites.put(new Point3d(300, 764, 0), sprites.get(1206));
+		log.info("1205 " + sprites.get(1205));
+		log.info("1206 " + sprites.get(1206));
+
+		// 1184, 1185, 1186, 1187
 	}
 
 	@Override
@@ -241,6 +252,13 @@ public class GameV extends JPanel {
 
 		for (GoalkeeperM gm : game.getGoalkeepers()) {
 			drawGoalkeeper(g, vBounds, gm);
+		}
+
+		for (Entry<Point3d, Sprite> e : objectSprites.entrySet()) {
+			Point p = pToG(vBounds, e.getKey());
+			Sprite sprite = e.getValue();
+			Point s = sprite.getCentre();
+			g.drawImage(sprite.getImage(), p.x, p.y - s.y / 2, null);
 		}
 	}
 
@@ -352,11 +370,7 @@ public class GameV extends JPanel {
 						spriteIndex += 2;
 					}
 				}
-
-
-
 		}
-
 		Sprite sprite = teamSprites.get(spriteIndex);
 		Point s = sprite.getCentre();
 		g.drawImage(sprite.getImage(), gPos.x - s.x / 2 - 1, gPos.y - s.y / 2, null);
@@ -479,7 +493,6 @@ public class GameV extends JPanel {
 					break;
 			}
 			int stage = gm.getGkState().ordinal();
-			log.info("STAGE " + stage + " index = " + spriteIndex + " dir = " + direction);
 			assert stage < 6;
 			switch (direction) {
 				case RIGHT:
@@ -489,7 +502,6 @@ public class GameV extends JPanel {
 					spriteIndex += (12 - stage);
 					break;
 			}
-			log.info("index = " + spriteIndex);
 		}
 
 		Sprite sprite = goalkeeperSprites.get(spriteIndex);

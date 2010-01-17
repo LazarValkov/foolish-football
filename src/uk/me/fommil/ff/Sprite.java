@@ -28,6 +28,7 @@ import java.util.Map;
 public class Sprite {
 
 	private final BufferedImage image;
+
 	private final Point centre;
 
 	/**
@@ -61,6 +62,11 @@ public class Sprite {
 			}
 		}
 		return new Sprite(newImage, new Point(centre));
+	}
+
+	@Override
+	public String toString() {
+		return centre.toString();
 	}
 
 	// <editor-fold defaultstate="collapsed" desc="BOILERPLATE GETTERS/SETTERS">
