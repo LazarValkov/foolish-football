@@ -35,6 +35,7 @@ import static java.lang.Math.*;
 import javax.swing.JPanel;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
+import uk.me.fommil.ff.GoalkeeperM.GoalkeeperState;
 
 /**
  * The view (V) for the game play.
@@ -417,7 +418,85 @@ public class GameV extends JPanel {
 		return new Rectangle(gMinX, gMinY, gSize.width, gSize.height);
 	}
 
+	// TODO: remove code duplication
+	@Deprecated
 	private void drawGoalkeeper(Graphics2D g, Rectangle vBounds, GoalkeeperM gm) {
+		Point3d pPos = gm.getPosition();
+		Point gPos = pToG(vBounds, pPos);
+
+		// assumes sprite size
+		Rectangle vPmSprite = new Rectangle(vBounds.x + gPos.x - 20, vBounds.y + gPos.y - 20, 40, 40);
+		if (!vBounds.intersects(vPmSprite)) {
+			return;
+		}
+
+		int spriteIndex = 0;
+		Direction direction = Direction.valueOf(gm.getAngle());
+
+		long ts = (long) (1000L * game.getTimestamp());
+		long t = ts % 800L;
+
+		if (gm.getGkState() == GoalkeeperState.RUN) {
+			switch (direction) {
+				case DOWN:
+					spriteIndex = 1;
+					break;
+				case RIGHT:
+					spriteIndex = 2;
+					break;
+				case LEFT:
+					spriteIndex = 3;
+					break;
+				case DOWN_LEFT:
+					spriteIndex = 4;
+					break;
+				case DOWN_RIGHT:
+					spriteIndex = 5;
+					break;
+				case UP_LEFT:
+					spriteIndex = 6;
+					break;
+				case UP_RIGHT:
+					spriteIndex = 7;
+					break;
+			}
+			spriteIndex *= 3;
+			if (gm.getVelocity().lengthSquared() > 0) {
+				if (t < 200) {
+				} else if (t < 400) {
+					spriteIndex += 1;
+				} else if (t > 600) {
+					spriteIndex += 2;
+				}
+			}
+		} else {
+			switch (gm.getOpponent()) {
+				case UP:
+					spriteIndex = 38;
+					break;
+				case DOWN:
+					spriteIndex = 24;
+					break;
+			}
+			int stage = gm.getGkState().ordinal();
+			log.info("STAGE " + stage + " index = " + spriteIndex + " dir = " + direction);
+			assert stage < 6;
+			switch (direction) {
+				case RIGHT:
+					spriteIndex += stage;
+					break;
+				case LEFT:
+					spriteIndex += (12 - stage);
+					break;
+			}
+			log.info("index = " + spriteIndex);
+		}
+
+		Sprite sprite = goalkeeperSprites.get(spriteIndex);
+		Point s = sprite.getCentre();
+		g.drawImage(sprite.getImage(), gPos.x - s.x / 2 - 1, gPos.y - s.y / 2, null);
+
+
 //# sprite number, description
 //947, goalie up
 //950, goalie down
@@ -450,6 +529,6 @@ public class GameV extends JPanel {
 //...
 //1004, goalie down dive stage 3
 
-		
+
 	}
 }

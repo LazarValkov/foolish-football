@@ -14,6 +14,8 @@
  */
 package uk.me.fommil.ff;
 
+import java.util.Collection;
+import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 import static java.lang.Math.*;
 
@@ -24,14 +26,23 @@ import static java.lang.Math.*;
  */
 public class GoalkeeperM extends PlayerMC {
 
+
 	public enum GoalkeeperState {
 
-		DIVE_START, DIVE_MID, DIVE_PEAK, FALL_START, FALL_MID, FALL_END
+		DIVE_START, DIVE_MID, DIVE_PEAK, FALL_START, FALL_MID, FALL_END, RUN
 		// TODO FALL_END_BALL
 
 	}
 
-	private volatile GoalkeeperState gkState;
+	private volatile GoalkeeperState gkState = GoalkeeperState.RUN;
+
+	private Direction opponent;
+	public Direction getOpponent() {
+		return opponent;
+	}
+	public void setOpponent(Direction opponent) {
+		this.opponent = opponent;
+	}
 
 	public GoalkeeperM(int i, Player player) {
 		super(i, player);
@@ -42,57 +53,53 @@ public class GoalkeeperM extends PlayerMC {
 	 */
 	public void tick(double t) {
 		time += t;
-		assert mode != null;
-		switch (mode) {
-			case GROUND:
-			case THROW:
-			case INJURED:
-				break;
-			default:
-				Vector3d dv = (Vector3d) v.clone();
-				dv.scale(t);
-				s.add(dv);
-				v.x = signum(v.x) * max(0, abs(v.x) - friction(t, s.z));
-				v.y = signum(v.y) * max(0, abs(v.y) - friction(t, s.z));
+		if (v.length() > 0) {
+			Vector3d dv = (Vector3d) v.clone();
+			dv.scale(t);
+			s.add(dv);
+			v.x = signum(v.x) * max(0, abs(v.x) - friction(t, s.z));
+			v.y = signum(v.y) * max(0, abs(v.y) - friction(t, s.z));
+			if (v.length() < 10)
+				v.scale(0);
 		}
 
 		switch (mode) {
 			case KICK:
 				changeModeIfTimeExpired(0.1, PlayerState.RUN);
 				break;
-			case GROUND:
-				if (random.nextBoolean())
-					changeModeIfTimeExpired(2, PlayerState.RUN);
-				else
-					changeModeIfTimeExpired(2, PlayerState.INJURED);
-				break;
-			case INJURED:
-				changeModeIfTimeExpired(5, PlayerState.RUN);
 		}
 
+		assert gkState != null;
 		switch (gkState) {
 			case DIVE_START:
-				changeGkModeIfTimeExpired(0.2, GoalkeeperState.DIVE_MID);
+				changeGkModeIfTimeExpired(0.05, GoalkeeperState.DIVE_MID);
 				break;
 			case DIVE_MID:
-				changeGkModeIfTimeExpired(0.2, GoalkeeperState.DIVE_PEAK);
+				changeGkModeIfTimeExpired(0.05, GoalkeeperState.DIVE_PEAK);
 				break;
 			case DIVE_PEAK:
-				changeGkModeIfTimeExpired(0.2, GoalkeeperState.FALL_START);
+				changeGkModeIfTimeExpired(0.05, GoalkeeperState.FALL_START);
 				break;
 			case FALL_START:
-				changeGkModeIfTimeExpired(0.2, GoalkeeperState.FALL_MID);
+				changeGkModeIfTimeExpired(0.05, GoalkeeperState.FALL_MID);
 				break;
 			case FALL_MID:
-				changeGkModeIfTimeExpired(0.2, GoalkeeperState.FALL_END);
+				changeGkModeIfTimeExpired(0.05, GoalkeeperState.FALL_END);
 				break;
 			case FALL_END:
-				changeGkModeIfTimeExpired(1, null);
+				changeGkModeIfTimeExpired(2, GoalkeeperState.RUN);
 				break;
 			default:
-				if (random.nextInt(100) < 10) {
-					v.set(0, random.nextBoolean() ? -10 : 10, 0);
-					changeGkModeIfTimeExpired(0, GoalkeeperState.DIVE_START);
+				if (random.nextInt(100) < 5) {
+					if (random.nextBoolean()) {
+						v.set(-75, 0, 1);
+						facing.set(-1, 0, 0);
+					} else {
+						v.set(75, 0, 1);
+						facing.set(1, 0, 0);
+					}
+					timestamp = time;
+					gkState = GoalkeeperState.DIVE_START;
 				}
 				break;
 		}
@@ -105,7 +112,7 @@ public class GoalkeeperM extends PlayerMC {
 	protected void changeGkModeIfTimeExpired(double t, GoalkeeperState gkState) {
 		if (time - timestamp > t) {
 			this.gkState = gkState;
-			if (gkState == null)
+			if (gkState == GoalkeeperState.RUN)
 				timestamp = Double.NaN;
 			else
 				timestamp = time;
@@ -119,10 +126,24 @@ public class GoalkeeperM extends PlayerMC {
 		return GROUND_FRICTION * t;
 	}
 
-	private static final double GROUND_FRICTION = 200;
+	private static final double GROUND_FRICTION = 500;
 
-	private static final double AIR_FRICTION = 30;
+	private static final double AIR_FRICTION = 50;
 
 	private static final double GRAVITY = 10;
 
+	public GoalkeeperState getGkState() {
+		return gkState;
+	}
+
+	@Override
+	public void autoPilot(Point3d attractor) {
+		throw new UnsupportedOperationException("no autopilot for goalkeeper");
+	}
+
+	@Override
+	public void setActions(Collection<Action> actions) {
+		// TODO: allow player to direct and kick
+		throw new UnsupportedOperationException("actions not available for goalkeeper");
+	}
 }

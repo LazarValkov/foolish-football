@@ -81,7 +81,7 @@ public class PlayerMC {
 	 * @param player
 	 */
 	public PlayerMC(int i, Player player) {
-		Preconditions.checkArgument(i > 1 && i <= 11, i);
+		Preconditions.checkArgument(i >= 1 && i <= 11, i);
 		Preconditions.checkNotNull(player);
 		this.shirt = i;
 		this.player = player;

@@ -55,7 +55,7 @@ public class GameMC {
 
 	private final GoalMC goalTop, goalBottom;
 
-	private final GoalkeeperM goalkeeper;
+	private final List<GoalkeeperM> goalkeepers = Lists.newArrayList();
 
 	/**
 	 * @param a
@@ -77,11 +77,21 @@ public class GameMC {
 		selected = as.get(9);
 		goalTop = new GoalMC(pitch.getGoalNetTop(), 2, Direction.DOWN);
 		goalBottom = new GoalMC(pitch.getGoalNetBottom(), 2, Direction.UP);
-		goalkeeper = new GoalkeeperM(1, aPlayers.get(0));
+
 
 		BoundingBox net = pitch.getGoalNetBottom();
 		Point3d netLower = Utils.getLower(net);
-		goalkeeper.setPosition(new Point3d(netLower.x + 25, netLower.y, 0));
+		GoalkeeperM gk = new GoalkeeperM(1, aPlayers.get(0));
+		gk.setPosition(new Point3d(netLower.x + 25, netLower.y, 0));
+		gk.setOpponent(Direction.UP);
+		goalkeepers.add(gk);
+
+		net = pitch.getGoalNetTop();
+		netLower = Utils.getUpper(net);
+		gk = new GoalkeeperM(1, aPlayers.get(0));
+		gk.setPosition(new Point3d(netLower.x + 25, netLower.y, 0));
+		gk.setOpponent(Direction.DOWN);
+		goalkeepers.add(gk);
 	}
 
 	/**
@@ -150,7 +160,9 @@ public class GameMC {
 		for (PlayerMC pm : as) {
 			pm.tick(dt);
 		}
-		goalkeeper.tick(dt);
+		for (GoalkeeperM gk : goalkeepers) {
+			gk.tick(dt);
+		}
 		ball.tick(dt);
 
 		BoundingBox p = pitch.getPitch();
@@ -232,6 +244,6 @@ public class GameMC {
 	}
 
 	public Iterable<GoalkeeperM> getGoalkeepers() {
-		return Collections.singleton(goalkeeper);
+		return goalkeepers;
 	}
 }

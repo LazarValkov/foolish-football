@@ -71,7 +71,6 @@ public class GoalMC {
 	public void bounce(Point3d p, Vector3d v, Point3d oldPosition) {
 		if (!Utils.intersect(bbox, oldPosition, p))
 			return;
-		log.info("COLLISION DETECTED");
 		for (BoundingBox box : Lists.newArrayList(roof, west, east, back)) {
 			bounce(oldPosition, p, v, box);
 		}
