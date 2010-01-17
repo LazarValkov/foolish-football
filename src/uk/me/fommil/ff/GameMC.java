@@ -70,14 +70,14 @@ public class GameMC {
 		Tactics tactics = a.getCurrentTactics();
 		for (int i = 2; i <= 11; i++) {
 			Point3d p = tactics.getZone(bz, i).getCentre(pitch, Pitch.Facing.UP);
-			PlayerMC pma = new PlayerMC(i, aPlayers.get(i - 2));
+			PlayerMC pma = new PlayerMC(i, aPlayers.get(i - 1));
 			pma.setPosition(p);
 			as.add(pma);
 		}
 		selected = as.get(9);
 		goalTop = new GoalMC(pitch.getGoalNetTop(), 2, Direction.DOWN);
 		goalBottom = new GoalMC(pitch.getGoalNetBottom(), 2, Direction.UP);
-		goalkeeper = new GoalkeeperM();
+		goalkeeper = new GoalkeeperM(1, aPlayers.get(0));
 	}
 
 	/**
@@ -146,6 +146,7 @@ public class GameMC {
 		for (PlayerMC pm : as) {
 			pm.tick(dt);
 		}
+		goalkeeper.tick(dt);
 		ball.tick(dt);
 
 		BoundingBox p = pitch.getPitch();

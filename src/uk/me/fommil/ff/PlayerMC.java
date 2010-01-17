@@ -52,29 +52,29 @@ public class PlayerMC {
 
 	private static final Logger log = Logger.getLogger(PlayerMC.class.getName());
 
-	private static final int AUTO = 10;
+	protected static final int AUTO = 10;
 
-	private static final double TACKLE_FRICTION = 50;
+	protected static final double TACKLE_FRICTION = 50;
 
-	private static final double HEADING_FRICTION = 20;
+	protected static final double HEADING_FRICTION = 20;
+	
+	protected final Player player;
 
-	private final Player player;
+	protected final int shirt;
 
-	private final int shirt;
+	protected final Point3d s = new Point3d();
 
-	private final Point3d s = new Point3d();
+	protected final Vector3d v = new Vector3d();
 
-	private final Vector3d v = new Vector3d();
+	protected final Vector3d facing = new Vector3d(0, -1, 0);
 
-	private final Vector3d facing = new Vector3d(0, -1, 0);
+	protected volatile PlayerState mode = PlayerState.RUN;
 
-	private volatile PlayerState mode = PlayerState.RUN;
-
-	private volatile double time;
+	protected volatile double time;
 
 	private volatile double timestamp = Double.NaN; // of last mode switch
 
-	private final Random random = new Random();
+	protected final Random random = new Random();
 
 	/**
 	 * @param i
@@ -259,7 +259,7 @@ public class PlayerMC {
 		return shirt + ", mode = " + mode + ", s = " + s + ", v = " + v;
 	}
 
-	private void ifMovingChangeModeAndScaleVelocity(PlayerState playerMode, double scale) {
+	protected void ifMovingChangeModeAndScaleVelocity(PlayerState playerMode, double scale) {
 		if (v.lengthSquared() > 0) {
 			timestamp = time;
 			mode = playerMode;
@@ -267,7 +267,7 @@ public class PlayerMC {
 		}
 	}
 
-	private void changeModeIfTimeExpired(double t, PlayerState playerMode) {
+	protected void changeModeIfTimeExpired(double t, PlayerState playerMode) {
 		if (time - timestamp > t) {
 			mode = playerMode;
 			if (playerMode == PlayerState.RUN)

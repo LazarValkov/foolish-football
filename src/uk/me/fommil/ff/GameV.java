@@ -420,8 +420,6 @@ public class GameV extends JPanel {
 	private void drawGoalkeeper(Graphics2D g, Rectangle vBounds, GoalkeeperM gm) {
 //# sprite number, description
 //947, goalie up
-//948, goalie up alt
-//949, goalie up alt
 //950, goalie down
 //953, goalie right
 //956, goalie left
@@ -431,21 +429,17 @@ public class GameV extends JPanel {
 //968, goalie up right
 //971, goalie down dive right stage 1
 //...
-//975, goalie down dive right stage 5
-//976, goalie ground down right
+//976, goalie down dive right stage 6
 //977, goalie ground down right with ball
-//978, goalie ground down left
-//979, goalie down dive left stage 5
+//978, goalie down dive left stage 6
 //...
 //983, goalie down dive left stage 1
 //984, goalie ground down left with ball
 //985, goalie up dive right stage 1
 //...
-//989, goalie up dive right stage 5
-//990, goalie ground up right
+//990, goalie up dive right stage 6
 //991, goalie ground up right with ball
-//992, goalie ground up left
-//993, goalie up dive left stage 5
+//992, goalie up dive left stage 6
 //...
 //997, goalie down dive left stage 1
 //998, goalie ground down left with ball
