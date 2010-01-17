@@ -22,7 +22,7 @@ import java.util.List;
 import javax.vecmath.Point3d;
 import org.junit.Test;
 import uk.me.fommil.ff.PlayerMC.Action;
-import uk.me.fommil.ff.PlayerMC.PlayerMode;
+import uk.me.fommil.ff.PlayerMC.PlayerState;
 import static org.junit.Assert.*;
 
 /**
@@ -61,7 +61,7 @@ public class PlayerMCTest {
 			List<Point3d> positions = Lists.newArrayList();
 			for (PlayerMC player : players) {
 				player.tick(dt);
-				assertEquals(PlayerMode.RUN, player.getMode());
+				assertEquals(PlayerState.RUN, player.getMode());
 				assertEquals(0.0, player.getPosition().z);
 				positions.add(player.getPosition());
 			}

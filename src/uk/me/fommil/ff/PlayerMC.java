@@ -43,7 +43,7 @@ public class PlayerMC {
 
 	};
 
-	public enum PlayerMode {
+	public enum PlayerState {
 
 		RUN, KICK, TACKLE, HEAD_START, HEAD_MID, HEAD_END, GROUND, INJURED,
 		THROW,
@@ -68,7 +68,7 @@ public class PlayerMC {
 
 	private final Vector3d facing = new Vector3d(0, -1, 0);
 
-	private volatile PlayerMode mode = PlayerMode.RUN;
+	private volatile PlayerState mode = PlayerState.RUN;
 
 	private volatile double time;
 
@@ -134,33 +134,33 @@ public class PlayerMC {
 
 		switch (mode) {
 			case KICK:
-				changeModeIfTimeExpired(0.1, PlayerMode.RUN);
+				changeModeIfTimeExpired(0.1, PlayerState.RUN);
 				break;
 			case TACKLE:
 				v.x = signum(v.x) * max(0, abs(v.x) - t * TACKLE_FRICTION);
 				v.y = signum(v.y) * max(0, abs(v.y) - t * TACKLE_FRICTION);
-				changeModeIfTimeExpired(3, PlayerMode.RUN);
+				changeModeIfTimeExpired(3, PlayerState.RUN);
 				break;
 			case HEAD_START:
 			case HEAD_MID:
 			case HEAD_END:
 				v.x = signum(v.x) * max(0, abs(v.x) - t * HEADING_FRICTION);
 				v.y = signum(v.y) * max(0, abs(v.y) - t * HEADING_FRICTION);
-				if (mode == PlayerMode.HEAD_START)
-					changeModeIfTimeExpired(0.1, PlayerMode.HEAD_MID);
-				else if (mode == PlayerMode.HEAD_MID)
-					changeModeIfTimeExpired(0.1, PlayerMode.HEAD_END);
-				else if (mode == PlayerMode.HEAD_END)
-					changeModeIfTimeExpired(0.5, PlayerMode.GROUND);
+				if (mode == PlayerState.HEAD_START)
+					changeModeIfTimeExpired(0.1, PlayerState.HEAD_MID);
+				else if (mode == PlayerState.HEAD_MID)
+					changeModeIfTimeExpired(0.1, PlayerState.HEAD_END);
+				else if (mode == PlayerState.HEAD_END)
+					changeModeIfTimeExpired(0.5, PlayerState.GROUND);
 				break;
 			case GROUND:
 				if (random.nextBoolean())
-					changeModeIfTimeExpired(2, PlayerMode.RUN);
+					changeModeIfTimeExpired(2, PlayerState.RUN);
 				else
-					changeModeIfTimeExpired(2, PlayerMode.INJURED);
+					changeModeIfTimeExpired(2, PlayerState.INJURED);
 				break;
 			case INJURED:
-				changeModeIfTimeExpired(5, PlayerMode.RUN);
+				changeModeIfTimeExpired(5, PlayerState.RUN);
 		}
 	}
 
@@ -180,13 +180,13 @@ public class PlayerMC {
 		}
 		assert Double.isNaN(timestamp) : mode;
 		if (actions.contains(Action.KICK)) {
-			ifMovingChangeModeAndScaleVelocity(PlayerMode.KICK, 1);
+			ifMovingChangeModeAndScaleVelocity(PlayerState.KICK, 1);
 			return;
 		} else if (actions.contains(Action.TACKLE)) {
-			ifMovingChangeModeAndScaleVelocity(PlayerMode.TACKLE, 1.5);
+			ifMovingChangeModeAndScaleVelocity(PlayerState.TACKLE, 1.5);
 			return;
 		} else if (actions.contains(Action.HEAD)) {
-			ifMovingChangeModeAndScaleVelocity(PlayerMode.HEAD_START, 1.5);
+			ifMovingChangeModeAndScaleVelocity(PlayerState.HEAD_START, 1.5);
 			return;
 		}
 
@@ -259,7 +259,7 @@ public class PlayerMC {
 		return shirt + ", mode = " + mode + ", s = " + s + ", v = " + v;
 	}
 
-	private void ifMovingChangeModeAndScaleVelocity(PlayerMode playerMode, double scale) {
+	private void ifMovingChangeModeAndScaleVelocity(PlayerState playerMode, double scale) {
 		if (v.lengthSquared() > 0) {
 			timestamp = time;
 			mode = playerMode;
@@ -267,10 +267,10 @@ public class PlayerMC {
 		}
 	}
 
-	private void changeModeIfTimeExpired(double t, PlayerMode playerMode) {
+	private void changeModeIfTimeExpired(double t, PlayerState playerMode) {
 		if (time - timestamp > t) {
 			mode = playerMode;
-			if (playerMode == PlayerMode.RUN)
+			if (playerMode == PlayerState.RUN)
 				timestamp = Double.NaN;
 			else
 				timestamp = time;
@@ -278,7 +278,7 @@ public class PlayerMC {
 	}
 
 	public void setThrowIn() {
-		mode = PlayerMode.THROW;
+		mode = PlayerState.THROW;
 		timestamp = Double.NaN;
 	}
 
@@ -287,7 +287,7 @@ public class PlayerMC {
 		return shirt;
 	}
 
-	public PlayerMode getMode() {
+	public PlayerState getMode() {
 		return mode;
 	}
 

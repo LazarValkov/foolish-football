@@ -72,6 +72,8 @@ public class GameV extends JPanel {
 
 	private final Map<Integer, Sprite> teamNumberSprites = Maps.newHashMap();
 
+	private final Map<Integer, Sprite> goalkeeperSprites = Maps.newHashMap();
+
 	private final KeyListener keyboardInput = new KeyAdapter() {
 
 		private final Collection<PlayerMC.Action> actions = Sets.newHashSet();
@@ -177,8 +179,11 @@ public class GameV extends JPanel {
 		for (int i = 0; i < 5; i++) {
 			ballSprites.put(i, sprites.get(i + 1179));
 		}
-		for (int i = 0; i < 11; i++) {
+		for (int i = 0; i < 16; i++) {
 			teamNumberSprites.put(i + 1, sprites.get(i + 162));
+		}
+		for (int i = 0; i < 57; i++) {
+			goalkeeperSprites.put(i, sprites.get(i + 947));
 		}
 	}
 
@@ -231,6 +236,10 @@ public class GameV extends JPanel {
 		// draw the players that are in view
 		for (PlayerMC pm : game.getPlayers()) {
 			drawPlayer(g, vBounds, pm);
+		}
+
+		for (GoalkeeperM gm : game.getGoalkeepers()) {
+			drawGoalkeeper(g, vBounds, gm);
 		}
 	}
 
@@ -406,5 +415,45 @@ public class GameV extends JPanel {
 		int unseenHeight = max(0, pitch.getHeight() - gSize.height);
 		gMinY = Utils.bounded(0, gMinY, unseenHeight);
 		return new Rectangle(gMinX, gMinY, gSize.width, gSize.height);
+	}
+
+	private void drawGoalkeeper(Graphics2D g, Rectangle vBounds, GoalkeeperM gm) {
+//# sprite number, description
+//947, goalie up
+//948, goalie up alt
+//949, goalie up alt
+//950, goalie down
+//953, goalie right
+//956, goalie left
+//959, goalie down left
+//962, goalie down right
+//965, goalie up left
+//968, goalie up right
+//971, goalie down dive right stage 1
+//...
+//975, goalie down dive right stage 5
+//976, goalie ground down right
+//977, goalie ground down right with ball
+//978, goalie ground down left
+//979, goalie down dive left stage 5
+//...
+//983, goalie down dive left stage 1
+//984, goalie ground down left with ball
+//985, goalie up dive right stage 1
+//...
+//989, goalie up dive right stage 5
+//990, goalie ground up right
+//991, goalie ground up right with ball
+//992, goalie ground up left
+//993, goalie up dive left stage 5
+//...
+//997, goalie down dive left stage 1
+//998, goalie ground down left with ball
+//999, goalie up dive stage 1
+//...
+//1001, goalie up dive stage 3
+//1002, goalie down dive stage 1
+//...
+//1004, goalie down dive stage 3
 	}
 }

@@ -55,6 +55,8 @@ public class GameMC {
 
 	private final GoalMC goalTop, goalBottom;
 
+	private final GoalkeeperM goalkeeper;
+
 	/**
 	 * @param a
 	 * @param pitch
@@ -75,7 +77,7 @@ public class GameMC {
 		selected = as.get(9);
 		goalTop = new GoalMC(pitch.getGoalNetTop(), 2, Direction.DOWN);
 		goalBottom = new GoalMC(pitch.getGoalNetBottom(), 2, Direction.UP);
-		log.info(goalBottom.toString());
+		goalkeeper = new GoalkeeperM();
 	}
 
 	/**
@@ -222,5 +224,9 @@ public class GameMC {
 
 	public Team getTeamA() {
 		return a;
+	}
+
+	public Iterable<GoalkeeperM> getGoalkeepers() {
+		return Collections.singleton(goalkeeper);
 	}
 }
