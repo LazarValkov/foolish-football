@@ -14,15 +14,20 @@
  */
 package uk.me.fommil.ff;
 
+import com.google.common.base.Preconditions;
+import org.ode4j.math.DVector3C;
 import org.ode4j.ode.DBody;
 import org.ode4j.ode.DBox;
-import org.ode4j.ode.DContact;
+import org.ode4j.ode.DContactBuffer;
 import org.ode4j.ode.DGeom;
 import org.ode4j.ode.DGeom.DNearCallback;
-import org.ode4j.ode.DHashSpace;
+import org.ode4j.ode.DJoint;
+import org.ode4j.ode.DJointGroup;
 import org.ode4j.ode.DMass;
 import org.ode4j.ode.DPlane;
+import org.ode4j.ode.DSpace;
 import org.ode4j.ode.DWorld;
+import org.ode4j.ode.OdeConstants;
 import org.ode4j.ode.OdeHelper;
 
 /**
@@ -35,56 +40,70 @@ public class Physics {
 	public static final void main(String[] args) {
 		// http://www.alsprogrammingresource.com/basic_ode.html
 		// http://opende.sourceforge.net/wiki/index.php/HOWTO_simple_bouncing_sphere
+
+		OdeHelper.initODE2(0);
+
 		DWorld world = OdeHelper.createWorld();
 		world.setGravity(0, 0, -9.81);
 
-		DHashSpace space = OdeHelper.createHashSpace();
+		DSpace space = OdeHelper.createSimpleSpace();
+		DJointGroup joints = OdeHelper.createJointGroup();
+		NearCallback near = new NearCallback(world, joints);
 
-		final DBody body = OdeHelper.createBody(world);
+		DBody body = OdeHelper.createBody(world);
+		DBox box = OdeHelper.createBox(space, 1, 1, 1);
+		box.setBody(body);
 		body.setPosition(0, 0, 100);
 		DMass mass = OdeHelper.createMass();
 		mass.setBox(1, 1, 1, 1);
 		body.setMass(mass);
+		body.setLinearVel(1, -1, 0);
 
-		DBox box = OdeHelper.createBox(space, 1, 1, 1);
-		box.setBody(body);
-
-		DPlane plane = OdeHelper.createPlane(space, 0, 0, 1, 0);
+		DPlane ground = OdeHelper.createPlane(space, 0, 0, 1, 0);
 
 		for (int i = 0; i < 1000; i++) {
-			space.collide(null, nearCallback);
-
+			space.collide(null, near);
 			world.step(0.01);
+			joints.empty();
 			System.out.println(body.getPosition());
 		}
 
+		joints.destroy();
 		world.destroy();
+		space.destroy();
+
+		OdeHelper.closeODE();
 	}
 
-	private static final DNearCallback nearCallback = new DNearCallback() {
+	private static class NearCallback implements DNearCallback {
+
+		private final DWorld world;
+
+		private final DJointGroup joints;
+
+		private NearCallback(DWorld world, DJointGroup joints) {
+			this.world = world;
+			this.joints = joints;
+		}
 
 		@Override
 		public void call(Object data, DGeom o1, DGeom o2) {
+			Preconditions.checkNotNull(o1, "o1");
+			Preconditions.checkNotNull(o2, "o2");
+
 			DBody b1 = o1.getBody();
 			DBody b2 = o2.getBody();
-//			DContact contact = new DContact();
-//			contact.surface.mode = dContactBounce | dContactSoftCFM;
-//			// friction parameter
-//			contact.surface.mu = dInfinity;
-//			// bounce is the amount of "bouncyness".
-//			contact.surface.bounce = 0.9;
-//			// bounce_vel is the minimum incoming velocity to cause a bounce
-//			contact.surface.bounce_vel = 0.1;
-//			// constraint force mixing parameter
-//			contact.surface.soft_cfm = 0.001;
-//			if (int
-//				numc = dCollide(o1, o2, 1, &  contact.geom, sizeof(dContact))
-//
-//				     ) {
-//        dJointID c = dJointCreateContact (world,contactgroup, & contact);
-//				dJointAttach(c, b1, b2);
-//		}
+
+			final int MAX_CONTACTS = 8;
+			DContactBuffer contacts = new DContactBuffer(MAX_CONTACTS);
+			int numc = OdeHelper.collide(o1, o2, MAX_CONTACTS, contacts.getGeomBuffer());
+
+			for (int i = 0; i < numc; i++) {
+				contacts.get(i).surface.mode = OdeConstants.dContactBounce;
+				contacts.get(i).surface.bounce = 0.5;
+				DJoint c = OdeHelper.createContactJoint(world, joints, contacts.get(i));
+				c.attach(b1, b2);
+			}
 		}
 	};
-
 }
