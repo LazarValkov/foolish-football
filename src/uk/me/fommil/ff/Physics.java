@@ -15,7 +15,6 @@
 package uk.me.fommil.ff;
 
 import com.google.common.base.Preconditions;
-import org.ode4j.math.DVector3C;
 import org.ode4j.ode.DBody;
 import org.ode4j.ode.DBox;
 import org.ode4j.ode.DContactBuffer;
@@ -29,6 +28,7 @@ import org.ode4j.ode.DSpace;
 import org.ode4j.ode.DWorld;
 import org.ode4j.ode.OdeConstants;
 import org.ode4j.ode.OdeHelper;
+import org.ode4j.ode.internal.OdeInit;
 
 /**
  *
@@ -41,7 +41,7 @@ public class Physics {
 		// http://www.alsprogrammingresource.com/basic_ode.html
 		// http://opende.sourceforge.net/wiki/index.php/HOWTO_simple_bouncing_sphere
 
-		OdeHelper.initODE2(0);
+		OdeInit.dInitODE();
 
 		DWorld world = OdeHelper.createWorld();
 		world.setGravity(0, 0, -9.81);
@@ -72,7 +72,7 @@ public class Physics {
 		world.destroy();
 		space.destroy();
 
-		OdeHelper.closeODE();
+		OdeInit.dCloseODE();
 	}
 
 	private static class NearCallback implements DNearCallback {
