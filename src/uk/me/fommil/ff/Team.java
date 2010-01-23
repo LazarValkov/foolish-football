@@ -31,12 +31,12 @@ import uk.me.fommil.ff.swos.SwosUtils;
 public class Team {
 
 	private Tactics current;
-	private List<Player> players = Lists.newArrayList();
+	private List<PlayerStats> players = Lists.newArrayList();
 
 	/** */
 	public Team() {
 		for (int i = 0; i < 20; i++) {
-			players.add(new Player());
+			players.add(new PlayerStats());
 		}
 	}
 
@@ -54,7 +54,7 @@ public class Team {
 	/**
 	 * @return
 	 */
-	public List<Player> getPlayers() {
+	public List<PlayerStats> getPlayers() {
 		return Collections.unmodifiableList(players);
 	}
 

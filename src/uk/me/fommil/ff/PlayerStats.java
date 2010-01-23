@@ -15,11 +15,10 @@
 package uk.me.fommil.ff;
 
 /**
- * Represents a football player, storing all statistics about that player but not
- * its game state (see {@link PlayerModel}) or drawing of the sprite.
+ * Stores all statistics about a player.
  *
  * @author Samuel Halliday
  */
-public class Player {
+public class PlayerStats {
 
 }

@@ -14,9 +14,9 @@
  */
 package uk.me.fommil.ff;
 
-import uk.me.fommil.ff.physics.BallMC;
-import uk.me.fommil.ff.physics.GameMC;
-import uk.me.fommil.ff.physics.PlayerMC;
+import uk.me.fommil.ff.physics.Ball;
+import uk.me.fommil.ff.physics.GamePhysics;
+import uk.me.fommil.ff.physics.Player;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.awt.Color;
@@ -34,13 +34,12 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
-import javax.media.j3d.BoundingPolytope;
 import static java.lang.Math.*;
 import javax.swing.JPanel;
-import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
-import uk.me.fommil.ff.physics.GoalkeeperM;
-import uk.me.fommil.ff.physics.GoalkeeperM.GoalkeeperState;
+import uk.me.fommil.ff.physics.Goalkeeper;
+import uk.me.fommil.ff.physics.Goalkeeper.GoalkeeperState;
+import uk.me.fommil.ff.physics.Position;
+import uk.me.fommil.ff.physics.Velocity;
 
 /**
  * The view (V) for the game play.
@@ -60,9 +59,9 @@ import uk.me.fommil.ff.physics.GoalkeeperM.GoalkeeperState;
  * @author Samuel Halliday
  */
 @SuppressWarnings("serial")
-public class GameV extends JPanel {
+public class ClassicView extends JPanel {
 
-	private static final Logger log = Logger.getLogger(GameV.class.getName());
+	private static final Logger log = Logger.getLogger(ClassicView.class.getName());
 
 	private final boolean debugging = false;
 
@@ -80,41 +79,41 @@ public class GameV extends JPanel {
 
 	private final Map<Integer, Sprite> goalkeeperSprites = Maps.newHashMap();
 
-	private final Map<Point3d, Sprite> objectSprites = Maps.newHashMap();
+	private final Map<Position, Sprite> objectSprites = Maps.newHashMap();
 
 	private final KeyListener keyboardInput = new KeyAdapter() {
 
-		private final Collection<PlayerMC.Action> actions = Sets.newHashSet();
+		private final Collection<Player.Action> actions = Sets.newHashSet();
 
-		private final Collection<BallMC.Aftertouch> aftertouches = Sets.newHashSet();
+		private final Collection<Ball.Aftertouch> aftertouches = Sets.newHashSet();
 
 		@Override
 		public synchronized void keyPressed(KeyEvent e) {
 			switch (e.getKeyCode()) {
 				case KeyEvent.VK_LEFT:
-					actions.add(PlayerMC.Action.LEFT);
-					aftertouches.add(BallMC.Aftertouch.LEFT);
+					actions.add(Player.Action.LEFT);
+					aftertouches.add(Ball.Aftertouch.LEFT);
 					break;
 				case KeyEvent.VK_RIGHT:
-					actions.add(PlayerMC.Action.RIGHT);
-					aftertouches.add(BallMC.Aftertouch.RIGHT);
+					actions.add(Player.Action.RIGHT);
+					aftertouches.add(Ball.Aftertouch.RIGHT);
 					break;
 				case KeyEvent.VK_UP:
-					actions.add(PlayerMC.Action.UP);
-					aftertouches.add(BallMC.Aftertouch.UP);
+					actions.add(Player.Action.UP);
+					aftertouches.add(Ball.Aftertouch.UP);
 					break;
 				case KeyEvent.VK_DOWN:
-					actions.add(PlayerMC.Action.DOWN);
-					aftertouches.add(BallMC.Aftertouch.DOWN);
+					actions.add(Player.Action.DOWN);
+					aftertouches.add(Ball.Aftertouch.DOWN);
 					break;
 				case KeyEvent.VK_SPACE:
-					actions.add(PlayerMC.Action.KICK);
+					actions.add(Player.Action.KICK);
 					break;
 				case KeyEvent.VK_ENTER:
-					actions.add(PlayerMC.Action.TACKLE);
+					actions.add(Player.Action.TACKLE);
 					break;
 				case KeyEvent.VK_A:
-					actions.add(PlayerMC.Action.HEAD);
+					actions.add(Player.Action.HEAD);
 					break;
 				default:
 					return;
@@ -126,29 +125,29 @@ public class GameV extends JPanel {
 		public synchronized void keyReleased(KeyEvent e) {
 			switch (e.getKeyCode()) {
 				case KeyEvent.VK_LEFT:
-					actions.remove(PlayerMC.Action.LEFT);
-					aftertouches.remove(BallMC.Aftertouch.LEFT);
+					actions.remove(Player.Action.LEFT);
+					aftertouches.remove(Ball.Aftertouch.LEFT);
 					break;
 				case KeyEvent.VK_RIGHT:
-					actions.remove(PlayerMC.Action.RIGHT);
-					aftertouches.remove(BallMC.Aftertouch.RIGHT);
+					actions.remove(Player.Action.RIGHT);
+					aftertouches.remove(Ball.Aftertouch.RIGHT);
 					break;
 				case KeyEvent.VK_UP:
-					actions.remove(PlayerMC.Action.UP);
-					aftertouches.remove(BallMC.Aftertouch.UP);
+					actions.remove(Player.Action.UP);
+					aftertouches.remove(Ball.Aftertouch.UP);
 					break;
 				case KeyEvent.VK_DOWN:
-					actions.remove(PlayerMC.Action.DOWN);
-					aftertouches.remove(BallMC.Aftertouch.DOWN);
+					actions.remove(Player.Action.DOWN);
+					aftertouches.remove(Ball.Aftertouch.DOWN);
 					break;
 				case KeyEvent.VK_SPACE:
-					actions.remove(PlayerMC.Action.KICK);
+					actions.remove(Player.Action.KICK);
 					break;
 				case KeyEvent.VK_ENTER:
-					actions.remove(PlayerMC.Action.TACKLE);
+					actions.remove(Player.Action.TACKLE);
 					break;
 				case KeyEvent.VK_A:
-					actions.remove(PlayerMC.Action.HEAD);
+					actions.remove(Player.Action.HEAD);
 					break;
 				case KeyEvent.VK_ESCAPE:
 					System.exit(0);
@@ -160,18 +159,18 @@ public class GameV extends JPanel {
 		}
 
 		private void updateActions() {
-			game.setUserActions(GameV.this.a, actions, aftertouches);
+			game.setUserActions(ClassicView.this.a, actions, aftertouches);
 		}
 	};
 
-	private final GameMC game;
+	private final GamePhysics game;
 
 	/**
 	 * @param game
 	 * @param pitch
 	 * @param sprites
 	 */
-	public GameV(GameMC game, BufferedImage pitch, Map<Integer, Sprite> sprites) {
+	public ClassicView(GamePhysics game, BufferedImage pitch, Map<Integer, Sprite> sprites) {
 		this.pitch = pitch;
 		this.a = game.getTeamA();
 		this.game = game;
@@ -195,8 +194,8 @@ public class GameV extends JPanel {
 		}
 
 		// TODO: deal with nets/flags better
-		objectSprites.put(new Point3d(300, 117, 0), sprites.get(1205));
-		objectSprites.put(new Point3d(300, 764, 0), sprites.get(1206));
+		objectSprites.put(new Position(300, 117, 0), sprites.get(1205));
+		objectSprites.put(new Position(300, 764, 0), sprites.get(1206));
 		log.info("1205 " + sprites.get(1205));
 		log.info("1206 " + sprites.get(1206));
 
@@ -237,28 +236,28 @@ public class GameV extends JPanel {
 			g.setColor(Color.GREEN);
 			for (int i = 0; i <= 5; i++) {
 				int x = 81 + i * (590 - 81) / 5;
-				Point start = pToG(vBounds, new Point3d(x, 129, 0));
-				Point end = pToG(vBounds, new Point3d(x, 769, 0));
+				Point start = pToG(vBounds, new Position(x, 129, 0));
+				Point end = pToG(vBounds, new Position(x, 769, 0));
 				g.drawLine(start.x, start.y, end.x, end.y);
 			}
 			for (int i = 0; i <= 7; i++) {
 				int y = 129 + i * (769 - 129) / 7;
-				Point start = pToG(vBounds, new Point3d(81, y, 0));
-				Point end = pToG(vBounds, new Point3d(590, y, 0));
+				Point start = pToG(vBounds, new Position(81, y, 0));
+				Point end = pToG(vBounds, new Position(590, y, 0));
 				g.drawLine(start.x, start.y, end.x, end.y);
 			}
 		}
 
 		// draw the players that are in view
-		for (PlayerMC pm : game.getPlayers()) {
+		for (Player pm : game.getPlayers()) {
 			drawPlayer(g, vBounds, pm);
 		}
 
-		for (GoalkeeperM gm : game.getGoalkeepers()) {
+		for (Goalkeeper gm : game.getGoalkeepers()) {
 			drawGoalkeeper(g, vBounds, gm);
 		}
 
-		for (Entry<Point3d, Sprite> e : objectSprites.entrySet()) {
+		for (Entry<Position, Sprite> e : objectSprites.entrySet()) {
 			Point p = pToG(vBounds, e.getKey());
 			Sprite sprite = e.getValue();
 			Point s = sprite.getCentre();
@@ -266,8 +265,8 @@ public class GameV extends JPanel {
 		}
 	}
 
-	private void drawPlayer(Graphics2D g, Rectangle vBounds, PlayerMC pm) {
-		Point3d pPos = pm.getPosition();
+	private void drawPlayer(Graphics2D g, Rectangle vBounds, Player pm) {
+		Position pPos = pm.getPosition();
 		Point gPos = pToG(vBounds, pPos);
 
 		// assumes sprite size
@@ -276,20 +275,20 @@ public class GameV extends JPanel {
 			return;
 		}
 
-		if (debugging && pm == game.getSelected()) {
-			// draw the bounds, scattergun and not efficient
-			g.setColor(Color.WHITE);
-			BoundingPolytope pBounds = pm.getBounds();
-			for (int x = (int) (pPos.x - 50); x < pPos.x + 50; x++) {
-				for (int y = (int) (pPos.y - 50); y < pPos.y + 50; y++) {
-					Point3d pTest = new Point3d(x, y, 0); // TODO: use ball height
-					if (pBounds.intersect(pTest)) {
-						Point gP = pToG(vBounds, pTest);
-						g.fillRect(gP.x, gP.y, 1, 1);
-					}
-				}
-			}
-		}
+//		if (debugging && pm == game.getSelected()) {
+//			// draw the bounds, scattergun and not efficient
+//			g.setColor(Color.WHITE);
+//			BoundingPolytope pBounds = pm.getBounds();
+//			for (int x = (int) (pPos.x - 50); x < pPos.x + 50; x++) {
+//				for (int y = (int) (pPos.y - 50); y < pPos.y + 50; y++) {
+//					Position pTest = new Position(x, y, 0); // TODO: use ball height
+//					if (pBounds.intersect(pTest)) {
+//						Point gP = pToG(vBounds, pTest);
+//						g.fillRect(gP.x, gP.y, 1, 1);
+//					}
+//				}
+//			}
+//		}
 
 		int spriteIndex = 0;
 		Direction direction = Direction.valueOf(pm.getAngle());
@@ -366,7 +365,7 @@ public class GameV extends JPanel {
 				break;
 			default:
 				spriteIndex *= 3;
-				if (pm.getVelocity().lengthSquared() > 0) {
+				if (pm.getVelocity().speed() > 0) {
 					if (t < 200) {
 					} else if (t < 400) {
 						spriteIndex += 1;
@@ -387,10 +386,10 @@ public class GameV extends JPanel {
 	}
 
 	private void drawBall(Graphics2D g, Rectangle vBounds) {
-		BallMC ball = game.getBall();
+		Ball ball = game.getBall();
 		int spriteIndex = 0;
-		Vector3d v = ball.getVelocity();
-		if (v.lengthSquared() > 0) {
+		Velocity v = ball.getVelocity();
+		if (v.speed() > 0) {
 			long t = (long) ((1000L * game.getTimestamp()) % 800L);
 			if (t < 200) {
 				spriteIndex += 1;
@@ -417,7 +416,7 @@ public class GameV extends JPanel {
 		}
 	}
 
-	private Point pToG(Rectangle vBounds, Point3d p) {
+	private Point pToG(Rectangle vBounds, Position p) {
 		return new Point((int) round(p.x - vBounds.getX()), (int) round(p.y - vBounds.getY()));
 	}
 
@@ -425,7 +424,7 @@ public class GameV extends JPanel {
 	// gSize is the drawable graphics, top left of the view being (0, 0) in graphics 'g' coordinates
 	private Rectangle calculateWindow(Dimension gSize) {
 		// centre over the ball
-		Point3d pBall = game.getBall().getPosition();
+		Position pBall = game.getBall().getPosition();
 		int gMinX = (int) round(pBall.x - gSize.width / 2.0);
 		int gMinY = (int) round(pBall.y - gSize.height / 2.0);
 		// account for falling off, where screen could be bigger than the pitch image
@@ -438,8 +437,8 @@ public class GameV extends JPanel {
 
 	// TODO: remove code duplication
 	@Deprecated
-	private void drawGoalkeeper(Graphics2D g, Rectangle vBounds, GoalkeeperM gm) {
-		Point3d pPos = gm.getPosition();
+	private void drawGoalkeeper(Graphics2D g, Rectangle vBounds, Goalkeeper gm) {
+		Position pPos = gm.getPosition();
 		Point gPos = pToG(vBounds, pPos);
 
 		// assumes sprite size
@@ -479,7 +478,7 @@ public class GameV extends JPanel {
 					break;
 			}
 			spriteIndex *= 3;
-			if (gm.getVelocity().lengthSquared() > 0) {
+			if (gm.getVelocity().speed() > 0) {
 				if (t < 200) {
 				} else if (t < 400) {
 					spriteIndex += 1;

@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License along with this file.
  * If not, see <http://www.gnu.org/licenses/>.
  */
-package uk.me.fommil.ff;
+package uk.me.fommil.ff.physics;
 
 import com.google.common.base.Preconditions;
 import org.ode4j.ode.DBody;
@@ -33,7 +33,9 @@ import org.ode4j.ode.internal.OdeInit;
 /**
  *
  * @author Samuel Halliday
+ * @deprecated this standalone class is to experiment with the physics engine
  */
+@Deprecated
 public class Physics {
 
 	/** @param args */

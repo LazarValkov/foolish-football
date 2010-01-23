@@ -14,8 +14,8 @@
  */
 package uk.me.fommil.ff.physics;
 
-import uk.me.fommil.ff.physics.GoalMC;
-import uk.me.fommil.ff.physics.BallMC;
+import uk.me.fommil.ff.physics.Goalpost;
+import uk.me.fommil.ff.physics.Ball;
 import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.logging.Logger;
@@ -46,7 +46,7 @@ public class GoalMCTest {
 	}
 
 	public void testBounceDelegate(BoundingBox bbox, Direction direction) throws Exception {
-		GoalMC goal = new GoalMC(bbox, 2, direction);
+		Goalpost goal = new Goalpost(bbox, 2, direction);
 		Point3d lower = Utils.getLower(bbox);
 		Point3d upper = Utils.getUpper(bbox);
 
@@ -75,16 +75,16 @@ public class GoalMCTest {
 			p.z = 2;
 			positions.add(p);
 		}
-		List<BallMC> balls = Lists.newArrayList();
+		List<Ball> balls = Lists.newArrayList();
 		for (int i = 0; i < velocities.size(); i++) {
-			BallMC ball = new BallMC();
+			Ball ball = new Ball();
 			ball.setPosition(positions.get(i));
 			ball.setVelocity(velocities.get(i));
 			balls.add(ball);
 		}
 
 		for (int i = 0; i < 1000; i++) {
-			for (BallMC ball : balls) {
+			for (Ball ball : balls) {
 				Point3d pOld = ball.getPosition();
 				ball.tick(dt);
 				Point3d p = ball.getPosition();
@@ -96,7 +96,7 @@ public class GoalMCTest {
 				}
 			}
 		}
-		for (BallMC ball : balls) {
+		for (Ball ball : balls) {
 			assertTrue(ball.getVelocity().length() == 0);
 		}
 

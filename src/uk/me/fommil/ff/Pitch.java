@@ -19,6 +19,7 @@ import java.awt.Rectangle;
 import javax.media.j3d.BoundingBox;
 import javax.vecmath.Point2d;
 import javax.vecmath.Point3d;
+import uk.me.fommil.ff.physics.Position;
 
 /**
  * Contains the details of the lines on the pitch in 'v' coordinates.
@@ -45,7 +46,9 @@ import javax.vecmath.Point3d;
  * The centre spot is (336, 449).
 
  * @author Samuel Halliday
+ * @deprecated requires more thought on how to abstract
  */
+@Deprecated
 public class Pitch {
 
 	public enum Facing {
@@ -92,8 +95,8 @@ public class Pitch {
 		return pitch;
 	}
 
-	public Point3d getCentre() {
-		return new Point3d(centreSpot.x, centreSpot.y, 0);
+	public Position getCentre() {
+		return new Position(centreSpot.x, centreSpot.y, 0);
 	}
 
 	// provides infinite z bounds to a rectangle

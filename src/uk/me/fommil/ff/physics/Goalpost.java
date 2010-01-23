@@ -28,9 +28,9 @@ import uk.me.fommil.ff.Utils;
  *
  * @author Samuel Halliday
  */
-public class GoalMC {
+public class Goalpost {
 
-	private static final Logger log = Logger.getLogger(GoalMC.class.getName());
+	private static final Logger log = Logger.getLogger(Goalpost.class.getName());
 
 	private final BoundingBox roof, west, east, back, bbox;
 
@@ -39,7 +39,7 @@ public class GoalMC {
 	 * @param posts the width of the posts, inset from the bounding box
 	 * @param facing
 	 */
-	public GoalMC(BoundingBox bbox, double posts, Direction facing) {
+	public Goalpost(BoundingBox bbox, double posts, Direction facing) {
 		Preconditions.checkNotNull(bbox);
 		Preconditions.checkArgument(facing == Direction.UP || facing == Direction.DOWN);
 		this.bbox = bbox;
@@ -70,32 +70,32 @@ public class GoalMC {
 		back = new BoundingBox(backLower, backUpper);
 	}
 
-	public void bounce(Point3d p, Vector3d v, Point3d oldPosition) {
-		if (!Utils.intersect(bbox, oldPosition, p))
-			return;
-		for (BoundingBox box : Lists.newArrayList(roof, west, east, back)) {
-			bounce(oldPosition, p, v, box);
-		}
-	}
-
-	private void bounce(Point3d oldS, Point3d s, Vector3d v, BoundingBox box) {
-		if (v.length() == 0 || !Utils.intersect(box, oldS, s))
-			return;
-		s.set(Utils.exitPoint(box, s, v, 0.1)); // ?? energy loss
-		s.set(Utils.entryPoint(box, s, v, 0.1)); // ?? energy loss
-		v.set(Utils.rebound(box, s, v));
-		v.scale(0.5);
-	}
-
-	public boolean inside(Point3d p) {
-		if (!bbox.intersect(p))
-			return false;
-		for (BoundingBox box : Lists.newArrayList(roof, west, east, back)) {
-			if (box.intersect(p))
-				return false;
-		}
-		return true;
-	}
+//	public void bounce(Point3d p, Vector3d v, Point3d oldPosition) {
+//		if (!Utils.intersect(bbox, oldPosition, p))
+//			return;
+//		for (BoundingBox box : Lists.newArrayList(roof, west, east, back)) {
+//			bounce(oldPosition, p, v, box);
+//		}
+//	}
+//
+//	private void bounce(Point3d oldS, Point3d s, Vector3d v, BoundingBox box) {
+//		if (v.length() == 0 || !Utils.intersect(box, oldS, s))
+//			return;
+//		s.set(Utils.exitPoint(box, s, v, 0.1)); // ?? energy loss
+//		s.set(Utils.entryPoint(box, s, v, 0.1)); // ?? energy loss
+//		v.set(Utils.rebound(box, s, v));
+//		v.scale(0.5);
+//	}
+//
+//	public boolean inside(Point3d p) {
+//		if (!bbox.intersect(p))
+//			return false;
+//		for (BoundingBox box : Lists.newArrayList(roof, west, east, back)) {
+//			if (box.intersect(p))
+//				return false;
+//		}
+//		return true;
+//	}
 
 	@Override
 	public String toString() {

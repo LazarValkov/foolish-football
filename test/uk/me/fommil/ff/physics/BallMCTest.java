@@ -14,7 +14,7 @@
  */
 package uk.me.fommil.ff.physics;
 
-import uk.me.fommil.ff.physics.BallMC;
+import uk.me.fommil.ff.physics.Ball;
 import com.google.common.collect.Lists;
 import java.util.List;
 import javax.vecmath.Point3d;
@@ -39,8 +39,8 @@ public class BallMCTest {
 
 	@Test
 	public void testNoKick() {
-		BallMC ball = new BallMC();
-		Point3d centre = pitch.getCentre();
+		Ball ball = new Ball();
+		Position centre = pitch.getCentre();
 		ball.setPosition(centre);
 		ball.setVelocity(new Vector3d(0, 0, 0)); // no kick
 		for (int i = 0; i < 100; i++) {
@@ -63,14 +63,14 @@ public class BallMCTest {
 		velocities.add(new Vector3d(-10, 10, 0)); // 7 down left
 		velocities.add(new Vector3d(500, 0, 0)); // 8 right, fast
 		velocities.add(new Vector3d(0, 500, 0)); // 9 down, fast
-		List<BallMC> balls = createBalls(velocities.size(), centre);
+		List<Ball> balls = createBalls(velocities.size(), centre);
 		for (int i = 0; i < balls.size(); i++) {
 			balls.get(i).setVelocity(velocities.get(i));
 		}
 
 		for (int i = 0; i < 1000; i++) {
 			List<Point3d> positions = Lists.newArrayList();
-			for (BallMC ball : balls) {
+			for (Ball ball : balls) {
 				ball.tick(dt);
 				assertEquals(0.0, ball.getPosition().z);
 				positions.add(ball.getPosition());
@@ -102,7 +102,7 @@ public class BallMCTest {
 			assertEquals(positions.get(3).y, positions.get(6).y);
 		}
 
-		for (BallMC ball : balls) {
+		for (Ball ball : balls) {
 			assertEquals(0.0, ball.getVelocity().length());
 		}
 	}
@@ -121,14 +121,14 @@ public class BallMCTest {
 		velocities.add(new Vector3d(-10, 10, 10)); // 7 down left
 		velocities.add(new Vector3d(500, 0, 100)); // 8 right, fast
 		velocities.add(new Vector3d(0, 500, 100)); // 9 down, fast
-		List<BallMC> balls = createBalls(velocities.size(), centre);
+		List<Ball> balls = createBalls(velocities.size(), centre);
 		for (int i = 0; i < balls.size(); i++) {
 			balls.get(i).setVelocity(velocities.get(i));
 		}
 
 		for (int i = 0; i < 1000; i++) {
 			List<Point3d> positions = Lists.newArrayList();
-			for (BallMC ball : balls) {
+			for (Ball ball : balls) {
 				ball.tick(dt);
 				assertTrue(0.0 <= ball.getPosition().z);
 				positions.add(ball.getPosition());
@@ -160,7 +160,7 @@ public class BallMCTest {
 			assertEquals(positions.get(3).y, positions.get(6).y);
 		}
 
-		for (BallMC ball : balls) {
+		for (Ball ball : balls) {
 			assertEquals(0.0, ball.getVelocity().length());
 			assertEquals(0.0, ball.getPosition().z);
 		}
@@ -186,10 +186,10 @@ public class BallMCTest {
 		fail("test not written");
 	}
 
-	private List<BallMC> createBalls(int number, Point3d position) {
-		List<BallMC> balls = Lists.newArrayList();
+	private List<Ball> createBalls(int number, Point3d position) {
+		List<Ball> balls = Lists.newArrayList();
 		for (int i = 0; i < number; i++) {
-			BallMC ball = new BallMC();
+			Ball ball = new Ball();
 			ball.setPosition(position);
 			balls.add(ball);
 		}

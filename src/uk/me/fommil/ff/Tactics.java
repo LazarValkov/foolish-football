@@ -21,7 +21,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import javax.vecmath.Point3d;
+import uk.me.fommil.ff.physics.Position;
 
 /**
  * Represents the team tactics, which dictates where each {@link Player} should be
@@ -58,7 +58,7 @@ public class Tactics {
 		 * @param s
 		 * @param pitch
 		 */
-		public BallZone(Point3d s, Pitch pitch) {
+		public BallZone(Position s, Pitch pitch) {
 			Rectangle p = pitch.getPitchAsRectangle();
 
 			int xx = (int) (5 * (p.width + p.x - s.x) / p.width);
@@ -139,7 +139,7 @@ public class Tactics {
 		 * @param facing
 		 * @return the central point represented by this for a pitch of the given width and height
 		 */
-		public Point3d getCentre(Pitch pitch, Pitch.Facing facing) {
+		public Position getCentre(Pitch pitch, Pitch.Facing facing) {
 			Rectangle p = pitch.getPitchAsRectangle();
 			double xx = (p.width * x) / 15.0;
 			double yy = (p.height * y) / 16.0;
@@ -147,7 +147,7 @@ public class Tactics {
 				yy = p.height - yy;
 				xx = p.width - xx;
 			}
-			return new Point3d(xx + p.x, yy + p.y, 0);
+			return new Position(xx + p.x, yy + p.y, 0);
 		}
 	}
 

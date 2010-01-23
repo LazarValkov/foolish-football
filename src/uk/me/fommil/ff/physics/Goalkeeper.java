@@ -18,7 +18,7 @@ import java.util.Collection;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 import uk.me.fommil.ff.Direction;
-import uk.me.fommil.ff.Player;
+import uk.me.fommil.ff.PlayerStats;
 import static java.lang.Math.*;
 
 /**
@@ -26,8 +26,7 @@ import static java.lang.Math.*;
  *
  * @author Samuel Halliday
  */
-public class GoalkeeperM extends PlayerMC {
-
+public class Goalkeeper extends Player {
 
 	public enum GoalkeeperState {
 
@@ -39,14 +38,16 @@ public class GoalkeeperM extends PlayerMC {
 	private volatile GoalkeeperState gkState = GoalkeeperState.RUN;
 
 	private Direction opponent;
+
 	public Direction getOpponent() {
 		return opponent;
 	}
+
 	public void setOpponent(Direction opponent) {
 		this.opponent = opponent;
 	}
 
-	public GoalkeeperM(int i, Player player) {
+	public Goalkeeper(int i, PlayerStats player) {
 		super(i, player);
 	}
 
@@ -147,5 +148,15 @@ public class GoalkeeperM extends PlayerMC {
 	public void setActions(Collection<Action> actions) {
 		// TODO: allow player to direct and kick
 		throw new UnsupportedOperationException("actions not available for goalkeeper");
+	}
+
+	public Velocity getVelocity() {
+		// TODO: implement method
+		throw new UnsupportedOperationException("not implemented yet");
+	}
+
+	public Position getPosition() {
+		// TODO: implement method
+		throw new UnsupportedOperationException("not implemented yet");
 	}
 }

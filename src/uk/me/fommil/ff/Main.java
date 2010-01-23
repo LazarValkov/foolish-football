@@ -14,7 +14,7 @@
  */
 package uk.me.fommil.ff;
 
-import uk.me.fommil.ff.physics.GameMC;
+import uk.me.fommil.ff.physics.GamePhysics;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import uk.me.fommil.ff.swos.TacticsParser;
@@ -55,8 +55,8 @@ public class Main {
 		b.setCurrentTactics(swosTactics.get("433"));
 
 		Pitch pitch = new Pitch();
-		final GameMC game = new GameMC(a, pitch);
-		final GameV gv = new GameV(game, pitchImage, sprites);
+		final GamePhysics game = new GamePhysics(a, pitch);
+		final ClassicView gv = new ClassicView(game, pitchImage, sprites);
 
 		JFrame frame = new JFrame();
 		frame.add(gv);

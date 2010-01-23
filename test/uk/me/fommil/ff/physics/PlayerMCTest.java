@@ -22,9 +22,9 @@ import java.util.List;
 import javax.vecmath.Point3d;
 import org.junit.Test;
 import uk.me.fommil.ff.Pitch;
-import uk.me.fommil.ff.Player;
-import uk.me.fommil.ff.physics.PlayerMC.Action;
-import uk.me.fommil.ff.physics.PlayerMC.PlayerState;
+import uk.me.fommil.ff.PlayerStats;
+import uk.me.fommil.ff.physics.Player.Action;
+import uk.me.fommil.ff.physics.Player.PlayerState;
 import static org.junit.Assert.*;
 
 /**
@@ -54,14 +54,14 @@ public class PlayerMCTest {
 		actions.add(Sets.immutableEnumSet(Action.UP, Action.RIGHT));   // 6
 		actions.add(Sets.immutableEnumSet(Action.DOWN, Action.LEFT));  // 7
 		actions.add(EnumSet.noneOf(Action.class));  // 7
-		List<PlayerMC> players = createPlayers(actions.size(), centre);
+		List<Player> players = createPlayers(actions.size(), centre);
 		for (int i = 0; i < players.size(); i++) {
 			players.get(i).setActions(actions.get(i));
 		}
 
 		for (int i = 0; i < 1000; i++) {
 			List<Point3d> positions = Lists.newArrayList();
-			for (PlayerMC player : players) {
+			for (Player player : players) {
 				player.tick(dt);
 				assertEquals(PlayerState.RUN, player.getMode());
 				assertEquals(0.0, player.getPosition().z);
@@ -95,7 +95,7 @@ public class PlayerMCTest {
 			players.get(i).setActions(EnumSet.noneOf(Action.class));
 		}
 
-		for (PlayerMC player : players) {
+		for (Player player : players) {
 			assertEquals("v = " + player.getVelocity(), 0.0, player.getVelocity().length());
 		}
 	}
@@ -110,11 +110,11 @@ public class PlayerMCTest {
 		fail("test not written");
 	}
 
-	private List<PlayerMC> createPlayers(int number, Point3d position) {
-		List<PlayerMC> models = Lists.newArrayList();
+	private List<Player> createPlayers(int number, Point3d position) {
+		List<Player> models = Lists.newArrayList();
 		for (int i = 0; i < number; i++) {
-			Player player = new Player();
-			PlayerMC model = new PlayerMC(7, player);
+			PlayerStats player = new PlayerStats();
+			Player model = new Player(7, player);
 			model.setPosition(position);
 			models.add(model);
 		}

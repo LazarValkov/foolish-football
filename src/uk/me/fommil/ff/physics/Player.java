@@ -26,7 +26,7 @@ import javax.media.j3d.Transform3D;
 import javax.vecmath.AxisAngle4d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
-import uk.me.fommil.ff.Player;
+import uk.me.fommil.ff.PlayerStats;
 import uk.me.fommil.ff.Utils;
 
 /**
@@ -34,7 +34,7 @@ import uk.me.fommil.ff.Utils;
  *
  * @author Samuel Halliday
  */
-public class PlayerMC {
+public class Player {
 
 	/**
 	 * The actions that a player can perform.
@@ -52,15 +52,15 @@ public class PlayerMC {
 		// TODO CELEBRATE, PUNISH
 	}
 
-	private static final Logger log = Logger.getLogger(PlayerMC.class.getName());
+	private static final Logger log = Logger.getLogger(Player.class.getName());
 
 	protected static final int AUTO = 10;
 
 	protected static final double TACKLE_FRICTION = 50;
 
 	protected static final double HEADING_FRICTION = 20;
-	
-	protected final Player player;
+
+	protected final PlayerStats player;
 
 	protected final int shirt;
 
@@ -82,7 +82,7 @@ public class PlayerMC {
 	 * @param i
 	 * @param player
 	 */
-	public PlayerMC(int i, Player player) {
+	public Player(int i, PlayerStats player) {
 		Preconditions.checkArgument(i >= 1 && i <= 11, i);
 		Preconditions.checkNotNull(player);
 		this.shirt = i;
@@ -233,18 +233,18 @@ public class PlayerMC {
 	 */
 	public void autoPilot(Point3d attractor) {
 		Preconditions.checkNotNull(attractor);
-		List<PlayerMC.Action> auto = Lists.newArrayList();
+		List<Player.Action> auto = Lists.newArrayList();
 		double dx = s.x - attractor.x;
 		if (dx < -AUTO) {
-			auto.add(PlayerMC.Action.RIGHT);
+			auto.add(Player.Action.RIGHT);
 		} else if (dx > AUTO) {
-			auto.add(PlayerMC.Action.LEFT);
+			auto.add(Player.Action.LEFT);
 		}
 		double dy = s.y - attractor.y;
 		if (dy < -AUTO) {
-			auto.add(PlayerMC.Action.DOWN);
+			auto.add(Player.Action.DOWN);
 		} else if (dy > AUTO) {
-			auto.add(PlayerMC.Action.UP);
+			auto.add(Player.Action.UP);
 		}
 		setActions(auto);
 	}
@@ -292,18 +292,15 @@ public class PlayerMC {
 	public PlayerState getMode() {
 		return mode;
 	}
-
-	public Point3d getPosition() {
-		return (Point3d) s.clone();
-	}
-
-	public void setPosition(Point3d s) {
-		Preconditions.checkNotNull(s);
-		this.s.set(s);
-	}
-
-	public Vector3d getVelocity() {
-		return (Vector3d) v.clone();
-	}
 	// </editor-fold>
+
+	public Velocity getVelocity() {
+		// TODO: implement method
+		throw new UnsupportedOperationException("not implemented yet");
+	}
+
+	public Position getPosition() {
+		// TODO: implement method
+		throw new UnsupportedOperationException("not implemented yet");
+	}
 }
