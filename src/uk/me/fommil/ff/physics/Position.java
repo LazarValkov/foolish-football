@@ -27,7 +27,7 @@ import org.ode4j.math.DVector3C;
  *
  * @author Samuel Halliday
  */
-public class Position {
+public final class Position {
 
 	public final double x, y, z;
 
@@ -87,5 +87,10 @@ public class Position {
 	@Override
 	public int hashCode() {
 		return Objects.hashCode(x, y, z);
+	}
+
+	@Override
+	public String toString() {
+		return "(" + x + ", " + y + ", " + z + ")";
 	}
 }

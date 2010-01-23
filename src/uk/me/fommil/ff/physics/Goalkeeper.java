@@ -15,11 +15,8 @@
 package uk.me.fommil.ff.physics;
 
 import java.util.Collection;
-import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
 import uk.me.fommil.ff.Direction;
 import uk.me.fommil.ff.PlayerStats;
-import static java.lang.Math.*;
 
 /**
  * The model (M) for a goalkeeper.
@@ -48,100 +45,11 @@ public class Goalkeeper extends Player {
 	}
 
 	public Goalkeeper(int i, PlayerStats player) {
-		super(i, player);
+		super(i, player, null);
 	}
-
-	/**
-	 * @param t with units of seconds
-	 */
-	public void tick(double t) {
-		time += t;
-		if (v.length() > 0) {
-			Vector3d dv = (Vector3d) v.clone();
-			dv.scale(t);
-			s.add(dv);
-			v.x = signum(v.x) * max(0, abs(v.x) - friction(t, s.z));
-			v.y = signum(v.y) * max(0, abs(v.y) - friction(t, s.z));
-			if (v.length() < 10)
-				v.scale(0);
-		}
-
-		switch (mode) {
-			case KICK:
-				changeModeIfTimeExpired(0.1, PlayerState.RUN);
-				break;
-		}
-
-		assert gkState != null;
-		switch (gkState) {
-			case DIVE_START:
-				changeGkModeIfTimeExpired(0.05, GoalkeeperState.DIVE_MID);
-				break;
-			case DIVE_MID:
-				changeGkModeIfTimeExpired(0.05, GoalkeeperState.DIVE_PEAK);
-				break;
-			case DIVE_PEAK:
-				changeGkModeIfTimeExpired(0.05, GoalkeeperState.FALL_START);
-				break;
-			case FALL_START:
-				changeGkModeIfTimeExpired(0.05, GoalkeeperState.FALL_MID);
-				break;
-			case FALL_MID:
-				changeGkModeIfTimeExpired(0.05, GoalkeeperState.FALL_END);
-				break;
-			case FALL_END:
-				changeGkModeIfTimeExpired(2, GoalkeeperState.RUN);
-				break;
-			default:
-				if (random.nextInt(100) < 5) {
-					if (random.nextBoolean()) {
-						v.set(-75, 0, 1);
-						facing.set(-1, 0, 0);
-					} else {
-						v.set(75, 0, 1);
-						facing.set(1, 0, 0);
-					}
-					timestamp = time;
-					gkState = GoalkeeperState.DIVE_START;
-				}
-				break;
-		}
-	}
-
-	// TODO: no code duplication
-	private volatile double timestamp = Double.NaN; // of last mode switch
-
-	@Deprecated
-	protected void changeGkModeIfTimeExpired(double t, GoalkeeperState gkState) {
-		if (time - timestamp > t) {
-			this.gkState = gkState;
-			if (gkState == GoalkeeperState.RUN)
-				timestamp = Double.NaN;
-			else
-				timestamp = time;
-		}
-	}
-
-	@Deprecated
-	private double friction(double t, double z) {
-		if (z > 0.1)
-			return AIR_FRICTION * t;
-		return GROUND_FRICTION * t;
-	}
-
-	private static final double GROUND_FRICTION = 500;
-
-	private static final double AIR_FRICTION = 50;
-
-	private static final double GRAVITY = 10;
 
 	public GoalkeeperState getGkState() {
 		return gkState;
-	}
-
-	@Override
-	public void autoPilot(Point3d attractor) {
-		throw new UnsupportedOperationException("no autopilot for goalkeeper");
 	}
 
 	@Override

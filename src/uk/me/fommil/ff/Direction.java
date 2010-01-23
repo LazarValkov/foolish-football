@@ -24,11 +24,14 @@ public enum Direction {
 
 	UP, DOWN, LEFT, RIGHT, UP_RIGHT, UP_LEFT, DOWN_RIGHT, DOWN_LEFT;
 
+	/**
+	 * @param angle {@code (-PI, PI]}
+	 * @return
+	 */
 	public static Direction valueOf(double angle) {
 		if (Double.isNaN(angle))
 			return null;
 		Preconditions.checkArgument(angle <= Math.PI && angle > -Math.PI, angle);
-		// TODO: rotate by a few degrees counter clockwise
 		if (angle <= -3 * Math.PI / 4 + Math.PI / 8) {
 			return DOWN_LEFT;
 		} else if (angle <= -Math.PI / 2 + Math.PI / 8) {

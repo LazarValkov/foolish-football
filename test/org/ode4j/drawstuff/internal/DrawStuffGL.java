@@ -1215,7 +1215,7 @@ public class DrawStuffGL extends LwJGL implements DrawStuffApi {
 	private static final FloatBuffer light_position =  
 		FloatBuffer.wrap(new float[] { LIGHTX, LIGHTY, 1.0f, 0.0f });
 	//	void dsDrawFrame (int width, int height, dsFunctions *fn, int pause)
-	void dsDrawFrame (int width, int height, dsFunctions fn, boolean pause)
+	public void dsDrawFrame (int width, int height, dsFunctions fn, boolean pause)
 	{
 		if (current_state < 1) dsDebug ("internal error");
 		current_state = 2;

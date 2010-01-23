@@ -34,6 +34,9 @@ import org.ode4j.ode.OdeConstants;
 import org.ode4j.ode.OdeHelper;
 import org.ode4j.ode.internal.OdeInit;
 import uk.me.fommil.ff.Pitch;
+import uk.me.fommil.ff.PlayerStats;
+import uk.me.fommil.ff.Tactics;
+import uk.me.fommil.ff.Tactics.BallZone;
 import uk.me.fommil.ff.physics.Player.Action;
 import uk.me.fommil.ff.Team;
 
@@ -71,6 +74,10 @@ public class GamePhysics {
 
 	private final DJointGroup joints;
 
+	private final DPlane ground;
+
+	private final NearCallback collision;
+
 	/**
 	 * @param a
 	 * @param pitch
@@ -78,16 +85,6 @@ public class GamePhysics {
 	public GamePhysics(Team a, Pitch pitch) {
 		this.a = a;
 		this.pitch = pitch;
-//		BallZone bz = ball.getZone(pitch);
-//		List<PlayerStats> aPlayers = a.getPlayers();
-//		Tactics tactics = a.getCurrentTactics();
-//		for (int i = 2; i <= 11; i++) {
-//			Point3d p = tactics.getZone(bz, i).getCentre(pitch, Pitch.Facing.UP);
-//			Player pma = new Player(i, aPlayers.get(i - 1));
-//			pma.setPosition(p);
-//			as.add(pma);
-//		}
-//		selected = as.get(9);
 //		goalTop = new GoalMC(pitch.getGoalNetTop(), 2, Direction.DOWN);
 //		goalBottom = new GoalMC(pitch.getGoalNetBottom(), 2, Direction.UP);
 
@@ -101,24 +98,25 @@ public class GamePhysics {
 		space = OdeHelper.createSimpleSpace();
 		joints = OdeHelper.createJointGroup();
 
+		collision = new NearCallback(world, joints);
 
+		ground = OdeHelper.createPlane(space, 0, 0, 1, 0);
 
-
-		NearCallback near = new NearCallback(world, joints);
-
-//		DBox box = OdeHelper.createBox(space, 1, 1, 1);
-//		DBody body = OdeHelper.createBody(world);
-//		box.setBody(body);
-//		body.setPosition(0, 0, 100);
-//		DMass mass = OdeHelper.createMass();
-//		mass.setBox(1, 1, 1, 1);
-//		body.setMass(mass);
-//		body.setLinearVel(1, -1, 0);
-
-		DPlane ground = OdeHelper.createPlane(space, 0, 0, 1, 0);
-
-		ball = new Ball(space, world);
+		ball = new Ball(OdeHelper.createBody(world));
 		ball.setPosition(pitch.getCentre());
+		space.add(ball.getGeometry());
+
+		BallZone bz = ball.getZone(pitch);
+		List<PlayerStats> aPlayers = a.getPlayers();
+		Tactics tactics = a.getCurrentTactics();
+		for (int i = 2; i <= 11; i++) {
+			Position p = tactics.getZone(bz, i).getCentre(pitch, Pitch.Facing.UP);
+			Player pma = new Player(i, aPlayers.get(i - 1), OdeHelper.createBody(world));
+			pma.setPosition(p);
+			space.add(pma.getGeometry());
+			as.add(pma);
+		}
+		selected = as.get(9);
 	}
 
 	/**
@@ -137,6 +135,13 @@ public class GamePhysics {
 
 	public void tick(double dt) {
 		time += dt;
+
+		space.collide(null, collision);
+		world.step(dt);
+		joints.empty();
+
+		// log.info(ball.getPosition().toString());
+
 //		Point3d bp = ball.getPosition();
 //		BallZone bz = ball.getZone(pitch);
 //		Tactics tactics = a.getCurrentTactics();
@@ -231,7 +236,7 @@ public class GamePhysics {
 			closest = selected;
 			double distance = Double.MAX_VALUE;
 			for (Player model : as) {
-				switch (model.getMode()) {
+				switch (model.getState()) {
 					case GROUND:
 					case INJURED:
 					case HEAD_START:
@@ -295,13 +300,19 @@ public class GamePhysics {
 			DBody b1 = o1.getBody();
 			DBody b2 = o2.getBody();
 
+			if (b1 != null && b2 != null)
+				log.info(b1 + " collided with " + b2);
+
 			final int MAX_CONTACTS = 8;
 			DContactBuffer contacts = new DContactBuffer(MAX_CONTACTS);
 			int numc = OdeHelper.collide(o1, o2, MAX_CONTACTS, contacts.getGeomBuffer());
 
 			for (int i = 0; i < numc; i++) {
-				contacts.get(i).surface.mode = OdeConstants.dContactBounce;
+				contacts.get(i).surface.mode = OdeConstants.dContactBounce | OdeConstants.dContactApprox1;
 				contacts.get(i).surface.bounce = 0.5;
+				contacts.get(i).surface.mu = 1.0;
+				contacts.get(i).surface.bounce_vel = 0.01;
+
 				DJoint c = OdeHelper.createContactJoint(world, joints, contacts.get(i));
 				c.attach(b1, b2);
 			}

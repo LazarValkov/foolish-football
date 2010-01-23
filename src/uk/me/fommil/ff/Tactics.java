@@ -59,10 +59,13 @@ public class Tactics {
 		 * @param pitch
 		 */
 		public BallZone(Position s, Pitch pitch) {
-			Rectangle p = pitch.getPitchAsRectangle();
+			Position upper = pitch.getPitchUpperRight();
+			Position lower = pitch.getPitchLowerLeft();
+			double width = upper.x - lower.x;
+			double height = upper.y - lower.y;
 
-			int xx = (int) (5 * (p.width + p.x - s.x) / p.width);
-			int yy = (int) (7 * (p.height + p.y - s.y) / p.height);
+			int xx = (int) (5 * (upper.x - s.x) / width);
+			int yy = (int) (7 * (upper.y - s.y) / height);
 
 			this.x = Utils.bounded(0, xx, 4);
 			this.y = Utils.bounded(0, yy, 6);
@@ -140,14 +143,18 @@ public class Tactics {
 		 * @return the central point represented by this for a pitch of the given width and height
 		 */
 		public Position getCentre(Pitch pitch, Pitch.Facing facing) {
-			Rectangle p = pitch.getPitchAsRectangle();
-			double xx = (p.width * x) / 15.0;
-			double yy = (p.height * y) / 16.0;
+			Position upper = pitch.getPitchUpperRight();
+			Position lower = pitch.getPitchLowerLeft();
+			double width = upper.x - lower.x;
+			double height = upper.y - lower.y;
+
+			double xx = (width * x) / 15.0;
+			double yy = (height * y) / 16.0;
 			if (facing == Pitch.Facing.UP) {
-				yy = p.height - yy;
-				xx = p.width - xx;
+				yy = height - yy;
+				xx = width - xx;
 			}
-			return new Position(xx + p.x, yy + p.y, 0);
+			return new Position(xx + lower.x, yy + lower.y, 0);
 		}
 	}
 

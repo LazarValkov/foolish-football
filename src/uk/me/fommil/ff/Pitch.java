@@ -52,8 +52,12 @@ import uk.me.fommil.ff.physics.Position;
 public class Pitch {
 
 	public enum Facing {
+
 		UP, DOWN
+
 	}
+
+	private static final double SCALE = 0.1;
 
 	private final Rectangle pitch = new Rectangle(81, 129, 509, 640);
 
@@ -68,41 +72,34 @@ public class Pitch {
 //	private final Rectangle goalLineTop = new Rectangle(300, 129, 71, 1);
 //
 //	private final Rectangle goalLineBottom = new Rectangle(300, 769, 71, 1);
-
-	private final Rectangle goalNetTop = new Rectangle(300, 117, 71, 12);
-
-	private final Rectangle goalNetBottom = new Rectangle(300, 769, 71, 12);
-
+//	private final Rectangle goalNetTop = new Rectangle(300, 117, 71, 12);
+//
+//	private final Rectangle goalNetBottom = new Rectangle(300, 769, 71, 12);
 //	private final Point penaltySpotTop = new Point(336, 187);
 //
 //	private final Point penaltySpotBottom = new Point(336, 711);
-
 	private final Point centreSpot = new Point(336, 449);
 
 	public BoundingBox getPitch() {
 		return rectangleTo3d(pitch, new Point2d(0, Double.MAX_VALUE));
 	}
 
-	public BoundingBox getGoalNetTop() {
-		return rectangleTo3d(goalNetTop, new Point2d(0, 30)); // FIXME: z of goal post
+	public Position getPitchLowerLeft() {
+		return new Position(pitch.x * SCALE, pitch.y * SCALE, 0);
 	}
 
-	public BoundingBox getGoalNetBottom() {
-		return rectangleTo3d(goalNetBottom, new Point2d(0, 30)); // FIXME: z of goal post
-	}
-
-	public Rectangle getPitchAsRectangle() {
-		return pitch;
+	public Position getPitchUpperRight() {
+		return new Position((pitch.x + pitch.width) * SCALE, (pitch.y + pitch.height) * SCALE, 0);
 	}
 
 	public Position getCentre() {
-		return new Position(centreSpot.x, centreSpot.y, 0);
+		return new Position(centreSpot.x * SCALE, centreSpot.y * SCALE, 0);
 	}
 
 	// provides infinite z bounds to a rectangle
 	private BoundingBox rectangleTo3d(Rectangle r, Point2d h) {
 		return new BoundingBox(
-				new Point3d(r.x, r.y, h.x),
-				new Point3d(r.x + r.width, r.y + r.height, h.y));
+				new Point3d(r.x * SCALE, r.y * SCALE, h.x),
+				new Point3d((r.x + r.width) * SCALE, (r.y + r.height) * SCALE, h.y));
 	}
 }

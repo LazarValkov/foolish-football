@@ -24,7 +24,7 @@ import org.ode4j.math.DVector3C;
  *
  * @author Samuel Halliday
  */
-public class Velocity {
+public final class Velocity {
 
 	public final double x, y, z;
 
@@ -70,5 +70,10 @@ public class Velocity {
 	@Override
 	public int hashCode() {
 		return Objects.hashCode(x, y, z);
+	}
+
+	@Override
+	public String toString() {
+		return "(" + x + ", " + y + ", " + z + ")";
 	}
 }

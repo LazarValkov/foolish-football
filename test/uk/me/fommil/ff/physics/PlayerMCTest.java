@@ -63,7 +63,7 @@ public class PlayerMCTest {
 			List<Point3d> positions = Lists.newArrayList();
 			for (Player player : players) {
 				player.tick(dt);
-				assertEquals(PlayerState.RUN, player.getMode());
+				assertEquals(PlayerState.RUN, player.getState());
 				assertEquals(0.0, player.getPosition().z);
 				positions.add(player.getPosition());
 			}

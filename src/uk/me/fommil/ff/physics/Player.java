@@ -15,19 +15,16 @@
 package uk.me.fommil.ff.physics;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 import java.util.Collection;
-import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
-import static java.lang.Math.*;
-import javax.media.j3d.BoundingPolytope;
-import javax.media.j3d.Transform3D;
-import javax.vecmath.AxisAngle4d;
-import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
+import org.ode4j.math.DVector3;
+import org.ode4j.ode.DBody;
+import org.ode4j.ode.DBox;
+import org.ode4j.ode.DGeom;
+import org.ode4j.ode.DMass;
+import org.ode4j.ode.OdeHelper;
 import uk.me.fommil.ff.PlayerStats;
-import uk.me.fommil.ff.Utils;
 
 /**
  * The model (M) and controller (C) for a {@link Player} during game play.
@@ -35,6 +32,10 @@ import uk.me.fommil.ff.Utils;
  * @author Samuel Halliday
  */
 public class Player {
+
+	private final DBox box;
+
+	private volatile double direction;
 
 	/**
 	 * The actions that a player can perform.
@@ -56,114 +57,24 @@ public class Player {
 
 	protected static final int AUTO = 10;
 
-	protected static final double TACKLE_FRICTION = 50;
-
-	protected static final double HEADING_FRICTION = 20;
-
-	protected final PlayerStats player;
+	protected final PlayerStats stats;
 
 	protected final int shirt;
 
-	protected final Point3d s = new Point3d();
-
-	protected final Vector3d v = new Vector3d();
-
-	protected final Vector3d facing = new Vector3d(0, -1, 0);
-
 	protected volatile PlayerState mode = PlayerState.RUN;
-
-	protected volatile double time;
-
-	private volatile double timestamp = Double.NaN; // of last mode switch
 
 	protected final Random random = new Random();
 
-	/**
-	 * @param i
-	 * @param player
-	 */
-	public Player(int i, PlayerStats player) {
+	Player(int i, PlayerStats stats, DBody body) {
 		Preconditions.checkArgument(i >= 1 && i <= 11, i);
-		Preconditions.checkNotNull(player);
+		Preconditions.checkNotNull(stats);
 		this.shirt = i;
-		this.player = player;
-	}
-
-	/**
-	 * Return the volume in which this player can control the ball.
-	 *
-	 * @return
-	 */
-	public BoundingPolytope getBounds() {
-		BoundingPolytope b = new BoundingPolytope();
-
-		// TODO: heading and tackling bounds (should follow same pattern)
-
-		Transform3D affine = new Transform3D();
-		Vector3d t = new Vector3d(facing);
-		// centre of bounding box is biased in front of the player
-		//t.scale(1);
-		t.add(s);
-		affine.setTranslation(t);
-		// defines the scale of the bounding box in x, y, z
-		// TODO: control could determine the x scale
-		affine.setScale(new Vector3d(8, 5, 2));
-		// rotate
-		affine.setRotation(new AxisAngle4d(0, 0, 1, getAngle()));
-
-		b.transform(affine);
-		return b;
-	}
-
-	/**
-	 * @param t with units of seconds
-	 */
-	public void tick(double t) {
-		time += t;
-//		log.info(s + " " + v);
-		assert mode != null;
-		switch (mode) {
-			case GROUND:
-			case THROW:
-			case INJURED:
-				//v.scale(0);
-				break;
-			default:
-				Vector3d dv = (Vector3d) v.clone();
-				dv.scale(t);
-				s.add(dv);
-		}
-
-		switch (mode) {
-			case KICK:
-				changeModeIfTimeExpired(0.1, PlayerState.RUN);
-				break;
-			case TACKLE:
-				v.x = signum(v.x) * max(0, abs(v.x) - t * TACKLE_FRICTION);
-				v.y = signum(v.y) * max(0, abs(v.y) - t * TACKLE_FRICTION);
-				changeModeIfTimeExpired(3, PlayerState.RUN);
-				break;
-			case HEAD_START:
-			case HEAD_MID:
-			case HEAD_END:
-				v.x = signum(v.x) * max(0, abs(v.x) - t * HEADING_FRICTION);
-				v.y = signum(v.y) * max(0, abs(v.y) - t * HEADING_FRICTION);
-				if (mode == PlayerState.HEAD_START)
-					changeModeIfTimeExpired(0.1, PlayerState.HEAD_MID);
-				else if (mode == PlayerState.HEAD_MID)
-					changeModeIfTimeExpired(0.1, PlayerState.HEAD_END);
-				else if (mode == PlayerState.HEAD_END)
-					changeModeIfTimeExpired(0.5, PlayerState.GROUND);
-				break;
-			case GROUND:
-				if (random.nextBoolean())
-					changeModeIfTimeExpired(2, PlayerState.RUN);
-				else
-					changeModeIfTimeExpired(2, PlayerState.INJURED);
-				break;
-			case INJURED:
-				changeModeIfTimeExpired(5, PlayerState.RUN);
-		}
+		this.stats = stats;
+		box = OdeHelper.createBox(1, 0.5, 2);
+		box.setBody(body);
+		DMass mass = OdeHelper.createMass();
+		mass.setBoxTotal(80, 20, 10, 20); // ?? code dupe
+		body.setMass(mass);
 	}
 
 	/**
@@ -172,7 +83,7 @@ public class Player {
 	 * @param actions
 	 */
 	public void setActions(Collection<Action> actions) {
-//		log.info(shirt + " " + mode + " " + actions);
+		Preconditions.checkNotNull(actions);
 		switch (mode) {
 			case RUN:
 			case THROW:
@@ -180,127 +91,101 @@ public class Player {
 			default:
 				return;
 		}
-		assert Double.isNaN(timestamp) : mode;
-		if (actions.contains(Action.KICK)) {
-			ifMovingChangeModeAndScaleVelocity(PlayerState.KICK, 1);
-			return;
-		} else if (actions.contains(Action.TACKLE)) {
-			ifMovingChangeModeAndScaleVelocity(PlayerState.TACKLE, 1.5);
-			return;
-		} else if (actions.contains(Action.HEAD)) {
-			ifMovingChangeModeAndScaleVelocity(PlayerState.HEAD_START, 1.5);
-			return;
-		}
 
-		Vector3d newV = new Vector3d();
+		DVector3 vector = actionsToVector(actions);
+		vector.scale(50);
+		box.getBody().setLinearVel(vector);
+		direction = computeDirection(vector);
+	}
+
+	private DVector3 actionsToVector(Collection<Action> actions) {
+		DVector3 impulse = new DVector3();
 		for (Action action : actions) {
 			switch (action) {
 				case UP:
-					newV.y -= 1;
+					impulse.sub(0, 1, 0);
 					break;
 				case DOWN:
-					newV.y += 1;
+					impulse.add(0, 1, 0);
 					break;
 				case LEFT:
-					newV.x -= 1;
+					impulse.sub(1, 0, 0);
 					break;
 				case RIGHT:
-					newV.x += 1;
+					impulse.add(1, 0, 0);
 					break;
 			}
 		}
-		if (newV.lengthSquared() > 0) {
-			newV.normalize(); // TODO: is there a more efficient way?
-			newV.scale(50);
+		if (impulse.lengthSquared() > 0) {
+			impulse.normalize();
 		}
-		v.set(newV);
-		if (v.lengthSquared() > 0) {
-			facing.normalize(v);
-		}
+		return impulse;
 	}
 
-	/**
-	 * Controller. Clear the action list.
-	 */
-	public void clearActions() {
-		v.scale(0);
+	private double computeDirection(DVector3 vector) {
+		return dePhase(Math.atan2(vector.get1(), vector.get0()) + Math.PI / 2);
 	}
 
-	/**
-	 * Controller. Ignore user input and go to the zone indicated.
-	 *
-	 * @param attractor
-	 */
-	public void autoPilot(Point3d attractor) {
-		Preconditions.checkNotNull(attractor);
-		List<Player.Action> auto = Lists.newArrayList();
-		double dx = s.x - attractor.x;
-		if (dx < -AUTO) {
-			auto.add(Player.Action.RIGHT);
-		} else if (dx > AUTO) {
-			auto.add(Player.Action.LEFT);
-		}
-		double dy = s.y - attractor.y;
-		if (dy < -AUTO) {
-			auto.add(Player.Action.DOWN);
-		} else if (dy > AUTO) {
-			auto.add(Player.Action.UP);
-		}
-		setActions(auto);
+	private double dePhase(double d) {
+		if (d > Math.PI)
+			return dePhase(d - 2 * Math.PI);
+		if (d <= -Math.PI)
+			return dePhase(d + 2 * Math.PI);
+		return d;
 	}
 
+//	/**
+//	 * Controller. Ignore user input and go to the zone indicated.
+//	 *
+//	 * @param attractor
+//	 */
+//	public void autoPilot(Point3d attractor) {
+//		Preconditions.checkNotNull(attractor);
+//		List<Player.Action> auto = Lists.newArrayList();
+//		double dx = s.x - attractor.x;
+//		if (dx < -AUTO) {
+//			auto.add(Player.Action.RIGHT);
+//		} else if (dx > AUTO) {
+//			auto.add(Player.Action.LEFT);
+//		}
+//		double dy = s.y - attractor.y;
+//		if (dy < -AUTO) {
+//			auto.add(Player.Action.DOWN);
+//		} else if (dy > AUTO) {
+//			auto.add(Player.Action.UP);
+//		}
+//		setActions(auto);
+//	}
 	/**
 	 * @return the angle relate to NORTH {@code (- PI, + PI]}.
 	 */
-	public double getAngle() {
-		return Utils.getBearing(facing);
+	public double getDirection() {
+		return direction;
 	}
 
-	@Override
-	public String toString() {
-		return shirt + ", mode = " + mode + ", s = " + s + ", v = " + v;
-	}
-
-	protected void ifMovingChangeModeAndScaleVelocity(PlayerState playerMode, double scale) {
-		if (v.lengthSquared() > 0) {
-			timestamp = time;
-			mode = playerMode;
-			v.scale(scale);
-		}
-	}
-
-	protected void changeModeIfTimeExpired(double t, PlayerState playerMode) {
-		if (time - timestamp > t) {
-			mode = playerMode;
-			if (playerMode == PlayerState.RUN)
-				timestamp = Double.NaN;
-			else
-				timestamp = time;
-		}
-	}
-
-	public void setThrowIn() {
-		mode = PlayerState.THROW;
-		timestamp = Double.NaN;
-	}
-
-	// <editor-fold defaultstate="collapsed" desc="BOILERPLATE GETTERS/SETTERS">
 	public int getShirt() {
 		return shirt;
 	}
 
-	public PlayerState getMode() {
-		return mode;
+	public PlayerState getState() {
+		return PlayerState.RUN; // TODO: calculate state
 	}
-	// </editor-fold>
 
 	public Velocity getVelocity() {
-		// TODO: implement method
-		throw new UnsupportedOperationException("not implemented yet");
+		return new Velocity(box.getBody().getLinearVel());
 	}
 
 	public Position getPosition() {
-		// TODO: implement method
-		throw new UnsupportedOperationException("not implemented yet");
+		return new Position(box.getPosition());
+	}
+
+	public void setPosition(Position p) {
+		DVector3 vector = p.toDVector();
+		vector.add(0, 0, box.getLengths().get2() / 2);
+		box.setPosition(vector);
+	}
+
+	DGeom getGeometry() {
+		return box;
 	}
 }

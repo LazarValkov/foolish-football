@@ -165,6 +165,9 @@ public class ClassicView extends JPanel {
 
 	private final GamePhysics game;
 
+	// a metre is worth this many pixels
+	private double scale = 10.0;
+
 	/**
 	 * @param game
 	 * @param pitch
@@ -291,7 +294,7 @@ public class ClassicView extends JPanel {
 //		}
 
 		int spriteIndex = 0;
-		Direction direction = Direction.valueOf(pm.getAngle());
+		Direction direction = Direction.valueOf(pm.getDirection());
 		switch (direction) {
 			case DOWN:
 				spriteIndex = 1;
@@ -318,7 +321,7 @@ public class ClassicView extends JPanel {
 
 		long ts = (long) (1000L * game.getTimestamp());
 		long t = (ts + pm.getShirt() * 17) % 800L;
-		switch (pm.getMode()) {
+		switch (pm.getState()) {
 			case TACKLE:			// left and right are swapped
 				switch (direction) {
 					case LEFT:
@@ -417,7 +420,7 @@ public class ClassicView extends JPanel {
 	}
 
 	private Point pToG(Rectangle vBounds, Position p) {
-		return new Point((int) round(p.x - vBounds.getX()), (int) round(p.y - vBounds.getY()));
+		return new Point((int) round(scale * (p.x - vBounds.getX())), (int) round(scale * (p.y - vBounds.getY())));
 	}
 
 	// TODO: remove the need for 'v' coordinates by returning a java 3d object in 'p' coords
@@ -448,7 +451,7 @@ public class ClassicView extends JPanel {
 		}
 
 		int spriteIndex = 0;
-		Direction direction = Direction.valueOf(gm.getAngle());
+		Direction direction = Direction.valueOf(gm.getDirection());
 
 		long ts = (long) (1000L * game.getTimestamp());
 		long t = ts % 800L;

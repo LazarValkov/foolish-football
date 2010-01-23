@@ -17,11 +17,11 @@ package uk.me.fommil.ff.physics;
 import com.google.common.base.Preconditions;
 import java.util.Collection;
 import java.util.logging.Logger;
+import org.ode4j.math.DVector3;
 import org.ode4j.ode.DBody;
+import org.ode4j.ode.DGeom;
 import org.ode4j.ode.DMass;
-import org.ode4j.ode.DSpace;
 import org.ode4j.ode.DSphere;
-import org.ode4j.ode.DWorld;
 import org.ode4j.ode.OdeHelper;
 import uk.me.fommil.ff.Pitch;
 import uk.me.fommil.ff.Tactics.BallZone;
@@ -49,15 +49,14 @@ public class Ball {
 //	private final Vector3d after = new Vector3d();
 	// no aftertouch after a bounce
 //	private volatile boolean bounced = false;
-	// creates Ball and registers itself with the world and space
-	Ball(DSpace space, DWorld world) {
-		sphere = OdeHelper.createSphere(space, 0.7 / (2 * Math.PI));
-		DBody body = OdeHelper.createBody(world);
+
+	// creates Ball and assign it to the body
+	Ball(DBody body) {
+		sphere = OdeHelper.createSphere(0.7 / (2 * Math.PI));
 		sphere.setBody(body);
 		DMass mass = OdeHelper.createMass();
-		mass.setBox(1, 1, 1, 1);
+		mass.setSphereTotal(0.45, sphere.getRadius());
 		body.setMass(mass);
-
 	}
 
 	/**
@@ -171,6 +170,12 @@ public class Ball {
 	}
 
 	public void setPosition(Position p) {
-		sphere.setPosition(p.toDVector());
+		DVector3 vector = p.toDVector();
+		vector.add(0, 0, sphere.getRadius());
+		sphere.setPosition(vector);
+	}
+
+	DGeom getGeometry() {
+		return sphere;
 	}
 }
