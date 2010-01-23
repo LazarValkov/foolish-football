@@ -14,6 +14,7 @@
  */
 package uk.me.fommil.ff;
 
+import uk.me.fommil.ff.physics.GameMC;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import uk.me.fommil.ff.swos.TacticsParser;

@@ -12,11 +12,13 @@
  * You should have received a copy of the GNU General Public License along with this file.
  * If not, see <http://www.gnu.org/licenses/>.
  */
-package uk.me.fommil.ff;
+package uk.me.fommil.ff.physics;
 
 import java.util.Collection;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
+import uk.me.fommil.ff.Direction;
+import uk.me.fommil.ff.Player;
 import static java.lang.Math.*;
 
 /**

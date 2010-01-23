@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License along with this file.
  * If not, see <http://www.gnu.org/licenses/>.
  */
-package uk.me.fommil.ff;
+package uk.me.fommil.ff.physics;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -21,8 +21,10 @@ import java.util.EnumSet;
 import java.util.List;
 import javax.vecmath.Point3d;
 import org.junit.Test;
-import uk.me.fommil.ff.PlayerMC.Action;
-import uk.me.fommil.ff.PlayerMC.PlayerState;
+import uk.me.fommil.ff.Pitch;
+import uk.me.fommil.ff.Player;
+import uk.me.fommil.ff.physics.PlayerMC.Action;
+import uk.me.fommil.ff.physics.PlayerMC.PlayerState;
 import static org.junit.Assert.*;
 
 /**

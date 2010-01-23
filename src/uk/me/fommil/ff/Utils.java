@@ -14,6 +14,7 @@
  */
 package uk.me.fommil.ff;
 
+import uk.me.fommil.ff.physics.GameMC;
 import com.google.common.base.Preconditions;
 import java.util.logging.Logger;
 import javax.media.j3d.BoundingBox;

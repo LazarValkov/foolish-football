@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License along with this file.
  * If not, see <http://www.gnu.org/licenses/>.
  */
-package uk.me.fommil.ff;
+package uk.me.fommil.ff.physics;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -20,6 +20,8 @@ import java.util.logging.Logger;
 import javax.media.j3d.BoundingBox;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
+import uk.me.fommil.ff.Direction;
+import uk.me.fommil.ff.Utils;
 
 /**
  * The model (M) and controller (C) for a goal during game play.

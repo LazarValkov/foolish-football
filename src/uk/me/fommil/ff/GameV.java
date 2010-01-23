@@ -14,6 +14,9 @@
  */
 package uk.me.fommil.ff;
 
+import uk.me.fommil.ff.physics.BallMC;
+import uk.me.fommil.ff.physics.GameMC;
+import uk.me.fommil.ff.physics.PlayerMC;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.awt.Color;
@@ -36,7 +39,8 @@ import static java.lang.Math.*;
 import javax.swing.JPanel;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
-import uk.me.fommil.ff.GoalkeeperM.GoalkeeperState;
+import uk.me.fommil.ff.physics.GoalkeeperM;
+import uk.me.fommil.ff.physics.GoalkeeperM.GoalkeeperState;
 
 /**
  * The view (V) for the game play.

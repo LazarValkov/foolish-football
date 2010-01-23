@@ -12,13 +12,15 @@
  * You should have received a copy of the GNU General Public License along with this file.
  * If not, see <http://www.gnu.org/licenses/>.
  */
-package uk.me.fommil.ff;
+package uk.me.fommil.ff.physics;
 
+import uk.me.fommil.ff.physics.BallMC;
 import com.google.common.collect.Lists;
 import java.util.List;
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
 import org.junit.Test;
+import uk.me.fommil.ff.Pitch;
 import static org.junit.Assert.*;
 
 /**
