@@ -49,13 +49,14 @@ public class Ball {
 //	private final Vector3d after = new Vector3d();
 	// no aftertouch after a bounce
 //	private volatile boolean bounced = false;
-
 	// creates Ball and assign it to the body
 	Ball(DBody body) {
-		sphere = OdeHelper.createSphere(0.7 / (2 * Math.PI));
+		double radius = 0.7 / (2 * Math.PI);
+		sphere = OdeHelper.createSphere(radius);
+//		sphere = OdeHelper.createBox(2 * radius, 2 * radius, 2 * radius);
 		sphere.setBody(body);
 		DMass mass = OdeHelper.createMass();
-		mass.setSphereTotal(0.45, sphere.getRadius());
+		mass.setSphereTotal(0.45, radius);
 		body.setMass(mass);
 	}
 
@@ -172,6 +173,7 @@ public class Ball {
 	public void setPosition(Position p) {
 		DVector3 vector = p.toDVector();
 		vector.add(0, 0, sphere.getRadius());
+//		vector.add(0, 0, sphere.getLengths().get2() / 2);
 		sphere.setPosition(vector);
 	}
 

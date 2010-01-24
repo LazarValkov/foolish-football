@@ -87,6 +87,8 @@ public class GamePhysicsGL extends dsFunctions {
 		DrawStuff.dsSetColor(1, 1, 1);
 		DSphere sphere = (DSphere) game.getBall().getGeometry();
 		DrawStuff.dsDrawSphere(sphere.getPosition(), sphere.getRotation(), (float) sphere.getRadius());
+//		DBox sphere = (DBox) game.getBall().getGeometry();
+//		DrawStuff.dsDrawBox(sphere.getPosition(), sphere.getRotation(), sphere.getLengths());
 	}
 
 	@Override

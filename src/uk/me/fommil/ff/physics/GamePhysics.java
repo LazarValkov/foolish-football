@@ -80,7 +80,7 @@ public class GamePhysics {
 
 	private final DPlane ground;
 
-	private final NearCallback collision;
+	private final NearCallback collision = new NearCallback();
 
 	/**
 	 * @param a
@@ -101,8 +101,6 @@ public class GamePhysics {
 
 		space = OdeHelper.createSimpleSpace();
 		joints = OdeHelper.createJointGroup();
-
-		collision = new NearCallback(world, joints);
 
 		ground = OdeHelper.createPlane(space, 0, 0, 1, 0);
 
@@ -159,9 +157,10 @@ public class GamePhysics {
 		selected.setActions(actions);
 
 		space.collide(null, collision);
+		drag(ball.getGeometry(), 0.1); // air drag on ball
+
 		world.step(dt);
 		joints.empty();
-
 
 
 //		List<PlayerMC> candidate = Lists.newArrayList();
@@ -261,6 +260,13 @@ public class GamePhysics {
 		selected.setActions(actions);
 	}
 
+	private void drag(DGeom geom, double d) {
+		DBody body = geom.getBody();
+		DVector3C v = body.getLinearVel();
+		v = v.reScale(-d);
+		body.addForce(v);
+	}
+
 	// <editor-fold defaultstate="collapsed" desc="BOILERPLATE GETTERS/SETTERS">
 	public Ball getBall() {
 		return ball;
@@ -287,16 +293,7 @@ public class GamePhysics {
 	}
 	// </editor-fold>
 
-	private static class NearCallback implements DNearCallback {
-
-		private final DWorld world;
-
-		private final DJointGroup joints;
-
-		private NearCallback(DWorld world, DJointGroup joints) {
-			this.world = world;
-			this.joints = joints;
-		}
+	private class NearCallback implements DNearCallback {
 
 		@Override
 		public void call(Object data, DGeom o1, DGeom o2) {
@@ -318,19 +315,17 @@ public class GamePhysics {
 				contact.surface.mode = OdeConstants.dContactBounce;
 				contact.surface.bounce = 0.5;
 				contact.surface.bounce_vel = 0.1;
+				contact.surface.mu = 10;
 
 				// ODE doesn't have rolling friction, so we manually apply it here
 				if (o1 instanceof DPlane || o2 instanceof DPlane) {
 					DGeom geom = (o1 instanceof DPlane) ? o2 : o1;
 					if (geom instanceof DSphere) {
-						DBody body = geom.getBody();
-						DVector3C v = body.getLinearVel();
-						v = v.reScale(-1);
-						body.addForce(v);
+						drag(geom, 2.0);
 					}
 				}
 
-				
+
 				DJoint c = OdeHelper.createContactJoint(world, joints, contacts.get(i));
 				c.attach(b1, b2);
 
