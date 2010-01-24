@@ -75,7 +75,7 @@ public class Player {
 		box = OdeHelper.createBox(1, 0.5, 2);
 		box.setBody(body);
 		DMass mass = OdeHelper.createMass();
-		mass.setBoxTotal(80, 20, 10, 20); // ?? code dupe
+		mass.setBoxTotal(80, 1, 0.5, 2); // ?? code dupe
 		body.setMass(mass);
 	}
 

@@ -21,7 +21,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
+import org.ode4j.math.DVector3C;
 import org.ode4j.ode.DBody;
+import org.ode4j.ode.DContact;
 import org.ode4j.ode.DContactBuffer;
 import org.ode4j.ode.DGeom;
 import org.ode4j.ode.DGeom.DNearCallback;
@@ -29,6 +31,7 @@ import org.ode4j.ode.DJoint;
 import org.ode4j.ode.DJointGroup;
 import org.ode4j.ode.DPlane;
 import org.ode4j.ode.DSpace;
+import org.ode4j.ode.DSphere;
 import org.ode4j.ode.DWorld;
 import org.ode4j.ode.OdeConstants;
 import org.ode4j.ode.OdeHelper;
@@ -104,7 +107,9 @@ public class GamePhysics {
 		ground = OdeHelper.createPlane(space, 0, 0, 1, 0);
 
 		ball = new Ball(OdeHelper.createBody(world));
-		ball.setPosition(pitch.getCentre());
+		Position centre = pitch.getCentre();
+		centre = new Position(centre.x, centre.y, 5);
+		ball.setPosition(centre);
 		space.add(ball.getGeometry());
 
 		BallZone bz = ball.getZone(pitch);
@@ -309,13 +314,26 @@ public class GamePhysics {
 			int numc = OdeHelper.collide(o1, o2, MAX_CONTACTS, contacts.getGeomBuffer());
 
 			for (int i = 0; i < numc; i++) {
-				contacts.get(i).surface.mode = OdeConstants.dContactBounce | OdeConstants.dContactApprox1;
-				contacts.get(i).surface.bounce = 0.5;
-				contacts.get(i).surface.mu = 1.0;
-				contacts.get(i).surface.bounce_vel = 0.01;
+				DContact contact = contacts.get(i);
+				contact.surface.mode = OdeConstants.dContactBounce;
+				contact.surface.bounce = 0.5;
+				contact.surface.bounce_vel = 0.1;
 
+				// ODE doesn't have rolling friction, so we manually apply it here
+				if (o1 instanceof DPlane || o2 instanceof DPlane) {
+					DGeom geom = (o1 instanceof DPlane) ? o2 : o1;
+					if (geom instanceof DSphere) {
+						DBody body = geom.getBody();
+						DVector3C v = body.getLinearVel();
+						v = v.reScale(-1);
+						body.addForce(v);
+					}
+				}
+
+				
 				DJoint c = OdeHelper.createContactJoint(world, joints, contacts.get(i));
 				c.attach(b1, b2);
+
 			}
 		}
 	};

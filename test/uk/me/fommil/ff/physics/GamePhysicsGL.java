@@ -74,7 +74,7 @@ public class GamePhysicsGL extends dsFunctions {
 		game.tick(0.01);
 
 		Position c = game.getBall().getPosition();
-		float[] xyz = {(float) c.x, (float) c.y, 15f};
+		float[] xyz = {(float) c.x, (float) c.y + 5, 20f};
 		float[] hpr = {-90, -70, 0};
 		DrawStuff.dsSetViewpoint(xyz, hpr);
 
@@ -133,7 +133,6 @@ public class GamePhysicsGL extends dsFunctions {
 		}
 		if (change) {
 			// TODO: aftertouches
-//			log.info(actions.toString());
 			game.setUserActions(actions, null);
 		}
 	}
