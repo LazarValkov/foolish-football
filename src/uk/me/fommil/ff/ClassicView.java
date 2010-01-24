@@ -18,24 +18,21 @@ import uk.me.fommil.ff.physics.Ball;
 import uk.me.fommil.ff.physics.GamePhysics;
 import uk.me.fommil.ff.physics.Player;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
 import static java.lang.Math.*;
 import javax.swing.JPanel;
+import javax.vecmath.Point3d;
 import uk.me.fommil.ff.physics.Goalkeeper;
 import uk.me.fommil.ff.physics.Goalkeeper.GoalkeeperState;
 import uk.me.fommil.ff.physics.Position;
@@ -81,87 +78,7 @@ public class ClassicView extends JPanel {
 
 	private final Map<Position, Sprite> objectSprites = Maps.newHashMap();
 
-	private final KeyListener keyboardInput = new KeyAdapter() {
-
-		private final Collection<Player.Action> actions = Sets.newHashSet();
-
-		private final Collection<Ball.Aftertouch> aftertouches = Sets.newHashSet();
-
-		@Override
-		public synchronized void keyPressed(KeyEvent e) {
-			switch (e.getKeyCode()) {
-				case KeyEvent.VK_LEFT:
-					actions.add(Player.Action.LEFT);
-					aftertouches.add(Ball.Aftertouch.LEFT);
-					break;
-				case KeyEvent.VK_RIGHT:
-					actions.add(Player.Action.RIGHT);
-					aftertouches.add(Ball.Aftertouch.RIGHT);
-					break;
-				case KeyEvent.VK_UP:
-					actions.add(Player.Action.UP);
-					aftertouches.add(Ball.Aftertouch.UP);
-					break;
-				case KeyEvent.VK_DOWN:
-					actions.add(Player.Action.DOWN);
-					aftertouches.add(Ball.Aftertouch.DOWN);
-					break;
-				case KeyEvent.VK_SPACE:
-					actions.add(Player.Action.KICK);
-					break;
-				case KeyEvent.VK_ENTER:
-					actions.add(Player.Action.TACKLE);
-					break;
-				case KeyEvent.VK_A:
-					actions.add(Player.Action.HEAD);
-					break;
-				default:
-					return;
-			}
-			updateActions();
-		}
-
-		@Override
-		public synchronized void keyReleased(KeyEvent e) {
-			switch (e.getKeyCode()) {
-				case KeyEvent.VK_LEFT:
-					actions.remove(Player.Action.LEFT);
-					aftertouches.remove(Ball.Aftertouch.LEFT);
-					break;
-				case KeyEvent.VK_RIGHT:
-					actions.remove(Player.Action.RIGHT);
-					aftertouches.remove(Ball.Aftertouch.RIGHT);
-					break;
-				case KeyEvent.VK_UP:
-					actions.remove(Player.Action.UP);
-					aftertouches.remove(Ball.Aftertouch.UP);
-					break;
-				case KeyEvent.VK_DOWN:
-					actions.remove(Player.Action.DOWN);
-					aftertouches.remove(Ball.Aftertouch.DOWN);
-					break;
-				case KeyEvent.VK_SPACE:
-					actions.remove(Player.Action.KICK);
-					break;
-				case KeyEvent.VK_ENTER:
-					actions.remove(Player.Action.TACKLE);
-					break;
-				case KeyEvent.VK_A:
-					actions.remove(Player.Action.HEAD);
-					break;
-				case KeyEvent.VK_ESCAPE:
-					System.exit(0);
-					break;
-				default:
-					return;
-			}
-			updateActions();
-		}
-
-		private void updateActions() {
-			game.setUserActions(ClassicView.this.a, actions, aftertouches);
-		}
-	};
+	private final KeyListener keyboardInput;
 
 	private final GamePhysics game;
 
@@ -177,6 +94,7 @@ public class ClassicView extends JPanel {
 		this.pitch = pitch;
 		this.a = game.getTeamA();
 		this.game = game;
+		keyboardInput = new KeyboardController(game);
 
 		// TODO: eventually take in input controls
 		setFocusable(true);

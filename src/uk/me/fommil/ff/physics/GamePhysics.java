@@ -37,6 +37,7 @@ import uk.me.fommil.ff.Pitch;
 import uk.me.fommil.ff.PlayerStats;
 import uk.me.fommil.ff.Tactics;
 import uk.me.fommil.ff.Tactics.BallZone;
+import uk.me.fommil.ff.Tactics.PlayerZone;
 import uk.me.fommil.ff.physics.Player.Action;
 import uk.me.fommil.ff.Team;
 
@@ -120,11 +121,10 @@ public class GamePhysics {
 	}
 
 	/**
-	 * @param team
 	 * @param actions
 	 * @param aftertouches
 	 */
-	public void setUserActions(Team team, Collection<Player.Action> actions, Collection<Ball.Aftertouch> aftertouches) {
+	public void setUserActions(Collection<Player.Action> actions, Collection<Ball.Aftertouch> aftertouches) {
 		this.actions = Lists.newArrayList(actions);
 		if (actions.contains(Player.Action.KICK))
 			updateSelected(null);
@@ -136,27 +136,28 @@ public class GamePhysics {
 	public void tick(double dt) {
 		time += dt;
 
+		Position bp = ball.getPosition();
+		BallZone bz = ball.getZone(pitch);
+		Tactics tactics = a.getCurrentTactics();
+		for (Player p : as) {
+			if (p != selected) {
+				Position target;
+				if (bp.distance(p.getPosition()) < Math.min(100, bp.distance(selected.getPosition()))) {
+					target = bp;
+				} else {
+					PlayerZone pz = tactics.getZone(bz, p.getShirt());
+					target = pz.getCentre(pitch, Pitch.Facing.UP);
+				}
+				p.autoPilot(target);
+			}
+		}
+		selected.setActions(actions);
+
 		space.collide(null, collision);
 		world.step(dt);
 		joints.empty();
 
-		// log.info(ball.getPosition().toString());
 
-//		Point3d bp = ball.getPosition();
-//		BallZone bz = ball.getZone(pitch);
-//		Tactics tactics = a.getCurrentTactics();
-//		for (Player p : as) {
-//			if (p != selected) {
-//				Point3d target;
-//				if (bp.distance(p.getPosition()) < Math.min(100, bp.distance(selected.getPosition()))) {
-//					target = bp;
-//				} else {
-//					PlayerZone pz = tactics.getZone(bz, p.getShirt());
-//					target = pz.getCentre(pitch, Pitch.Facing.UP);
-//				}
-//				p.autoPilot(target);
-//			}
-//		}
 
 //		List<PlayerMC> candidate = Lists.newArrayList();
 //		for (PlayerMC pm : as) {

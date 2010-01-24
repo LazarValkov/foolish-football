@@ -15,7 +15,9 @@
 package uk.me.fommil.ff.physics;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import java.util.Collection;
+import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
 import org.ode4j.math.DVector3;
@@ -93,7 +95,7 @@ public class Player {
 		}
 
 		DVector3 vector = actionsToVector(actions);
-		vector.scale(50);
+		vector.scale(5);
 		box.getBody().setLinearVel(vector);
 		direction = computeDirection(vector);
 	}
@@ -134,28 +136,29 @@ public class Player {
 		return d;
 	}
 
-//	/**
-//	 * Controller. Ignore user input and go to the zone indicated.
-//	 *
-//	 * @param attractor
-//	 */
-//	public void autoPilot(Point3d attractor) {
-//		Preconditions.checkNotNull(attractor);
-//		List<Player.Action> auto = Lists.newArrayList();
-//		double dx = s.x - attractor.x;
-//		if (dx < -AUTO) {
-//			auto.add(Player.Action.RIGHT);
-//		} else if (dx > AUTO) {
-//			auto.add(Player.Action.LEFT);
-//		}
-//		double dy = s.y - attractor.y;
-//		if (dy < -AUTO) {
-//			auto.add(Player.Action.DOWN);
-//		} else if (dy > AUTO) {
-//			auto.add(Player.Action.UP);
-//		}
-//		setActions(auto);
-//	}
+	/**
+	 * Controller. Ignore user input and go to the zone indicated.
+	 *
+	 * @param attractor
+	 */
+	public void autoPilot(Position attractor) {
+		Preconditions.checkNotNull(attractor);
+		List<Player.Action> auto = Lists.newArrayList();
+		double dx = box.getPosition().get0() - attractor.x;
+		if (dx < -AUTO) {
+			auto.add(Player.Action.RIGHT);
+		} else if (dx > AUTO) {
+			auto.add(Player.Action.LEFT);
+		}
+		double dy = box.getPosition().get1() - attractor.y;
+		if (dy < -AUTO) {
+			auto.add(Player.Action.DOWN);
+		} else if (dy > AUTO) {
+			auto.add(Player.Action.UP);
+		}
+		setActions(auto);
+	}
+
 	/**
 	 * @return the angle relate to NORTH {@code (- PI, + PI]}.
 	 */
