@@ -17,15 +17,15 @@ package uk.me.fommil.ff.physics;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
 import org.ode4j.math.DMatrix3;
-import org.ode4j.math.DQuaternion;
 import org.ode4j.math.DVector3;
-import org.ode4j.math.DVector3C;
 import org.ode4j.ode.DBody;
 import org.ode4j.ode.DBox;
+import org.ode4j.ode.DGeom;
 import org.ode4j.ode.DGeom;
 import org.ode4j.ode.DMass;
 import org.ode4j.ode.OdeHelper;
@@ -98,6 +98,7 @@ public class Player {
 				return;
 		}
 		// stabilise
+		box.getBody().setAngularVel(0, 0, 0);
 		DVector3 position = new DVector3(box.getPosition());
 		position.set(2, box.getLengths().get2() / 2);
 		box.setPosition(position);
@@ -109,6 +110,7 @@ public class Player {
 
 		DMatrix3 rotation = new DMatrix3();
 		Rotation.dRFromAxisAndAngle(rotation, 0, 0, 1, direction);
+//		box.setOffsetWorldRotation(rotation);
 		box.setRotation(rotation);
 	}
 
@@ -202,7 +204,9 @@ public class Player {
 		box.setPosition(vector);
 	}
 
-	DGeom getGeometry() {
-		return box;
+	Collection<DGeom> getGeometries() {
+		Collection<DGeom> geometries = Lists.newArrayList();
+		geometries.add(box);
+		return geometries;
 	}
 }

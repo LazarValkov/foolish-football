@@ -14,9 +14,9 @@
  */
 package uk.me.fommil.ff.physics;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import java.awt.Color;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -24,12 +24,9 @@ import java.util.logging.Logger;
 import org.lwjgl.input.Keyboard;
 import org.ode4j.drawstuff.DrawStuff;
 import org.ode4j.drawstuff.DrawStuff.dsFunctions;
-import org.ode4j.math.DVector3C;
 import org.ode4j.ode.DBox;
-import org.ode4j.ode.DMass;
-import org.ode4j.ode.DMassC;
+import org.ode4j.ode.DGeom;
 import org.ode4j.ode.DSphere;
-import org.ode4j.ode.internal.DxMass;
 import uk.me.fommil.ff.KeyboardController;
 import uk.me.fommil.ff.Main;
 import uk.me.fommil.ff.Pitch;
@@ -83,16 +80,12 @@ public class GamePhysicsGL extends dsFunctions {
 		DrawStuff.dsSetViewpoint(xyz, hpr);
 
 		for (Player player : game.getPlayers()) {
-			DrawStuff.dsSetColor(1, 0, 0);
-			DBox box = (DBox) player.getGeometry();
-			DrawStuff.dsDrawBox(box.getPosition(), box.getRotation(), box.getLengths());
+			for (DGeom geom : player.getGeometries()) {
+				draw(geom, Color.RED);
+			}
 		}
 
-		DrawStuff.dsSetColor(1, 1, 1);
-		DSphere sphere = (DSphere) game.getBall().getGeometry();
-		DrawStuff.dsDrawSphere(sphere.getPosition(), sphere.getRotation(), (float) sphere.getRadius());
-//		DBox sphere = (DBox) game.getBall().getGeometry();
-//		DrawStuff.dsDrawBox(sphere.getPosition(), sphere.getRotation(), sphere.getLengths());
+		draw(game.getBall().getGeometry(), Color.WHITE);
 	}
 
 	@Override
@@ -140,6 +133,19 @@ public class GamePhysicsGL extends dsFunctions {
 		if (change) {
 			// TODO: aftertouches
 			game.setUserActions(actions, null);
+		}
+	}
+
+	private void draw(DGeom geometry, Color c) {
+		float[] color = c.getColorComponents(new float[3]);
+		DrawStuff.dsSetColor(color[0], color[1], color[2]);
+
+		if (geometry instanceof DBox) {
+			DBox box = (DBox) geometry;
+			DrawStuff.dsDrawBox(box.getPosition(), box.getRotation(), box.getLengths());
+		} else if (geometry instanceof DSphere) {
+			DSphere sphere = (DSphere) geometry;
+			DrawStuff.dsDrawSphere(sphere.getPosition(), sphere.getRotation(), (float) sphere.getRadius());
 		}
 	}
 }

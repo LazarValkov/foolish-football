@@ -23,6 +23,7 @@ import java.util.Random;
 import java.util.logging.Logger;
 import org.ode4j.math.DVector3C;
 import org.ode4j.ode.DBody;
+import org.ode4j.ode.DBox;
 import org.ode4j.ode.DContact;
 import org.ode4j.ode.DContactBuffer;
 import org.ode4j.ode.DGeom;
@@ -117,7 +118,9 @@ public class GamePhysics {
 			Position p = tactics.getZone(bz, i).getCentre(pitch, Pitch.Facing.UP);
 			Player pma = new Player(i, aPlayers.get(i - 1), OdeHelper.createBody(world));
 			pma.setPosition(p);
-			space.add(pma.getGeometry());
+			for (DGeom geom : pma.getGeometries()) {
+				space.add(geom);
+			}
 			as.add(pma);
 		}
 		selected = as.get(9);
@@ -303,21 +306,27 @@ public class GamePhysics {
 			DBody b1 = o1.getBody();
 			DBody b2 = o2.getBody();
 
-			if (b1 != null && b2 != null)
-				log.info(b1 + " collided with " + b2);
-
 			final int MAX_CONTACTS = 8;
 			DContactBuffer contacts = new DContactBuffer(MAX_CONTACTS);
 			int numc = OdeHelper.collide(o1, o2, MAX_CONTACTS, contacts.getGeomBuffer());
 
 			for (int i = 0; i < numc; i++) {
 				DContact contact = contacts.get(i);
-				contact.surface.mode = OdeConstants.dContactBounce;
-				contact.surface.bounce = 0.5;
-				contact.surface.bounce_vel = 0.1;
-				contact.surface.mu = 10;
+					contact.surface.mode = OdeConstants.dContactBounce;
+				if ((o1 instanceof DSphere || o2 instanceof DSphere)) {
+					contact.surface.mu = OdeConstants.dInfinity;
+				}
 
-				// ODE doesn't have rolling friction, so we manually apply it here
+				if ((o1 instanceof DBox || o2 instanceof DBox) && (o1 instanceof DSphere || o2 instanceof DSphere)) {
+					// ball bouncing off player
+					contact.surface.bounce = 0.0;
+				} else {
+					contact.surface.bounce = 0.5;
+					contact.surface.mu = 10;
+				}
+				contact.surface.bounce_vel = 0.1;
+
+				// ODE doesn't have rolling friction, so we manually apply it here for the ball
 				if (o1 instanceof DPlane || o2 instanceof DPlane) {
 					DGeom geom = (o1 instanceof DPlane) ? o2 : o1;
 					if (geom instanceof DSphere) {
@@ -325,10 +334,8 @@ public class GamePhysics {
 					}
 				}
 
-
 				DJoint c = OdeHelper.createContactJoint(world, joints, contacts.get(i));
 				c.attach(b1, b2);
-
 			}
 		}
 	};
