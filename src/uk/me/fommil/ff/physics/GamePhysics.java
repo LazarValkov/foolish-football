@@ -312,14 +312,13 @@ public class GamePhysics {
 
 			for (int i = 0; i < numc; i++) {
 				DContact contact = contacts.get(i);
-					contact.surface.mode = OdeConstants.dContactBounce;
+				contact.surface.mode = OdeConstants.dContactBounce;
 				if ((o1 instanceof DSphere || o2 instanceof DSphere)) {
 					contact.surface.mu = OdeConstants.dInfinity;
 				}
-
 				if ((o1 instanceof DBox || o2 instanceof DBox) && (o1 instanceof DSphere || o2 instanceof DSphere)) {
 					// ball bouncing off player
-					contact.surface.bounce = 0.0;
+					contact.surface.bounce = 0.1;
 				} else {
 					contact.surface.bounce = 0.5;
 					contact.surface.mu = 10;

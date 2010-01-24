@@ -139,7 +139,6 @@ public class GamePhysicsGL extends dsFunctions {
 	private void draw(DGeom geometry, Color c) {
 		float[] color = c.getColorComponents(new float[3]);
 		DrawStuff.dsSetColor(color[0], color[1], color[2]);
-
 		if (geometry instanceof DBox) {
 			DBox box = (DBox) geometry;
 			DrawStuff.dsDrawBox(box.getPosition(), box.getRotation(), box.getLengths());

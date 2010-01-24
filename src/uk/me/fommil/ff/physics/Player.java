@@ -23,11 +23,14 @@ import java.util.Random;
 import java.util.logging.Logger;
 import org.ode4j.math.DMatrix3;
 import org.ode4j.math.DVector3;
+import org.ode4j.math.DVector3C;
 import org.ode4j.ode.DBody;
 import org.ode4j.ode.DBox;
+import org.ode4j.ode.DFixedJoint;
 import org.ode4j.ode.DGeom;
 import org.ode4j.ode.DGeom;
 import org.ode4j.ode.DMass;
+import org.ode4j.ode.DWorld;
 import org.ode4j.ode.OdeHelper;
 import org.ode4j.ode.internal.Rotation;
 import uk.me.fommil.ff.PlayerStats;
@@ -39,7 +42,10 @@ import uk.me.fommil.ff.PlayerStats;
  */
 public class Player {
 
+//	private final Collection<DGeom> geometries = Lists.newArrayList();
 	private final DBox box;
+	private final DBody body;
+	private static final double height = 2;
 
 	private volatile double direction;
 
@@ -76,10 +82,20 @@ public class Player {
 		Preconditions.checkNotNull(stats);
 		this.shirt = i;
 		this.stats = stats;
-		box = OdeHelper.createBox(1, 0.5, 2);
+		this.body = body;
+		box = OdeHelper.createBox(1, 0.5, height);
 		box.setBody(body);
+//		geometries.add(box);
+//		DBox box2 = OdeHelper.createBox(0.5, 1, height);
+//		box2.setBody(body);
+//		box2.setOffsetPosition(0.75, 0.5, height / 2);
+//		geometries.add(box2);
+//		DFixedJoint j = OdeHelper.createFixedJoint(world);
+//		j.attach(body, box2);
+//		j.setFixed();
+
 		DMass mass = OdeHelper.createMass();
-		mass.setBoxTotal(80, 1, 0.5, 2); // ?? code dupe
+		mass.setBoxTotal(80, 1, 0.5, height); // ?? code dupe
 		body.setMass(mass);
 	}
 
@@ -98,19 +114,15 @@ public class Player {
 				return;
 		}
 		// stabilise
-		box.getBody().setAngularVel(0, 0, 0);
-		DVector3 position = new DVector3(box.getPosition());
-		position.set(2, box.getLengths().get2() / 2);
-		box.setPosition(position);
+		setPosition(body.getPosition());
 
 		DVector3 vector = actionsToVector(actions);
 		vector.scale(5);
-		box.getBody().setLinearVel(vector);
+		body.setLinearVel(vector);
 		direction = computeDirection(vector);
 
 		DMatrix3 rotation = new DMatrix3();
 		Rotation.dRFromAxisAndAngle(rotation, 0, 0, 1, direction);
-//		box.setOffsetWorldRotation(rotation);
 		box.setRotation(rotation);
 	}
 
@@ -160,13 +172,13 @@ public class Player {
 	public void autoPilot(Position attractor) {
 		Preconditions.checkNotNull(attractor);
 		List<Player.Action> auto = Lists.newArrayList();
-		double dx = box.getPosition().get0() - attractor.x;
+		double dx = body.getPosition().get0() - attractor.x;
 		if (dx < -AUTO) {
 			auto.add(Player.Action.RIGHT);
 		} else if (dx > AUTO) {
 			auto.add(Player.Action.LEFT);
 		}
-		double dy = box.getPosition().get1() - attractor.y;
+		double dy = body.getPosition().get1() - attractor.y;
 		if (dy < -AUTO) {
 			auto.add(Player.Action.DOWN);
 		} else if (dy > AUTO) {
@@ -191,22 +203,29 @@ public class Player {
 	}
 
 	public Velocity getVelocity() {
-		return new Velocity(box.getBody().getLinearVel());
+		return new Velocity(body.getLinearVel());
 	}
 
 	public Position getPosition() {
-		return new Position(box.getPosition());
+		return new Position(body.getPosition());
 	}
 
 	public void setPosition(Position p) {
-		DVector3 vector = p.toDVector();
-		vector.add(0, 0, box.getLengths().get2() / 2);
-		box.setPosition(vector);
+		setPosition(p.toDVector());
+	}
+
+	void setPosition(DVector3C p) {
+		DVector3 position = new DVector3(p);
+		body.setAngularVel(0, 0, 0);
+		position.set(2, height / 2);
+		body.setPosition(position);
 	}
 
 	Collection<DGeom> getGeometries() {
 		Collection<DGeom> geometries = Lists.newArrayList();
 		geometries.add(box);
 		return geometries;
+
+		// return Collections.unmodifiableCollection(geometries);
 	}
 }
