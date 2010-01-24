@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
+import org.ode4j.math.DVector3;
 import org.ode4j.math.DVector3C;
 import org.ode4j.ode.DBody;
 import org.ode4j.ode.DBox;
@@ -116,11 +117,8 @@ public class GamePhysics {
 		Tactics tactics = a.getCurrentTactics();
 		for (int i = 2; i <= 11; i++) {
 			Position p = tactics.getZone(bz, i).getCentre(pitch, Pitch.Facing.UP);
-			Player pma = new Player(i, aPlayers.get(i - 1), OdeHelper.createBody(world));
+			Player pma = new Player(i, aPlayers.get(i - 1), world, space);
 			pma.setPosition(p);
-			for (DGeom geom : pma.getGeometries()) {
-				space.add(geom);
-			}
 			as.add(pma);
 		}
 		selected = as.get(9);
@@ -142,13 +140,14 @@ public class GamePhysics {
 	public void tick(double dt) {
 		time += dt;
 
+		// TODO: be consistent with vector implementation
 		Position bp = ball.getPosition();
 		BallZone bz = ball.getZone(pitch);
 		Tactics tactics = a.getCurrentTactics();
 		for (Player p : as) {
 			if (p != selected) {
 				Position target;
-				if (bp.distance(p.getPosition()) < Math.min(100, bp.distance(selected.getPosition()))) {
+				if (bp.distance(p.getPosition()) < Math.min(10, bp.distance(selected.getPosition()))) {
 					target = bp;
 				} else {
 					PlayerZone pz = tactics.getZone(bz, p.getShirt());
@@ -159,8 +158,8 @@ public class GamePhysics {
 		}
 		selected.setActions(actions);
 
+		drag(ball.getGeometry(), 0); // default drag on ball
 		space.collide(null, collision);
-		drag(ball.getGeometry(), 0.1); // air drag on ball
 
 		world.step(dt);
 		joints.empty();
@@ -264,10 +263,12 @@ public class GamePhysics {
 	}
 
 	private void drag(DGeom geom, double d) {
+		assert d >= 0 && d <= 1;
 		DBody body = geom.getBody();
-		DVector3C v = body.getLinearVel();
-		v = v.reScale(-d);
-		body.addForce(v);
+//		DVector3C v = body.getLinearVel();
+//		v = v.reScale(-d);
+//		body.addForce(v);
+		body.setDamping(d, d);
 	}
 
 	// <editor-fold defaultstate="collapsed" desc="BOILERPLATE GETTERS/SETTERS">
@@ -319,6 +320,12 @@ public class GamePhysics {
 				if ((o1 instanceof DBox || o2 instanceof DBox) && (o1 instanceof DSphere || o2 instanceof DSphere)) {
 					// ball bouncing off player
 					contact.surface.bounce = 0.1;
+
+					DGeom geom = (o1 instanceof DPlane) ? o2 : o1;
+					DVector3 toPlayer = selected.getPosition().toDVector().sub(geom.getPosition());
+					toPlayer.set(2, 0);
+					toPlayer.scale(100); // ball control
+					geom.getBody().addForce(toPlayer);
 				} else {
 					contact.surface.bounce = 0.5;
 					contact.surface.mu = 10;
@@ -329,7 +336,7 @@ public class GamePhysics {
 				if (o1 instanceof DPlane || o2 instanceof DPlane) {
 					DGeom geom = (o1 instanceof DPlane) ? o2 : o1;
 					if (geom instanceof DSphere) {
-						drag(geom, 2.0);
+						drag(geom, 0.1);
 					}
 				}
 

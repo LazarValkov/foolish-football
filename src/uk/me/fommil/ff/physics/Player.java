@@ -26,10 +26,9 @@ import org.ode4j.math.DVector3;
 import org.ode4j.math.DVector3C;
 import org.ode4j.ode.DBody;
 import org.ode4j.ode.DBox;
-import org.ode4j.ode.DFixedJoint;
-import org.ode4j.ode.DGeom;
 import org.ode4j.ode.DGeom;
 import org.ode4j.ode.DMass;
+import org.ode4j.ode.DSpace;
 import org.ode4j.ode.DWorld;
 import org.ode4j.ode.OdeHelper;
 import org.ode4j.ode.internal.Rotation;
@@ -42,8 +41,8 @@ import uk.me.fommil.ff.PlayerStats;
  */
 public class Player {
 
-//	private final Collection<DGeom> geometries = Lists.newArrayList();
-	private final DBox box;
+	private final Collection<DGeom> geometries = Lists.newArrayList();
+//	private final DBox box;
 	private final DBody body;
 	private static final double height = 2;
 
@@ -77,22 +76,29 @@ public class Player {
 
 	protected final Random random = new Random();
 
-	Player(int i, PlayerStats stats, DBody body) {
+	Player(int i, PlayerStats stats, DWorld world, DSpace space) {
 		Preconditions.checkArgument(i >= 1 && i <= 11, i);
 		Preconditions.checkNotNull(stats);
 		this.shirt = i;
 		this.stats = stats;
-		this.body = body;
-		box = OdeHelper.createBox(1, 0.5, height);
-		box.setBody(body);
-//		geometries.add(box);
+		this.body = OdeHelper.createBody(world);
+		DBox box1 = OdeHelper.createBox(space, 1, 0.5, height);
+		box1.setBody(body);
+		geometries.add(box1);
+
+//		DBody leftFoot = OdeHelper.createBody(world);
+//		DBox box2 = OdeHelper.createBox(space, 0.5, 1.0, height);
+//		box2.setBody(leftFoot);
+//		box2.setOffsetPosition(0.5, 0.25, height/2);
+//		DFixedJoint j = OdeHelper.createFixedJoint(world);
+//		j.attach(body, leftFoot);
+//		j.setFixed();
+//		geometries.add(box2);
+
 //		DBox box2 = OdeHelper.createBox(0.5, 1, height);
 //		box2.setBody(body);
 //		box2.setOffsetPosition(0.75, 0.5, height / 2);
 //		geometries.add(box2);
-//		DFixedJoint j = OdeHelper.createFixedJoint(world);
-//		j.attach(body, box2);
-//		j.setFixed();
 
 		DMass mass = OdeHelper.createMass();
 		mass.setBoxTotal(80, 1, 0.5, height); // ?? code dupe
@@ -123,7 +129,9 @@ public class Player {
 
 		DMatrix3 rotation = new DMatrix3();
 		Rotation.dRFromAxisAndAngle(rotation, 0, 0, 1, direction);
-		box.setRotation(rotation);
+		for (DGeom geom : geometries) {
+			geom.setRotation(rotation);
+		}
 	}
 
 	private DVector3 actionsToVector(Collection<Action> actions) {
@@ -222,10 +230,10 @@ public class Player {
 	}
 
 	Collection<DGeom> getGeometries() {
-		Collection<DGeom> geometries = Lists.newArrayList();
-		geometries.add(box);
-		return geometries;
+//		Collection<DGeom> geometries = Lists.newArrayList();
+//		geometries.add(box);
+//		return geometries;
 
-		// return Collections.unmodifiableCollection(geometries);
+		 return Collections.unmodifiableCollection(geometries);
 	}
 }
