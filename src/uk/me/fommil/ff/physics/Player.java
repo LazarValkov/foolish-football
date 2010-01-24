@@ -20,12 +20,16 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
+import org.ode4j.math.DMatrix3;
+import org.ode4j.math.DQuaternion;
 import org.ode4j.math.DVector3;
+import org.ode4j.math.DVector3C;
 import org.ode4j.ode.DBody;
 import org.ode4j.ode.DBox;
 import org.ode4j.ode.DGeom;
 import org.ode4j.ode.DMass;
 import org.ode4j.ode.OdeHelper;
+import org.ode4j.ode.internal.Rotation;
 import uk.me.fommil.ff.PlayerStats;
 
 /**
@@ -93,11 +97,19 @@ public class Player {
 			default:
 				return;
 		}
+		// stabilise
+		DVector3 position = new DVector3(box.getPosition());
+		position.set(2, box.getLengths().get2() / 2);
+		box.setPosition(position);
 
 		DVector3 vector = actionsToVector(actions);
 		vector.scale(5);
 		box.getBody().setLinearVel(vector);
 		direction = computeDirection(vector);
+
+		DMatrix3 rotation = new DMatrix3();
+		Rotation.dRFromAxisAndAngle(rotation, 0, 0, 1, direction);
+		box.setRotation(rotation);
 	}
 
 	private DVector3 actionsToVector(Collection<Action> actions) {
@@ -125,6 +137,8 @@ public class Player {
 	}
 
 	private double computeDirection(DVector3 vector) {
+		if (vector.length() == 0)
+			return direction;
 		return dePhase(Math.atan2(vector.get1(), vector.get0()) + Math.PI / 2);
 	}
 

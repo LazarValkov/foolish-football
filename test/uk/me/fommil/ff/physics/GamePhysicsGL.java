@@ -24,8 +24,12 @@ import java.util.logging.Logger;
 import org.lwjgl.input.Keyboard;
 import org.ode4j.drawstuff.DrawStuff;
 import org.ode4j.drawstuff.DrawStuff.dsFunctions;
+import org.ode4j.math.DVector3C;
 import org.ode4j.ode.DBox;
+import org.ode4j.ode.DMass;
+import org.ode4j.ode.DMassC;
 import org.ode4j.ode.DSphere;
+import org.ode4j.ode.internal.DxMass;
 import uk.me.fommil.ff.KeyboardController;
 import uk.me.fommil.ff.Main;
 import uk.me.fommil.ff.Pitch;
@@ -104,8 +108,8 @@ public class GamePhysicsGL extends dsFunctions {
 	static {
 		inputs.put(Keyboard.KEY_UP, Player.Action.UP);
 		inputs.put(Keyboard.KEY_DOWN, Player.Action.DOWN);
-		inputs.put(Keyboard.KEY_LEFT, Player.Action.LEFT);
-		inputs.put(Keyboard.KEY_RIGHT, Player.Action.RIGHT);
+		inputs.put(Keyboard.KEY_LEFT, Player.Action.RIGHT); // TODO: left/right switch
+		inputs.put(Keyboard.KEY_RIGHT, Player.Action.LEFT);
 		inputs.put(Keyboard.KEY_SPACE, Player.Action.KICK);
 		inputs.put(Keyboard.KEY_RETURN, Player.Action.TACKLE);
 		inputs.put(Keyboard.KEY_A, Player.Action.HEAD);
