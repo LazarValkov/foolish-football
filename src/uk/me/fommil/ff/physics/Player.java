@@ -92,22 +92,26 @@ public class Player {
 		body.setData(this);
 	}
 
-	void collide(Ball ball) {
+	void control(Ball ball) {
 		Preconditions.checkNotNull(ball);
-		if (actions.contains(Action.KICK)) {
-			DVector3 kick = new DVector3(body.getLinearVel());
-			kick.safeNormalize();
-			kick.set(2, 0.5);
-			kick.scale(10 / 0.01);
-//			log.info("KICK " + kick);
-			ball.addForce(kick);
-//			ball.setVelocity(kick);
-		} else {
-//			DVector3 control = getPosition().toDVector().sub(ball.getPosition().toDVector());
-//			control.set(2, 0);
-//			control.scale(100);
-//			ball.addForce(control);
-		}
+		// TODO: come up with a solution that avoids the oscillation
+		DVector3 control = getPosition().toDVector().sub(ball.getPosition().toDVector());
+//		control.normalize();
+		control.set(2, 0);
+		control.scale(25);
+		ball.addForce(control);
+	}
+
+	boolean kick(Ball ball) {
+		// TODO: alternative is to create temporary body/geomety with momentum to perform the kick
+		if (!actions.contains(Action.KICK))
+			return false;
+		DVector3 kick = new DVector3(body.getLinearVel());
+		kick.safeNormalize();
+		kick.scale(20);
+		kick.set(2, 2);
+		ball.setVelocity(kick);
+		return true;
 	}
 
 	/**
@@ -129,7 +133,7 @@ public class Player {
 		setPosition(body.getPosition());
 
 		DVector3 vector = actionsToVector(actions);
-		vector.scale(5);
+		vector.scale(7.5);
 		body.setLinearVel(vector);
 		direction = computeDirection(vector);
 
@@ -139,27 +143,27 @@ public class Player {
 	}
 
 	private DVector3 actionsToVector(Collection<Action> actions) {
-		DVector3 impulse = new DVector3();
+		DVector3 move = new DVector3();
 		for (Action action : actions) {
 			switch (action) {
 				case UP:
-					impulse.sub(0, 1, 0);
+					move.sub(0, 1, 0);
 					break;
 				case DOWN:
-					impulse.add(0, 1, 0);
+					move.add(0, 1, 0);
 					break;
 				case LEFT:
-					impulse.sub(1, 0, 0);
+					move.sub(1, 0, 0);
 					break;
 				case RIGHT:
-					impulse.add(1, 0, 0);
+					move.add(1, 0, 0);
 					break;
 			}
 		}
-		if (impulse.lengthSquared() > 0) {
-			impulse.normalize();
+		if (move.lengthSquared() > 0) {
+			move.normalize();
 		}
-		return impulse;
+		return move;
 	}
 
 	private double computeDirection(DVector3 vector) {

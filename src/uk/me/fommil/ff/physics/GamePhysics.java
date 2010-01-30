@@ -158,9 +158,11 @@ public class GamePhysics {
 		}
 		selected.setActions(actions);
 
+//		ball.setKick(null);
 		ball.setFriction(0);
 		space.collide(null, collision);
 		ball.applyFriction();
+//		ball.applyKick();
 
 		world.step(dt);
 		joints.empty();
@@ -328,10 +330,13 @@ public class GamePhysics {
 				surface.bounce_vel = 0.1;
 
 				if (ballInvolved) {
-					surface.mu = OdeConstants.dInfinity; // ball never slips
 					ball.setFriction(0.5);
+					surface.mu = OdeConstants.dInfinity; // ball never slips
 					if (selectedInvolved) {
-						selected.collide(ball);
+						selected.control(ball);
+						if (selected.kick(ball))
+							break;
+						// and do not create a joint
 					}
 					if (playerInvolved) {
 						surface.bounce = 0.1;

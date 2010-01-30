@@ -92,6 +92,19 @@ public class Ball {
 		this.mu = mu;
 	}
 
+	private volatile DVector3 kick;
+
+	@Deprecated // HACK
+	void applyKick() {
+		if (kick != null)
+			sphere.getBody().setLinearVel(kick);
+	}
+
+	@Deprecated // HACK
+	void setKick(DVector3 kick) {
+		this.kick = kick;
+	}
+
 	void addForce(DVector3C force) {
 		assert force != null;
 		DBody body = sphere.getBody();
