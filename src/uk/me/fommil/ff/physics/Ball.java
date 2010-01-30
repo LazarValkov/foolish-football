@@ -18,10 +18,12 @@ import com.google.common.base.Preconditions;
 import java.util.Collection;
 import java.util.logging.Logger;
 import org.ode4j.math.DVector3;
+import org.ode4j.math.DVector3C;
 import org.ode4j.ode.DBody;
-import org.ode4j.ode.DGeom;
 import org.ode4j.ode.DMass;
+import org.ode4j.ode.DSpace;
 import org.ode4j.ode.DSphere;
+import org.ode4j.ode.DWorld;
 import org.ode4j.ode.OdeHelper;
 import uk.me.fommil.ff.Pitch;
 import uk.me.fommil.ff.Tactics.BallZone;
@@ -50,14 +52,38 @@ public class Ball {
 	// no aftertouch after a bounce
 //	private volatile boolean bounced = false;
 	// creates Ball and assign it to the body
-	Ball(DBody body) {
+	Ball(DWorld world, DSpace space) {
+		Preconditions.checkNotNull(world);
+		Preconditions.checkNotNull(space);
+		DBody body = OdeHelper.createBody(world);
 		double radius = 0.7 / (2 * Math.PI);
 		sphere = OdeHelper.createSphere(radius);
-//		sphere = OdeHelper.createBox(2 * radius, 2 * radius, 2 * radius);
 		sphere.setBody(body);
 		DMass mass = OdeHelper.createMass();
 		mass.setSphereTotal(0.45, radius);
 		body.setMass(mass);
+		space.add(sphere);
+		body.setData(this);
+	}
+
+	void setDrag(double d) {
+		assert d >= 0 && d <= 1;
+		DBody body = sphere.getBody();
+//		DVector3C v = body.getLinearVel();
+//		v = v.reScale(-d);
+//		body.addForce(v);
+		body.setDamping(d, d);
+//		body.setLinearDamping(d);
+	}
+
+	void addForce(DVector3C force) {
+		assert force != null;
+		DBody body = sphere.getBody();
+		body.addForce(force);
+	}
+
+	void setVelocity(DVector3 v) {
+		sphere.getBody().setLinearVel(v);
 	}
 
 	/**
@@ -175,9 +201,5 @@ public class Ball {
 		vector.add(0, 0, sphere.getRadius());
 //		vector.add(0, 0, sphere.getLengths().get2() / 2);
 		sphere.setPosition(vector);
-	}
-
-	DGeom getGeometry() {
-		return sphere;
 	}
 }

@@ -26,6 +26,7 @@ import org.ode4j.math.DVector3C;
 import org.ode4j.ode.DBody;
 import org.ode4j.ode.DBox;
 import org.ode4j.ode.DContact;
+import org.ode4j.ode.DContact.dSurfaceParameters;
 import org.ode4j.ode.DContactBuffer;
 import org.ode4j.ode.DGeom;
 import org.ode4j.ode.DGeom.DNearCallback;
@@ -106,11 +107,10 @@ public class GamePhysics {
 
 		ground = OdeHelper.createPlane(space, 0, 0, 1, 0);
 
-		ball = new Ball(OdeHelper.createBody(world));
+		ball = new Ball(world, space);
 		Position centre = pitch.getCentre();
 		centre = new Position(centre.x, centre.y, 5);
 		ball.setPosition(centre);
-		space.add(ball.getGeometry());
 
 		BallZone bz = ball.getZone(pitch);
 		List<PlayerStats> aPlayers = a.getPlayers();
@@ -158,7 +158,7 @@ public class GamePhysics {
 		}
 		selected.setActions(actions);
 
-		drag(ball.getGeometry(), 0); // default drag on ball
+		ball.setDrag(0.0);
 		space.collide(null, collision);
 
 		world.step(dt);
@@ -262,15 +262,6 @@ public class GamePhysics {
 		selected.setActions(actions);
 	}
 
-	private void drag(DGeom geom, double d) {
-		assert d >= 0 && d <= 1;
-		DBody body = geom.getBody();
-//		DVector3C v = body.getLinearVel();
-//		v = v.reScale(-d);
-//		body.addForce(v);
-		body.setDamping(d, d);
-	}
-
 	// <editor-fold defaultstate="collapsed" desc="BOILERPLATE GETTERS/SETTERS">
 	public Ball getBall() {
 		return ball;
@@ -295,7 +286,18 @@ public class GamePhysics {
 	public Iterable<Goalkeeper> getGoalkeepers() {
 		return goalkeepers;
 	}
+
+	Collection<DGeom> getGeoms() {
+		Collection<DGeom> geoms = Lists.newArrayList();
+		int num = space.getNumGeoms();
+		for (int i = 0; i < num; i++) {
+			geoms.add(space.getGeom(i));
+		}
+		return geoms;
+	}
 	// </editor-fold>
+
+	private static final int MAX_CONTACTS = 8;
 
 	private class NearCallback implements DNearCallback {
 
@@ -307,40 +309,38 @@ public class GamePhysics {
 			DBody b1 = o1.getBody();
 			DBody b2 = o2.getBody();
 
-			final int MAX_CONTACTS = 8;
+			Object obj1 = b1 != null ? b1.getData() : null;
+			Object obj2 = b2 != null ? b2.getData() : null;
+
+			boolean ballInvolved = obj1 instanceof Ball || obj2 instanceof Ball;
+			boolean playerInvolved = obj1 instanceof Player || obj2 instanceof Player;
+			boolean selectedInvolved = selected == obj1 || selected == obj2;
+			boolean groundInvolved = o1 instanceof DPlane || o2 instanceof DPlane;
+
 			DContactBuffer contacts = new DContactBuffer(MAX_CONTACTS);
 			int numc = OdeHelper.collide(o1, o2, MAX_CONTACTS, contacts.getGeomBuffer());
 
 			for (int i = 0; i < numc; i++) {
 				DContact contact = contacts.get(i);
-				contact.surface.mode = OdeConstants.dContactBounce;
-				if ((o1 instanceof DSphere || o2 instanceof DSphere)) {
-					contact.surface.mu = OdeConstants.dInfinity;
-				}
-				if ((o1 instanceof DBox || o2 instanceof DBox) && (o1 instanceof DSphere || o2 instanceof DSphere)) {
-					// ball bouncing off player
-					contact.surface.bounce = 0.1;
+				dSurfaceParameters surface = contact.surface;
+				surface.mode = OdeConstants.dContactBounce | OdeConstants.dContactSoftERP;
+				surface.bounce_vel = 0.1;
 
-					DGeom geom = (o1 instanceof DPlane) ? o2 : o1;
-					DVector3 toPlayer = selected.getPosition().toDVector().sub(geom.getPosition());
-					toPlayer.set(2, 0);
-					toPlayer.scale(100); // ball control
-					geom.getBody().addForce(toPlayer);
-				} else {
-					contact.surface.bounce = 0.5;
-					contact.surface.mu = 10;
-				}
-				contact.surface.bounce_vel = 0.1;
-
-				// ODE doesn't have rolling friction, so we manually apply it here for the ball
-				if (o1 instanceof DPlane || o2 instanceof DPlane) {
-					DGeom geom = (o1 instanceof DPlane) ? o2 : o1;
-					if (geom instanceof DSphere) {
-						drag(geom, 0.1);
+				if (ballInvolved) {
+					surface.mu = OdeConstants.dInfinity; // ball never slips
+					if (playerInvolved) {
+						surface.bounce = 0.1;
+						if (selectedInvolved) {
+							selected.collide(ball);
+						}
+					} else if (groundInvolved) {
+						surface.bounce = 0.5;
+						// ODE doesn't have rolling friction, so we manually apply it here for the ball
+						ball.setDrag(0.1);
 					}
 				}
 
-				DJoint c = OdeHelper.createContactJoint(world, joints, contacts.get(i));
+				DJoint c = OdeHelper.createContactJoint(world, joints, contact);
 				c.attach(b1, b2);
 			}
 		}

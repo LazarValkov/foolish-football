@@ -79,13 +79,9 @@ public class GamePhysicsGL extends dsFunctions {
 		float[] hpr = {-90, -70, 0};
 		DrawStuff.dsSetViewpoint(xyz, hpr);
 
-		for (Player player : game.getPlayers()) {
-			for (DGeom geom : player.getGeometries()) {
-				draw(geom, Color.RED);
-			}
+		for (DGeom geom : game.getGeoms()) {
+			draw(geom, Color.RED);
 		}
-
-		draw(game.getBall().getGeometry(), Color.WHITE);
 	}
 
 	@Override

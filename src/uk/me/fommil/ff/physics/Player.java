@@ -17,7 +17,6 @@ package uk.me.fommil.ff.physics;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
@@ -26,7 +25,6 @@ import org.ode4j.math.DVector3;
 import org.ode4j.math.DVector3C;
 import org.ode4j.ode.DBody;
 import org.ode4j.ode.DBox;
-import org.ode4j.ode.DGeom;
 import org.ode4j.ode.DMass;
 import org.ode4j.ode.DSpace;
 import org.ode4j.ode.DWorld;
@@ -41,12 +39,15 @@ import uk.me.fommil.ff.PlayerStats;
  */
 public class Player {
 
-	private final Collection<DGeom> geometries = Lists.newArrayList();
-//	private final DBox box;
+	private final DBox box;
+
 	private final DBody body;
+
 	private static final double height = 2;
 
 	private volatile double direction;
+
+	private volatile Collection<Action> actions;
 
 	/**
 	 * The actions that a player can perform.
@@ -82,27 +83,29 @@ public class Player {
 		this.shirt = i;
 		this.stats = stats;
 		this.body = OdeHelper.createBody(world);
-		DBox box1 = OdeHelper.createBox(space, 1, 0.5, height);
-		box1.setBody(body);
-		geometries.add(box1);
-
-//		DBody leftFoot = OdeHelper.createBody(world);
-//		DBox box2 = OdeHelper.createBox(space, 0.5, 1.0, height);
-//		box2.setBody(leftFoot);
-//		box2.setOffsetPosition(0.5, 0.25, height/2);
-//		DFixedJoint j = OdeHelper.createFixedJoint(world);
-//		j.attach(body, leftFoot);
-//		j.setFixed();
-//		geometries.add(box2);
-
-//		DBox box2 = OdeHelper.createBox(0.5, 1, height);
-//		box2.setBody(body);
-//		box2.setOffsetPosition(0.75, 0.5, height / 2);
-//		geometries.add(box2);
+		box = OdeHelper.createBox(space, 1, 0.5, height);
+		box.setBody(body);
 
 		DMass mass = OdeHelper.createMass();
 		mass.setBoxTotal(80, 1, 0.5, height); // ?? code dupe
 		body.setMass(mass);
+		body.setData(this);
+	}
+
+	void collide(Ball ball) {
+		Preconditions.checkNotNull(ball);
+		if (actions.contains(Action.KICK)) {
+			DVector3 kick = new DVector3(body.getLinearVel());
+			kick.safeNormalize();
+			kick.scale(100);
+			kick.set(2, 1);
+			ball.addForce(kick);
+		} else {
+			DVector3 control = getPosition().toDVector().sub(ball.getPosition().toDVector());
+			control.set(2, 0);
+			control.scale(100);
+			ball.addForce(control);
+		}
 	}
 
 	/**
@@ -112,6 +115,7 @@ public class Player {
 	 */
 	public void setActions(Collection<Action> actions) {
 		Preconditions.checkNotNull(actions);
+		this.actions = actions;
 		switch (mode) {
 			case RUN:
 			case THROW:
@@ -129,9 +133,7 @@ public class Player {
 
 		DMatrix3 rotation = new DMatrix3();
 		Rotation.dRFromAxisAndAngle(rotation, 0, 0, 1, direction);
-		for (DGeom geom : geometries) {
-			geom.setRotation(rotation);
-		}
+		box.setRotation(rotation);
 	}
 
 	private DVector3 actionsToVector(Collection<Action> actions) {
@@ -227,13 +229,5 @@ public class Player {
 		body.setAngularVel(0, 0, 0);
 		position.set(2, height / 2);
 		body.setPosition(position);
-	}
-
-	Collection<DGeom> getGeometries() {
-//		Collection<DGeom> geometries = Lists.newArrayList();
-//		geometries.add(box);
-//		return geometries;
-
-		 return Collections.unmodifiableCollection(geometries);
 	}
 }
