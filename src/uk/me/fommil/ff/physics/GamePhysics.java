@@ -158,8 +158,9 @@ public class GamePhysics {
 		}
 		selected.setActions(actions);
 
-		ball.setDrag(0.0);
+		ball.setFriction(0);
 		space.collide(null, collision);
+		ball.applyFriction();
 
 		world.step(dt);
 		joints.empty();
@@ -323,20 +324,19 @@ public class GamePhysics {
 			for (int i = 0; i < numc; i++) {
 				DContact contact = contacts.get(i);
 				dSurfaceParameters surface = contact.surface;
-				surface.mode = OdeConstants.dContactBounce | OdeConstants.dContactSoftERP;
+				surface.mode = OdeConstants.dContactBounce;// | OdeConstants.dContactSoftERP;
 				surface.bounce_vel = 0.1;
 
 				if (ballInvolved) {
 					surface.mu = OdeConstants.dInfinity; // ball never slips
+					ball.setFriction(0.5);
+					if (selectedInvolved) {
+						selected.collide(ball);
+					}
 					if (playerInvolved) {
 						surface.bounce = 0.1;
-						if (selectedInvolved) {
-							selected.collide(ball);
-						}
 					} else if (groundInvolved) {
 						surface.bounce = 0.5;
-						// ODE doesn't have rolling friction, so we manually apply it here for the ball
-						ball.setDrag(0.1);
 					}
 				}
 

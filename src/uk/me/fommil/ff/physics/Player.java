@@ -97,14 +97,16 @@ public class Player {
 		if (actions.contains(Action.KICK)) {
 			DVector3 kick = new DVector3(body.getLinearVel());
 			kick.safeNormalize();
-			kick.scale(100);
-			kick.set(2, 1);
+			kick.set(2, 0.5);
+			kick.scale(10 / 0.01);
+//			log.info("KICK " + kick);
 			ball.addForce(kick);
+//			ball.setVelocity(kick);
 		} else {
-			DVector3 control = getPosition().toDVector().sub(ball.getPosition().toDVector());
-			control.set(2, 0);
-			control.scale(100);
-			ball.addForce(control);
+//			DVector3 control = getPosition().toDVector().sub(ball.getPosition().toDVector());
+//			control.set(2, 0);
+//			control.scale(100);
+//			ball.addForce(control);
 		}
 	}
 

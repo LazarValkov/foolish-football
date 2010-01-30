@@ -36,7 +36,11 @@ import uk.me.fommil.ff.Tactics.BallZone;
  */
 public class Ball {
 
+	private static final double MASS_KG = 0.45;
+
 	private final DSphere sphere;
+
+	private final double g;
 
 	/** The aftertouch that a ball may exhibit. Aftertouch depends on the direction of motion. */
 	public enum Aftertouch {
@@ -55,25 +59,37 @@ public class Ball {
 	Ball(DWorld world, DSpace space) {
 		Preconditions.checkNotNull(world);
 		Preconditions.checkNotNull(space);
+
+		DVector3 gravity = new DVector3();
+		world.getGravity(gravity);
+		g = gravity.length();
+
 		DBody body = OdeHelper.createBody(world);
 		double radius = 0.7 / (2 * Math.PI);
 		sphere = OdeHelper.createSphere(radius);
 		sphere.setBody(body);
 		DMass mass = OdeHelper.createMass();
-		mass.setSphereTotal(0.45, radius);
+		mass.setSphereTotal(MASS_KG, radius);
 		body.setMass(mass);
 		space.add(sphere);
 		body.setData(this);
 	}
 
-	void setDrag(double d) {
-		assert d >= 0 && d <= 1;
-		DBody body = sphere.getBody();
-//		DVector3C v = body.getLinearVel();
-//		v = v.reScale(-d);
-//		body.addForce(v);
-		body.setDamping(d, d);
-//		body.setLinearDamping(d);
+	private volatile double mu;
+
+	@Deprecated // HACK to workaround ODE lack of friction on spheres
+	void applyFriction() {
+		if (mu == 0)
+			return;
+		DVector3 friction = new DVector3(sphere.getBody().getLinearVel());
+		friction.scale(-1);
+		friction.scale(mu * MASS_KG * g);
+		sphere.getBody().addForce(friction);
+	}
+
+	@Deprecated // HACK to workaround ODE lack of friction on spheres
+	void setFriction(double mu) {
+		this.mu = mu;
 	}
 
 	void addForce(DVector3C force) {
