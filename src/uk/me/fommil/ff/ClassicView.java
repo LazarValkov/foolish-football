@@ -30,13 +30,12 @@ import java.awt.image.BufferedImage;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
-import static java.lang.Math.*;
 import javax.swing.JPanel;
-import javax.vecmath.Point3d;
 import uk.me.fommil.ff.physics.Goalkeeper;
 import uk.me.fommil.ff.physics.Goalkeeper.GoalkeeperState;
 import uk.me.fommil.ff.physics.Position;
 import uk.me.fommil.ff.physics.Velocity;
+import static uk.me.fommil.ff.Utils.*;
 
 /**
  * The view (V) for the game play.
@@ -48,9 +47,7 @@ import uk.me.fommil.ff.physics.Velocity;
  * <li>{@code gVar}: The {@link Point} locations of the {@link Graphics2D} object.</li>
  * <li>{@code sVar}: The set of pixels on the screen of those {@link Point}s,
  *     the same as 'g' if there is no {@link AffineTransform} applied.</li>
- * <li>{@code pVar}: The {@link Point3d} position of the objects using our physics model.</li>
- * <li>{@code vVar}: The {@link Point} view of the physics model (essentially {@code Point}
- *     versions of the {@code Point3d} instances).</li>
+ * <li>{@code pVar}: The {@link Position} position of the objects using our physics model.</li>
  * </ul>
 
  * @author Samuel Halliday
@@ -82,9 +79,6 @@ public class ClassicView extends JPanel {
 
 	private final GamePhysics game;
 
-	// a metre is worth this many pixels
-	private double scale = 10.0;
-
 	/**
 	 * @param game
 	 * @param pitch
@@ -115,8 +109,8 @@ public class ClassicView extends JPanel {
 		}
 
 		// TODO: deal with nets/flags better
-		objectSprites.put(new Position(300, 117, 0), sprites.get(1205));
-		objectSprites.put(new Position(300, 764, 0), sprites.get(1206));
+		objectSprites.put(new Position(30, 11.7, 0), sprites.get(1205));
+		objectSprites.put(new Position(30, 76.4, 0), sprites.get(1206));
 		log.info("1205 " + sprites.get(1205));
 		log.info("1206 " + sprites.get(1206));
 
@@ -137,64 +131,64 @@ public class ClassicView extends JPanel {
 
 		// we are centred over the ball
 		// g never goes outside the pitch image
-		// TODO: consider making this variable a field
-		Rectangle vBounds = calculateWindow(gSize);
-
+		calculateWindow(gSize);
 		// draw the pitch
-		BufferedImage sub = pitch.getSubimage(vBounds.x, vBounds.y,
-				min(gSize.width, pitch.getWidth() + 1),
-				min(gSize.height, pitch.getHeight() + 1));
+		double scale = 1.0 / game.getPitch().getScale();
+		BufferedImage sub = pitch.getSubimage(round(pBottomLeft.x * scale), round(pBottomLeft.y * scale),
+				Math.min(gSize.width, pitch.getWidth() + 1),
+				Math.min(gSize.height, pitch.getHeight() + 1));
 		// extra padding is for when a partial pixel is shown
 		g.drawImage(sub, 0, 0, null);
 
-		// FIXME: draw all sprites top to bottom to get layering correct
+		// FIXME: draw all sprites north to south to get layering correct
 
 		// draw the ball
-		drawBall(g, vBounds);
+		drawBall(g);
 
-		// draw the zones
-		if (debugging) {
-			g.setColor(Color.GREEN);
-			for (int i = 0; i <= 5; i++) {
-				int x = 81 + i * (590 - 81) / 5;
-				Point start = pToG(vBounds, new Position(x, 129, 0));
-				Point end = pToG(vBounds, new Position(x, 769, 0));
-				g.drawLine(start.x, start.y, end.x, end.y);
-			}
-			for (int i = 0; i <= 7; i++) {
-				int y = 129 + i * (769 - 129) / 7;
-				Point start = pToG(vBounds, new Position(81, y, 0));
-				Point end = pToG(vBounds, new Position(590, y, 0));
-				g.drawLine(start.x, start.y, end.x, end.y);
-			}
-		}
+//		// draw the zones
+//		if (debugging) {
+//			g.setColor(Color.GREEN);
+//			for (int i = 0; i <= 5; i++) {
+//				int x = 81 + i * (590 - 81) / 5;
+//				Point start = pToG(new Position(x, 129, 0));
+//				Point end = pToG(new Position(x, 769, 0));
+//				g.drawLine(start.x, start.y, end.x, end.y);
+//			}
+//			for (int i = 0; i <= 7; i++) {
+//				int y = 129 + i * (769 - 129) / 7;
+//				Point start = pToG(new Position(81, y, 0));
+//				Point end = pToG(new Position(590, y, 0));
+//				g.drawLine(start.x, start.y, end.x, end.y);
+//			}
+//		}
 
 		// draw the players that are in view
 		for (Player pm : game.getPlayers()) {
-			drawPlayer(g, vBounds, pm);
+			drawPlayer(g, pm);
 		}
 
 		for (Goalkeeper gm : game.getGoalkeepers()) {
-			drawGoalkeeper(g, vBounds, gm);
+			drawGoalkeeper(g, gm);
 		}
 
 		for (Entry<Position, Sprite> e : objectSprites.entrySet()) {
-			Point p = pToG(vBounds, e.getKey());
+			Point p = pToG(e.getKey());
 			Sprite sprite = e.getValue();
 			Point s = sprite.getCentre();
 			g.drawImage(sprite.getImage(), p.x, p.y - s.y / 2, null);
 		}
 	}
 
-	private void drawPlayer(Graphics2D g, Rectangle vBounds, Player pm) {
+	private void drawPlayer(Graphics2D g, Player pm) {
 		Position pPos = pm.getPosition();
-		Point gPos = pToG(vBounds, pPos);
+		Point gPos = pToG(pPos);
 
+		// TODO: draw only what is needed
 		// assumes sprite size
-		Rectangle vPmSprite = new Rectangle(vBounds.x + gPos.x - 20, vBounds.y + gPos.y - 20, 40, 40);
-		if (!vBounds.intersects(vPmSprite)) {
-			return;
-		}
+//		Rectangle vPmSprite = new Rectangle(vBounds.x + gPos.x - 20, vBounds.y + gPos.y - 20, 40, 40);
+//		if (!vBounds.intersects(vPmSprite)) {
+//			return;
+//		}
 
 //		if (debugging && pm == game.getSelected()) {
 //			// draw the bounds, scattergun and not efficient
@@ -306,7 +300,7 @@ public class ClassicView extends JPanel {
 		}
 	}
 
-	private void drawBall(Graphics2D g, Rectangle vBounds) {
+	private void drawBall(Graphics2D g) {
 		Ball ball = game.getBall();
 		int spriteIndex = 0;
 		Velocity v = ball.getVelocity();
@@ -326,47 +320,54 @@ public class ClassicView extends JPanel {
 		{	// the drop shadow
 			Sprite sprite = ballSprites.get(4);
 			Point s = sprite.getCentre();
-			Point gPos = pToG(vBounds, ball.getPosition());
+			Point gPos = pToG(ball.getPosition());
 			g.drawImage(sprite.getImage(), gPos.x - s.x / 2 + diff / 2, gPos.y - s.y / 2 + diff, null);
 		}
 		{	// the moving ball
 			Sprite sprite = ballSprites.get(spriteIndex);
 			Point s = sprite.getCentre();
-			Point gPos = pToG(vBounds, ball.getPosition());
+			Point gPos = pToG(ball.getPosition());
+			log.info(ball.getPosition() + ", " + gPos);
 			g.drawImage(sprite.getImage(), gPos.x - s.x / 2 - 1 - diff / 2, gPos.y - s.y / 2 - 1 - diff, null);
 		}
 	}
 
-	private Point pToG(Rectangle vBounds, Position p) {
-		return new Point((int) round(scale * (p.x - vBounds.getX())), (int) round(scale * (p.y - vBounds.getY())));
+	private Point pToG(Position p) {
+		double scale = 1.0 / game.getPitch().getScale();
+		return new Point(round(scale * (p.x - pBottomLeft.x)), round(scale * (p.y - pBottomLeft.y)));
 	}
 
-	// TODO: remove the need for 'v' coordinates by returning a java 3d object in 'p' coords
+	private Position pBottomLeft;
+
+	private Position pTopRight;
+
 	// gSize is the drawable graphics, top left of the view being (0, 0) in graphics 'g' coordinates
-	private Rectangle calculateWindow(Dimension gSize) {
+	private void calculateWindow(Dimension gSize) {
+		double scale = game.getPitch().getScale();
 		// centre over the ball
 		Position pBall = game.getBall().getPosition();
-		int gMinX = (int) round(pBall.x - gSize.width / 2.0);
-		int gMinY = (int) round(pBall.y - gSize.height / 2.0);
+		double pMinX = pBall.x - scale * gSize.width / 2.0;
+		double pMinY = pBall.y - scale * gSize.height / 2.0;
 		// account for falling off, where screen could be bigger than the pitch image
-		int unseenWidth = max(0, pitch.getWidth() - gSize.width);
-		gMinX = Utils.bounded(0, gMinX, unseenWidth);
-		int unseenHeight = max(0, pitch.getHeight() - gSize.height);
-		gMinY = Utils.bounded(0, gMinY, unseenHeight);
-		return new Rectangle(gMinX, gMinY, gSize.width, gSize.height);
+		double pUnseenWidth = Math.max(0, (pitch.getWidth() - gSize.width) * scale);
+		pMinX = Utils.bounded(0, pMinX, pUnseenWidth);
+		double pUnseenHeight = Math.max(0, (pitch.getHeight() - gSize.height) * scale);
+		pMinY = Utils.bounded(0, pMinY, pUnseenHeight);
+		pBottomLeft = new Position(pMinX, pMinY, 0);
+		pTopRight = new Position(pMinX + gSize.width * scale, pMinY + gSize.height * scale, 0);
 	}
 
 	// TODO: remove code duplication
 	@Deprecated
-	private void drawGoalkeeper(Graphics2D g, Rectangle vBounds, Goalkeeper gm) {
+	private void drawGoalkeeper(Graphics2D g, Goalkeeper gm) {
 		Position pPos = gm.getPosition();
-		Point gPos = pToG(vBounds, pPos);
+		Point gPos = pToG(pPos);
 
 		// assumes sprite size
-		Rectangle vPmSprite = new Rectangle(vBounds.x + gPos.x - 20, vBounds.y + gPos.y - 20, 40, 40);
-		if (!vBounds.intersects(vPmSprite)) {
-			return;
-		}
+//		Rectangle vPmSprite = new Rectangle(vBounds.x + gPos.x - 20, vBounds.y + gPos.y - 20, 40, 40);
+//		if (!vBounds.intersects(vPmSprite)) {
+//			return;
+//		}
 
 		int spriteIndex = 0;
 		Direction direction = Direction.valueOf(gm.getDirection());

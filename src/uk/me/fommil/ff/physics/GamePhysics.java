@@ -289,6 +289,10 @@ public class GamePhysics {
 		return Collections.emptyList(); // TODO: goalkeepers
 	}
 
+	public Pitch getPitch() {
+		return pitch;
+	}
+
 	Collection<DGeom> getGeoms() {
 		Collection<DGeom> geoms = Lists.newArrayList();
 		int num = space.getNumGeoms();

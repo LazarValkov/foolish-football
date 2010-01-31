@@ -87,4 +87,9 @@ public class Pitch {
 	public Position getCentre() {
 		return new Position(centreSpot.x * SCALE, (bounds.y - centreSpot.y) * SCALE, 0);
 	}
+
+	@Deprecated // implementation detail
+	public double getScale() {
+		return SCALE;
+	}
 }

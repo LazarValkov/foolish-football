@@ -38,6 +38,25 @@ public class Utils {
 		return Math.max(min, Math.min(value, max));
 	}
 
+	/**
+	 * @param min
+	 * @param value
+	 * @param max
+	 * @return
+	 */
+	public static double bounded(double min, double value, double max) {
+		Preconditions.checkArgument(max >= min);
+		return Math.max(min, Math.min(value, max));
+	}
+
+	/**
+	 * @param d
+	 * @return
+	 */
+	public static int round(double d) {
+		return (int) Math.round(d);
+	}
+
 	private static final Logger log = Logger.getLogger(GamePhysics.class.getName());
 
 	// this is mutable, so be careful not to edit it
