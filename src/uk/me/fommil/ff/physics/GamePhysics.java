@@ -45,7 +45,8 @@ import uk.me.fommil.ff.physics.Player.Action;
 import uk.me.fommil.ff.Team;
 
 /**
- * The model (M) and controller (C) for the game play.
+ * The model (M) and controller (C) for game play.
+ * The coordinate system is a left-handed system with X = East, Y = North, Z = Sky.
  *
  * @author Samuel Halliday
  */
@@ -106,7 +107,7 @@ public class GamePhysics {
 		List<PlayerStats> aPlayers = a.getPlayers();
 		Tactics tactics = a.getCurrentTactics();
 		for (int i = 2; i <= 11; i++) {
-			Position p = tactics.getZone(bz, i).getCentre(pitch, Pitch.Facing.UP);
+			Position p = tactics.getZone(bz, i).getCentre(pitch, Pitch.Facing.NORTH);
 			Player pma = new Player(i, aPlayers.get(i - 1), world, space);
 			pma.setPosition(p);
 			as.add(pma);
@@ -115,6 +116,8 @@ public class GamePhysics {
 	}
 
 	/**
+	 * Controller.
+	 *
 	 * @param actions
 	 * @param aftertouches
 	 */
@@ -142,7 +145,7 @@ public class GamePhysics {
 					target = bp;
 				} else {
 					PlayerZone pz = tactics.getZone(bz, p.getShirt());
-					target = pz.getCentre(pitch, Pitch.Facing.UP);
+					target = pz.getCentre(pitch, Pitch.Facing.NORTH);
 				}
 				p.autoPilot(target);
 			}

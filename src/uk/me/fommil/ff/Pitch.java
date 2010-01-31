@@ -16,17 +16,13 @@ package uk.me.fommil.ff;
 
 import java.awt.Point;
 import java.awt.Rectangle;
-import javax.media.j3d.BoundingBox;
-import javax.vecmath.Point2d;
-import javax.vecmath.Point3d;
 import uk.me.fommil.ff.physics.Position;
 
 /**
- * Contains the details of the lines on the pitch in 'v' coordinates.
- * TODO: should be in 'p' coordinates.
+ * This is a container that is tied to the pixel values of features from the SWOS pitch graphics. A
+ * ratio is used to convert pixels into meters.
  * <p>
- * This is a solid implementation that is tied to the values from the SWOS
- * pitch graphics.
+ * The pitches are (672, 880).
  * <p>
  * The location of the corner flags are pixels (81, 129), (590, 129), (590, 769),
  * (81, 769).
@@ -46,20 +42,22 @@ import uk.me.fommil.ff.physics.Position;
  * The centre spot is (336, 449).
 
  * @author Samuel Halliday
- * @deprecated requires more thought on how to abstract
  */
-@Deprecated
 public class Pitch {
 
 	public enum Facing {
 
-		UP, DOWN
+		NORTH, SOUTH;
 
 	}
 
 	private static final double SCALE = 0.1;
 
-	private final Rectangle pitch = new Rectangle(81, 129, 509, 640);
+	private static final Point bounds = new Point(672, 880);
+
+	private static final Rectangle pitch = new Rectangle(81, 129, 509, 640);
+
+	private static final Point centreSpot = new Point(336, 449);
 
 //	private final Rectangle penaltyBoxTop = new Rectangle(193, 129, 285, 87);
 //
@@ -78,28 +76,15 @@ public class Pitch {
 //	private final Point penaltySpotTop = new Point(336, 187);
 //
 //	private final Point penaltySpotBottom = new Point(336, 711);
-	private final Point centreSpot = new Point(336, 449);
-
-	public BoundingBox getPitch() {
-		return rectangleTo3d(pitch, new Point2d(0, Double.MAX_VALUE));
-	}
-
 	public Position getPitchLowerLeft() {
-		return new Position(pitch.x * SCALE, pitch.y * SCALE, 0);
+		return new Position(pitch.x * SCALE, (bounds.y - pitch.y - pitch.height) * SCALE, 0);
 	}
 
 	public Position getPitchUpperRight() {
-		return new Position((pitch.x + pitch.width) * SCALE, (pitch.y + pitch.height) * SCALE, 0);
+		return new Position((pitch.x + pitch.width) * SCALE, (bounds.y - pitch.y) * SCALE, 0);
 	}
 
 	public Position getCentre() {
-		return new Position(centreSpot.x * SCALE, centreSpot.y * SCALE, 0);
-	}
-
-	// provides infinite z bounds to a rectangle
-	private BoundingBox rectangleTo3d(Rectangle r, Point2d h) {
-		return new BoundingBox(
-				new Point3d(r.x * SCALE, r.y * SCALE, h.x),
-				new Point3d((r.x + r.width) * SCALE, (r.y + r.height) * SCALE, h.y));
+		return new Position(centreSpot.x * SCALE, (bounds.y - centreSpot.y) * SCALE, 0);
 	}
 }

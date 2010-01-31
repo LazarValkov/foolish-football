@@ -145,14 +145,15 @@ public class Tactics {
 		public Position getCentre(Pitch pitch, Pitch.Facing facing) {
 			Position upper = pitch.getPitchUpperRight();
 			Position lower = pitch.getPitchLowerLeft();
+
 			double width = upper.x - lower.x;
 			double height = upper.y - lower.y;
 
-			double xx = (width * x) / 15.0;
-			double yy = (height * y) / 16.0;
-			if (facing == Pitch.Facing.UP) {
-				yy = height - yy;
+			double xx = (width * (14 - x)) / 15 + width / 30;
+			double yy = (height * y) / 16 + height / 32;
+			if (facing == Pitch.Facing.SOUTH) {
 				xx = width - xx;
+				yy = height - yy;
 			}
 			return new Position(xx + lower.x, yy + lower.y, 0);
 		}

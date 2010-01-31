@@ -54,7 +54,7 @@ public class Player {
 	 */
 	public enum Action {
 
-		UP, DOWN, LEFT, RIGHT, KICK, TACKLE, HEAD
+		UP, DOWN, LEFT, RIGHT, KICK, TACKLE, HEAD;
 
 	};
 
@@ -67,7 +67,7 @@ public class Player {
 
 	private static final Logger log = Logger.getLogger(Player.class.getName());
 
-	protected static final int AUTO = 10;
+	protected static final double AUTO = 1;
 
 	protected final PlayerStats stats;
 
@@ -147,10 +147,10 @@ public class Player {
 		for (Action action : actions) {
 			switch (action) {
 				case UP:
-					move.sub(0, 1, 0);
+					move.add(0, 1, 0);
 					break;
 				case DOWN:
-					move.add(0, 1, 0);
+					move.sub(0, 1, 0);
 					break;
 				case LEFT:
 					move.sub(1, 0, 0);
@@ -160,7 +160,7 @@ public class Player {
 					break;
 			}
 		}
-		if (move.lengthSquared() > 0) {
+		if (move.length() > 0) {
 			move.normalize();
 		}
 		return move;
@@ -196,9 +196,9 @@ public class Player {
 		}
 		double dy = body.getPosition().get1() - attractor.y;
 		if (dy < -AUTO) {
-			auto.add(Player.Action.DOWN);
-		} else if (dy > AUTO) {
 			auto.add(Player.Action.UP);
+		} else if (dy > AUTO) {
+			auto.add(Player.Action.DOWN);
 		}
 		setActions(auto);
 	}

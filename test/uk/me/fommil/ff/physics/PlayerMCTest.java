@@ -19,7 +19,6 @@ import com.google.common.collect.Sets;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
-import javax.vecmath.Point3d;
 import org.junit.Test;
 import uk.me.fommil.ff.Pitch;
 import uk.me.fommil.ff.PlayerStats;
@@ -43,7 +42,7 @@ public class PlayerMCTest {
 
 	@Test
 	public void testRun() throws Exception {
-		Point3d centre = pitch.getCentre();
+		Position centre = pitch.getCentre();
 		List<Collection<Action>> actions = Lists.newArrayList();
 		actions.add(Sets.immutableEnumSet(Action.RIGHT)); // 0
 		actions.add(Sets.immutableEnumSet(Action.DOWN));  // 1
@@ -60,7 +59,7 @@ public class PlayerMCTest {
 		}
 
 		for (int i = 0; i < 1000; i++) {
-			List<Point3d> positions = Lists.newArrayList();
+			List<Position> positions = Lists.newArrayList();
 			for (Player player : players) {
 				player.tick(dt);
 				assertEquals(PlayerState.RUN, player.getState());
@@ -110,7 +109,7 @@ public class PlayerMCTest {
 		fail("test not written");
 	}
 
-	private List<Player> createPlayers(int number, Point3d position) {
+	private List<Player> createPlayers(int number, Position position) {
 		List<Player> models = Lists.newArrayList();
 		for (int i = 0; i < number; i++) {
 			PlayerStats player = new PlayerStats();

@@ -14,15 +14,12 @@
  */
 package uk.me.fommil.ff.physics;
 
-import uk.me.fommil.ff.physics.Goalpost;
-import uk.me.fommil.ff.physics.Ball;
 import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.logging.Logger;
 import javax.media.j3d.BoundingBox;
-import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
 import org.junit.Test;
+import org.ode4j.math.DVector3;
 import uk.me.fommil.ff.Direction;
 import uk.me.fommil.ff.Pitch;
 import uk.me.fommil.ff.Utils;
@@ -37,8 +34,6 @@ public class GoalMCTest {
 
 	private final Pitch pitch = new Pitch();
 
-	private static final double dt = 50L / 1000.0;
-
 	@Test
 	public void testBounce() throws Exception {
 		testBounceDelegate(pitch.getGoalNetTop(), Direction.DOWN);
@@ -47,29 +42,29 @@ public class GoalMCTest {
 
 	public void testBounceDelegate(BoundingBox bbox, Direction direction) throws Exception {
 		Goalpost goal = new Goalpost(bbox, 2, direction);
-		Point3d lower = Utils.getLower(bbox);
-		Point3d upper = Utils.getUpper(bbox);
+		Position lower = Utils.getLower(bbox);
+		Position upper = Utils.getUpper(bbox);
 
-		Point3d cog = new Point3d((upper.x - lower.x) / 2, (upper.y - lower.y) / 2, (upper.z - lower.z) / 2);
+		Position cog = new Position((upper.x - lower.x) / 2, (upper.y - lower.y) / 2, (upper.z - lower.z) / 2);
 		cog.add(lower);
 
-		List<Vector3d> velocities = Lists.newArrayList();
-		velocities.add(new Vector3d(100, 0, 0)); // 0 right
-		velocities.add(new Vector3d(0, 100, 0)); // 1 down
-		velocities.add(new Vector3d(-100, 0, 0)); // 2 left
-		velocities.add(new Vector3d(0, -100, 0)); // 3 up
-		velocities.add(new Vector3d(100, 100, 0)); // 4 down right
-		velocities.add(new Vector3d(-100, -100, 0)); // 5 up left
-		velocities.add(new Vector3d(100, -100, 0)); // 6 up right
-		velocities.add(new Vector3d(-100, 100, 0)); // 7 down left
-		velocities.add(new Vector3d(500, 0, 0)); // 8 right, fast
-		velocities.add(new Vector3d(0, -500, 0)); // 9 up, fast
-		List<Point3d> positions = Lists.newArrayList();
-		for (Vector3d v : velocities) {
-			Vector3d vu = (Vector3d) v.clone();
+		List<DVector3> velocities = Lists.newArrayList();
+		velocities.add(new DVector3(100, 0, 0)); // 0 right
+		velocities.add(new DVector3(0, 100, 0)); // 1 down
+		velocities.add(new DVector3(-100, 0, 0)); // 2 left
+		velocities.add(new DVector3(0, -100, 0)); // 3 up
+		velocities.add(new DVector3(100, 100, 0)); // 4 down right
+		velocities.add(new DVector3(-100, -100, 0)); // 5 up left
+		velocities.add(new DVector3(100, -100, 0)); // 6 up right
+		velocities.add(new DVector3(-100, 100, 0)); // 7 down left
+		velocities.add(new DVector3(500, 0, 0)); // 8 right, fast
+		velocities.add(new DVector3(0, -500, 0)); // 9 up, fast
+		List<Position> positions = Lists.newArrayList();
+		for (DVector3 v : velocities) {
+			DVector3 vu = (DVector3) v.clone();
 			vu.normalize();
 			vu.scale(50);
-			Point3d p = new Point3d(vu);
+			Position p = new Position(vu);
 			p.negate();
 			p.add(cog);
 			p.z = 2;
@@ -85,10 +80,10 @@ public class GoalMCTest {
 
 		for (int i = 0; i < 1000; i++) {
 			for (Ball ball : balls) {
-				Point3d pOld = ball.getPosition();
+				Position pOld = ball.getPosition();
 				ball.tick(dt);
-				Point3d p = ball.getPosition();
-				Vector3d v = ball.getVelocity();
+				Position p = ball.getPosition();
+				DVector3 v = ball.getVelocity();
 				goal.bounce(p, v, pOld);
 				if (!p.equals(pOld)) {
 					ball.setPosition(p);

@@ -14,12 +14,11 @@
  */
 package uk.me.fommil.ff.physics;
 
-import uk.me.fommil.ff.physics.Ball;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import java.util.List;
-import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
 import org.junit.Test;
+import org.ode4j.math.DVector3;
 import uk.me.fommil.ff.Pitch;
 import static org.junit.Assert.*;
 
@@ -30,8 +29,6 @@ public class BallMCTest {
 
 	private final Pitch pitch = new Pitch();
 
-	private static final double dt = 50L / 1000.0;
-
 	@Test
 	public void testGravity() throws Exception {
 		fail("test not written");
@@ -39,10 +36,10 @@ public class BallMCTest {
 
 	@Test
 	public void testNoKick() {
-		Ball ball = new Ball();
 		Position centre = pitch.getCentre();
+		Ball ball = Iterables.getOnlyElement(createBalls(1, centre));
 		ball.setPosition(centre);
-		ball.setVelocity(new Vector3d(0, 0, 0)); // no kick
+		ball.setVelocity(new DVector3(0, 0, 0)); // no kick
 		for (int i = 0; i < 100; i++) {
 			ball.tick(dt);
 			assertEquals(centre, ball.getPosition());
@@ -51,25 +48,25 @@ public class BallMCTest {
 
 	@Test
 	public void testGroundKicks() {
-		Point3d centre = pitch.getCentre();
-		List<Vector3d> velocities = Lists.newArrayList();
-		velocities.add(new Vector3d(10, 0, 0)); // 0 right
-		velocities.add(new Vector3d(0, 10, 0)); // 1 down
-		velocities.add(new Vector3d(-10, 0, 0)); // 2 left
-		velocities.add(new Vector3d(0, -10, 0)); // 3 up
-		velocities.add(new Vector3d(10, 10, 0)); // 4 down right
-		velocities.add(new Vector3d(-10, -10, 0)); // 5 up left
-		velocities.add(new Vector3d(10, -10, 0)); // 6 up right
-		velocities.add(new Vector3d(-10, 10, 0)); // 7 down left
-		velocities.add(new Vector3d(500, 0, 0)); // 8 right, fast
-		velocities.add(new Vector3d(0, 500, 0)); // 9 down, fast
+		Position centre = pitch.getCentre();
+		List<DVector3> velocities = Lists.newArrayList();
+		velocities.add(new DVector3(10, 0, 0)); // 0 right
+		velocities.add(new DVector3(0, 10, 0)); // 1 down
+		velocities.add(new DVector3(-10, 0, 0)); // 2 left
+		velocities.add(new DVector3(0, -10, 0)); // 3 up
+		velocities.add(new DVector3(10, 10, 0)); // 4 down right
+		velocities.add(new DVector3(-10, -10, 0)); // 5 up left
+		velocities.add(new DVector3(10, -10, 0)); // 6 up right
+		velocities.add(new DVector3(-10, 10, 0)); // 7 down left
+		velocities.add(new DVector3(500, 0, 0)); // 8 right, fast
+		velocities.add(new DVector3(0, 500, 0)); // 9 down, fast
 		List<Ball> balls = createBalls(velocities.size(), centre);
 		for (int i = 0; i < balls.size(); i++) {
 			balls.get(i).setVelocity(velocities.get(i));
 		}
 
 		for (int i = 0; i < 1000; i++) {
-			List<Point3d> positions = Lists.newArrayList();
+			List<Position> positions = Lists.newArrayList();
 			for (Ball ball : balls) {
 				ball.tick(dt);
 				assertEquals(0.0, ball.getPosition().z);
@@ -103,31 +100,31 @@ public class BallMCTest {
 		}
 
 		for (Ball ball : balls) {
-			assertEquals(0.0, ball.getVelocity().length());
+			assertEquals(0.0, ball.getVelocity().speed());
 		}
 	}
 
 	@Test
 	public void testAirKicks() {
-		Point3d centre = pitch.getCentre();
-		List<Vector3d> velocities = Lists.newArrayList();
-		velocities.add(new Vector3d(10, 0, 10)); // 0 right
-		velocities.add(new Vector3d(0, 10, 10)); // 1 down
-		velocities.add(new Vector3d(-10, 0, 10)); // 2 left
-		velocities.add(new Vector3d(0, -10, 10)); // 3 up
-		velocities.add(new Vector3d(10, 10, 10)); // 4 down right
-		velocities.add(new Vector3d(-10, -10, 10)); // 5 up left
-		velocities.add(new Vector3d(10, -10, 10)); // 6 up right
-		velocities.add(new Vector3d(-10, 10, 10)); // 7 down left
-		velocities.add(new Vector3d(500, 0, 100)); // 8 right, fast
-		velocities.add(new Vector3d(0, 500, 100)); // 9 down, fast
+		Position centre = pitch.getCentre();
+		List<DVector3> velocities = Lists.newArrayList();
+		velocities.add(new DVector3(10, 0, 10)); // 0 right
+		velocities.add(new DVector3(0, 10, 10)); // 1 down
+		velocities.add(new DVector3(-10, 0, 10)); // 2 left
+		velocities.add(new DVector3(0, -10, 10)); // 3 up
+		velocities.add(new DVector3(10, 10, 10)); // 4 down right
+		velocities.add(new DVector3(-10, -10, 10)); // 5 up left
+		velocities.add(new DVector3(10, -10, 10)); // 6 up right
+		velocities.add(new DVector3(-10, 10, 10)); // 7 down left
+		velocities.add(new DVector3(500, 0, 100)); // 8 right, fast
+		velocities.add(new DVector3(0, 500, 100)); // 9 down, fast
 		List<Ball> balls = createBalls(velocities.size(), centre);
 		for (int i = 0; i < balls.size(); i++) {
 			balls.get(i).setVelocity(velocities.get(i));
 		}
 
 		for (int i = 0; i < 1000; i++) {
-			List<Point3d> positions = Lists.newArrayList();
+			List<Position> positions = Lists.newArrayList();
 			for (Ball ball : balls) {
 				ball.tick(dt);
 				assertTrue(0.0 <= ball.getPosition().z);
@@ -161,7 +158,7 @@ public class BallMCTest {
 		}
 
 		for (Ball ball : balls) {
-			assertEquals(0.0, ball.getVelocity().length());
+			assertEquals(0.0, ball.getVelocity().speed());
 			assertEquals(0.0, ball.getPosition().z);
 		}
 	}
@@ -186,7 +183,7 @@ public class BallMCTest {
 		fail("test not written");
 	}
 
-	private List<Ball> createBalls(int number, Point3d position) {
+	private List<Ball> createBalls(int number, Position position) {
 		List<Ball> balls = Lists.newArrayList();
 		for (int i = 0; i < number; i++) {
 			Ball ball = new Ball();

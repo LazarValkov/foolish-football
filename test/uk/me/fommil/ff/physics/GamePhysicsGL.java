@@ -42,6 +42,11 @@ public class GamePhysicsGL extends dsFunctions {
 		Team a = new Team();
 		a.setCurrentTactics(TacticsParser.getSwosTactics(Main.SWOS).get("442"));
 		Pitch pitch = new Pitch();
+
+		Position lower = pitch.getPitchLowerLeft();
+		Position upper = pitch.getPitchUpperRight();
+		log.info(lower + " " + upper);
+
 		GamePhysics game = new GamePhysics(a, pitch);
 
 		GamePhysicsGL demo = new GamePhysicsGL(game);
@@ -68,8 +73,8 @@ public class GamePhysicsGL extends dsFunctions {
 		game.tick(0.01);
 
 		Position c = game.getBall().getPosition();
-		float[] xyz = {(float) c.x, (float) c.y + 5, 20f};
-		float[] hpr = {-90, -70, 0};
+		float[] xyz = {(float) c.x, (float) c.y - 5, 20f};
+		float[] hpr = {90, -70, 0}; // ?? heading definition wrong in drawStuff API
 		DrawStuff.dsSetViewpoint(xyz, hpr);
 
 		for (DGeom geom : game.getGeoms()) {
