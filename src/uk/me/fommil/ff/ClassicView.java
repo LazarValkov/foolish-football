@@ -90,7 +90,6 @@ public class ClassicView extends JPanel {
 		this.game = game;
 		keyboardInput = new KeyboardController(game);
 
-		// TODO: eventually take in input controls
 		setFocusable(true);
 		addKeyListener(keyboardInput);
 
@@ -111,9 +110,6 @@ public class ClassicView extends JPanel {
 		// TODO: deal with nets/flags better
 		objectSprites.put(new Position(30, 11.7, 0), sprites.get(1205));
 		objectSprites.put(new Position(30, 76.4, 0), sprites.get(1206));
-		log.info("1205 " + sprites.get(1205));
-		log.info("1206 " + sprites.get(1206));
-
 		// 1184, 1185, 1186, 1187
 	}
 
@@ -129,16 +125,11 @@ public class ClassicView extends JPanel {
 		g.setTransform(affine);
 		Dimension gSize = new Dimension(getWidth() / zoom, getHeight() / zoom);
 
-		// we are centred over the ball
+		// we are centered over the ball
 		// g never goes outside the pitch image
 		calculateWindow(gSize);
-		// draw the pitch
-		double scale = 1.0 / game.getPitch().getScale();
-		BufferedImage sub = pitch.getSubimage(round(pBottomLeft.x * scale), round(pBottomLeft.y * scale),
-				Math.min(gSize.width, pitch.getWidth() + 1),
-				Math.min(gSize.height, pitch.getHeight() + 1));
-		// extra padding is for when a partial pixel is shown
-		g.drawImage(sub, 0, 0, null);
+
+		drawPitch(g);
 
 		// FIXME: draw all sprites north to south to get layering correct
 
@@ -327,14 +318,15 @@ public class ClassicView extends JPanel {
 			Sprite sprite = ballSprites.get(spriteIndex);
 			Point s = sprite.getCentre();
 			Point gPos = pToG(ball.getPosition());
-			log.info(ball.getPosition() + ", " + gPos);
+			log.info(ball.getPosition() + " " + gPos);
 			g.drawImage(sprite.getImage(), gPos.x - s.x / 2 - 1 - diff / 2, gPos.y - s.y / 2 - 1 - diff, null);
 		}
 	}
 
 	private Point pToG(Position p) {
 		double scale = 1.0 / game.getPitch().getScale();
-		return new Point(round(scale * (p.x - pBottomLeft.x)), round(scale * (p.y - pBottomLeft.y)));
+		// FIXME: reverse Y to get graphics
+		return new Point(round(scale * (p.x - pBottomLeft.x)), round(pitch.getHeight() - scale * (p.y - pTopRight.y)));
 	}
 
 	private Position pBottomLeft;
@@ -467,5 +459,20 @@ public class ClassicView extends JPanel {
 //1004, goalie down dive stage 3
 
 
+	}
+
+	private void drawPitch(Graphics2D g) {
+		double scale = 1.0 / game.getPitch().getScale();
+
+		int gTopLeftX = round(pBottomLeft.x * scale);
+		int gTopLeftY = pitch.getHeight() - round(pTopRight.y * scale);
+		int gWidth = Math.min(round((pTopRight.x - pBottomLeft.x) * scale), pitch.getWidth());
+		int gHeight = Math.min(round((pTopRight.y - pBottomLeft.y) * scale), pitch.getHeight());
+
+//		log.info(pBottomLeft.x + " " + gTopLeftX + ", " + gTopLeftX);
+
+		// extra padding is for when a partial pixel is shown
+		BufferedImage sub = pitch.getSubimage(gTopLeftX, gTopLeftY, gWidth + 1, gHeight + 1);
+		g.drawImage(sub, 0, 0, null);
 	}
 }
