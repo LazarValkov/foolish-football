@@ -41,7 +41,7 @@ public class Goalpost {
 	 */
 	public Goalpost(BoundingBox bbox, double posts, Direction facing) {
 		Preconditions.checkNotNull(bbox);
-		Preconditions.checkArgument(facing == Direction.UP || facing == Direction.DOWN);
+		Preconditions.checkArgument(facing == Direction.NORTH || facing == Direction.SOUTH);
 		this.bbox = bbox;
 
 		Point3d lower = Utils.getLower(bbox);
@@ -62,9 +62,9 @@ public class Goalpost {
 
 		Point3d backLower = new Point3d(lower.x, lower.y, lower.z);
 		Point3d backUpper = new Point3d(upper.x, upper.y, upper.z);
-		if (facing == Direction.UP) {
+		if (facing == Direction.NORTH) {
 			backLower.y = upper.y - posts;
-		} else if (facing == Direction.DOWN) {
+		} else if (facing == Direction.SOUTH) {
 			backUpper.y = lower.y + posts;
 		}
 		back = new BoundingBox(backLower, backUpper);

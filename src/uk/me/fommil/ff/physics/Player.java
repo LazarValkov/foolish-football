@@ -169,7 +169,7 @@ public class Player {
 	private double computeDirection(DVector3 vector) {
 		if (vector.length() == 0)
 			return direction;
-		return dePhase(Math.atan2(vector.get1(), vector.get0()) + Math.PI / 2);
+		return dePhase(Math.atan2(-vector.get1(), vector.get0()) + Math.PI / 2);
 	}
 
 	private double dePhase(double d) {

@@ -79,6 +79,8 @@ public class ClassicView extends JPanel {
 
 	private final GamePhysics game;
 
+	private Dimension gSize;
+
 	/**
 	 * @param game
 	 * @param pitch
@@ -108,8 +110,8 @@ public class ClassicView extends JPanel {
 		}
 
 		// TODO: deal with nets/flags better
-		objectSprites.put(new Position(30, 11.7, 0), sprites.get(1205));
-		objectSprites.put(new Position(30, 76.4, 0), sprites.get(1206));
+		objectSprites.put(new Position(30, 88 - 11.7, 0), sprites.get(1205));
+		objectSprites.put(new Position(30, 88 - 76.4, 0), sprites.get(1206));
 		// 1184, 1185, 1186, 1187
 	}
 
@@ -123,7 +125,7 @@ public class ClassicView extends JPanel {
 		AffineTransform affine = new AffineTransform();
 		affine.scale(zoom, zoom);
 		g.setTransform(affine);
-		Dimension gSize = new Dimension(getWidth() / zoom, getHeight() / zoom);
+		gSize = new Dimension(getWidth() / zoom, getHeight() / zoom);
 
 		// we are centered over the ball
 		// g never goes outside the pitch image
@@ -199,25 +201,25 @@ public class ClassicView extends JPanel {
 		int spriteIndex = 0;
 		Direction direction = Direction.valueOf(pm.getDirection());
 		switch (direction) {
-			case DOWN:
+			case SOUTH:
 				spriteIndex = 1;
 				break;
-			case RIGHT:
+			case EAST:
 				spriteIndex = 2;
 				break;
-			case LEFT:
+			case WEST:
 				spriteIndex = 3;
 				break;
-			case DOWN_LEFT:
+			case SOUTH_WEST:
 				spriteIndex = 4;
 				break;
-			case DOWN_RIGHT:
+			case SOUTH_EAST:
 				spriteIndex = 5;
 				break;
-			case UP_LEFT:
+			case NORTH_WEST:
 				spriteIndex = 6;
 				break;
-			case UP_RIGHT:
+			case NORTH_EAST:
 				spriteIndex = 7;
 				break;
 		}
@@ -227,10 +229,10 @@ public class ClassicView extends JPanel {
 		switch (pm.getState()) {
 			case TACKLE:			// left and right are swapped
 				switch (direction) {
-					case LEFT:
+					case WEST:
 						spriteIndex--;
 						break;
-					case RIGHT:
+					case EAST:
 						spriteIndex++;
 						break;
 				}
@@ -247,10 +249,10 @@ public class ClassicView extends JPanel {
 				break;
 			case GROUND:
 				switch (direction) {
-					case LEFT:
+					case WEST:
 						spriteIndex--;
 						break;
-					case RIGHT:
+					case EAST:
 						spriteIndex++;
 						break;
 				}
@@ -258,7 +260,7 @@ public class ClassicView extends JPanel {
 				break;
 			case INJURED:
 				spriteIndex = 70;
-				if (direction == Direction.RIGHT)
+				if (direction == Direction.EAST)
 					spriteIndex += 2;
 				spriteIndex += t < 400 ? 0 : 1;
 				break;
@@ -271,7 +273,7 @@ public class ClassicView extends JPanel {
 				break;
 			default:
 				spriteIndex *= 3;
-				if (pm.getVelocity().speed() > 0) {
+				if (pm.getVelocity().speed() > 0.1) {
 					if (t < 200) {
 					} else if (t < 400) {
 						spriteIndex += 1;
@@ -295,7 +297,7 @@ public class ClassicView extends JPanel {
 		Ball ball = game.getBall();
 		int spriteIndex = 0;
 		Velocity v = ball.getVelocity();
-		if (v.speed() > 0) {
+		if (v.speed() > 0.1) {
 			long t = (long) ((1000L * game.getTimestamp()) % 800L);
 			if (t < 200) {
 				spriteIndex += 1;
@@ -318,7 +320,6 @@ public class ClassicView extends JPanel {
 			Sprite sprite = ballSprites.get(spriteIndex);
 			Point s = sprite.getCentre();
 			Point gPos = pToG(ball.getPosition());
-			log.info(ball.getPosition() + " " + gPos);
 			g.drawImage(sprite.getImage(), gPos.x - s.x / 2 - 1 - diff / 2, gPos.y - s.y / 2 - 1 - diff, null);
 		}
 	}
@@ -326,7 +327,9 @@ public class ClassicView extends JPanel {
 	private Point pToG(Position p) {
 		double scale = 1.0 / game.getPitch().getScale();
 		// FIXME: reverse Y to get graphics
-		return new Point(round(scale * (p.x - pBottomLeft.x)), round(pitch.getHeight() - scale * (p.y - pTopRight.y)));
+		return new Point(
+				round(scale * (p.x - pBottomLeft.x)),
+				gSize.height - round(scale * (p.y - pBottomLeft.y)));
 	}
 
 	private Position pBottomLeft;
@@ -369,25 +372,25 @@ public class ClassicView extends JPanel {
 
 		if (gm.getGkState() == GoalkeeperState.RUN) {
 			switch (direction) {
-				case DOWN:
+				case SOUTH:
 					spriteIndex = 1;
 					break;
-				case RIGHT:
+				case EAST:
 					spriteIndex = 2;
 					break;
-				case LEFT:
+				case WEST:
 					spriteIndex = 3;
 					break;
-				case DOWN_LEFT:
+				case SOUTH_WEST:
 					spriteIndex = 4;
 					break;
-				case DOWN_RIGHT:
+				case SOUTH_EAST:
 					spriteIndex = 5;
 					break;
-				case UP_LEFT:
+				case NORTH_WEST:
 					spriteIndex = 6;
 					break;
-				case UP_RIGHT:
+				case NORTH_EAST:
 					spriteIndex = 7;
 					break;
 			}
@@ -402,20 +405,20 @@ public class ClassicView extends JPanel {
 			}
 		} else {
 			switch (gm.getOpponent()) {
-				case UP:
+				case NORTH:
 					spriteIndex = 38;
 					break;
-				case DOWN:
+				case SOUTH:
 					spriteIndex = 24;
 					break;
 			}
 			int stage = gm.getGkState().ordinal();
 			assert stage < 6;
 			switch (direction) {
-				case RIGHT:
+				case EAST:
 					spriteIndex += stage;
 					break;
-				case LEFT:
+				case WEST:
 					spriteIndex += (12 - stage);
 					break;
 			}
@@ -464,15 +467,15 @@ public class ClassicView extends JPanel {
 	private void drawPitch(Graphics2D g) {
 		double scale = 1.0 / game.getPitch().getScale();
 
-		int gTopLeftX = round(pBottomLeft.x * scale);
-		int gTopLeftY = pitch.getHeight() - round(pTopRight.y * scale);
-		int gWidth = Math.min(round((pTopRight.x - pBottomLeft.x) * scale), pitch.getWidth());
-		int gHeight = Math.min(round((pTopRight.y - pBottomLeft.y) * scale), pitch.getHeight());
+		int gTopLeftX = Math.max(0, round(pBottomLeft.x * scale));
+		int gTopLeftY = Math.max(0, pitch.getHeight() - round(pTopRight.y * scale));
+		int gWidth = Math.min(round((pTopRight.x - pBottomLeft.x) * scale) + 1, pitch.getWidth() - gTopLeftX);
+		int gHeight = Math.min(round((pTopRight.y - pBottomLeft.y) * scale) + 1, pitch.getHeight() - gTopLeftY);
 
 //		log.info(pBottomLeft.x + " " + gTopLeftX + ", " + gTopLeftX);
 
 		// extra padding is for when a partial pixel is shown
-		BufferedImage sub = pitch.getSubimage(gTopLeftX, gTopLeftY, gWidth + 1, gHeight + 1);
+		BufferedImage sub = pitch.getSubimage(gTopLeftX, gTopLeftY, gWidth, gHeight);
 		g.drawImage(sub, 0, 0, null);
 	}
 }

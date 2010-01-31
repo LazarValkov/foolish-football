@@ -22,7 +22,7 @@ import com.google.common.base.Preconditions;
  */
 public enum Direction {
 
-	UP, DOWN, LEFT, RIGHT, UP_RIGHT, UP_LEFT, DOWN_RIGHT, DOWN_LEFT;
+	NORTH, SOUTH, WEST, EAST, NORTH_EAST, NORTH_WEST, SOUTH_EAST, SOUTH_WEST;
 
 	/**
 	 * @param angle {@code (-PI, PI]}
@@ -33,21 +33,21 @@ public enum Direction {
 			return null;
 		Preconditions.checkArgument(angle <= Math.PI && angle > -Math.PI, angle);
 		if (angle <= -3 * Math.PI / 4 + Math.PI / 8) {
-			return DOWN_LEFT;
+			return SOUTH_WEST;
 		} else if (angle <= -Math.PI / 2 + Math.PI / 8) {
-			return LEFT;
+			return WEST;
 		} else if (angle <= -Math.PI / 4 + Math.PI / 8) {
-			return UP_LEFT;
+			return NORTH_WEST;
 		} else if (angle <= 0 + Math.PI / 8) {
-			return UP;
+			return NORTH;
 		} else if (angle <= Math.PI / 4 + Math.PI / 8) {
-			return UP_RIGHT;
+			return NORTH_EAST;
 		} else if (angle <= Math.PI / 2 + Math.PI / 8) {
-			return RIGHT;
+			return EAST;
 		} else if (angle <= 3 * Math.PI / 4 + Math.PI / 8) {
-			return DOWN_RIGHT;
+			return SOUTH_EAST;
 		} else {
-			return DOWN;
+			return SOUTH;
 		}
 	}
 }

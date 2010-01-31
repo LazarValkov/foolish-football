@@ -36,8 +36,8 @@ public class GoalMCTest {
 
 	@Test
 	public void testBounce() throws Exception {
-		testBounceDelegate(pitch.getGoalNetTop(), Direction.DOWN);
-		testBounceDelegate(pitch.getGoalNetBottom(), Direction.UP);
+		testBounceDelegate(pitch.getGoalNetTop(), Direction.SOUTH);
+		testBounceDelegate(pitch.getGoalNetBottom(), Direction.NORTH);
 	}
 
 	public void testBounceDelegate(BoundingBox bbox, Direction direction) throws Exception {
