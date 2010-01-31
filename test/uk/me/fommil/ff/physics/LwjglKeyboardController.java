@@ -35,8 +35,8 @@ class LwjglKeyboardController {
 	static {
 		actionLookup.put(Keyboard.KEY_UP, Player.Action.UP);
 		actionLookup.put(Keyboard.KEY_DOWN, Player.Action.DOWN);
-		actionLookup.put(Keyboard.KEY_LEFT, Player.Action.RIGHT); // FIXME: left/right switch
-		actionLookup.put(Keyboard.KEY_RIGHT, Player.Action.LEFT);
+		actionLookup.put(Keyboard.KEY_LEFT, Player.Action.LEFT);
+		actionLookup.put(Keyboard.KEY_RIGHT, Player.Action.RIGHT);
 		actionLookup.put(Keyboard.KEY_SPACE, Player.Action.KICK);
 		actionLookup.put(Keyboard.KEY_RETURN, Player.Action.TACKLE);
 		actionLookup.put(Keyboard.KEY_A, Player.Action.HEAD);

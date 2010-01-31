@@ -88,6 +88,8 @@ public class Ball {
 		if (touches.isEmpty())
 			return;
 
+		if (touches.contains(Aftertouch.RIGHT))
+			addForce(new DVector3(10, 0, 0)); // ?? testing
 
 		//		// TODO: consider the player who applies the aftertouch
 //		Vector3d aftertouch = new Vector3d();

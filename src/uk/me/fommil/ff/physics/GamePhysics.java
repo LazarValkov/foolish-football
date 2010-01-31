@@ -20,7 +20,6 @@ import com.google.common.collect.Sets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.util.logging.Logger;
 import org.ode4j.ode.DBody;
 import org.ode4j.ode.DContact;
@@ -54,6 +53,8 @@ public class GamePhysics {
 
 	private static final Logger log = Logger.getLogger(GamePhysics.class.getName());
 
+	private static final int MAX_CONTACTS = 8; // for collision detection
+
 	private final Team a;
 
 	private final Ball ball;
@@ -66,18 +67,11 @@ public class GamePhysics {
 
 	private double time;
 
-	private final Random random = new Random();
-
-//	private final GoalMC goalTop, goalBottom;
-	private final List<Goalkeeper> goalkeepers = Lists.newArrayList();
-
 	private final DWorld world;
 
 	private final DSpace space;
 
 	private final DJointGroup joints;
-
-	private final DPlane ground;
 
 	private final NearCallback collision = new NearCallback();
 
@@ -92,10 +86,6 @@ public class GamePhysics {
 	public GamePhysics(Team a, Pitch pitch) {
 		this.a = a;
 		this.pitch = pitch;
-//		goalTop = new GoalMC(pitch.getGoalNetTop(), 2, Direction.DOWN);
-//		goalBottom = new GoalMC(pitch.getGoalNetBottom(), 2, Direction.UP);
-
-		// goalkeepers.add(new GoalkeeperM(1, aPlayers.get(0)));
 
 		OdeInit.dInitODE();
 
@@ -105,7 +95,7 @@ public class GamePhysics {
 		space = OdeHelper.createSimpleSpace();
 		joints = OdeHelper.createJointGroup();
 
-		ground = OdeHelper.createPlane(space, 0, 0, 1, 0);
+		OdeHelper.createPlane(space, 0, 0, 1, 0);
 
 		ball = new Ball(world, space);
 		Position centre = pitch.getCentre();
@@ -133,12 +123,13 @@ public class GamePhysics {
 		Preconditions.checkNotNull(aftertouches);
 		this.actions = Sets.newHashSet(actions);
 		this.aftertouches = Sets.newHashSet(aftertouches);
-		if (actions.contains(Player.Action.KICK))
-			updateSelected();
 	}
 
 	public void tick(double dt) {
 		time += dt;
+
+		if (actions.contains(Player.Action.KICK))
+			updateSelected();
 
 		// TODO: be consistent with position/velocity implementations
 		Position bp = ball.getPosition();
@@ -166,45 +157,6 @@ public class GamePhysics {
 
 		world.step(dt);
 		joints.empty();
-
-//		List<PlayerMC> candidate = Lists.newArrayList();
-//		for (PlayerMC pm : as) {
-//			Bounds pmb = pm.getBounds();
-//			if (pm.getPosition().distance(bp) < 100 && pmb.intersect(bp)) {
-//				candidate.add(pm);
-//			}
-//		}
-//		// TODO: better resolution of contended owner (e.g. by skill, tackling state)
-//		// TODO: physics rebounding off players
-//		// TODO: physics restrictions to stop players walking through walls
-//		// TODO: getForce for kick/heading/dribbling strength
-//		if (!candidate.isEmpty()) {
-//			PlayerMC owner = candidate.get(random.nextInt(candidate.size()));
-//			updateSelected(owner);
-//			Vector3d kick = owner.getVelocity();
-//			kick.z += ball.getVelocity().z;
-//			switch (owner.getMode()) {
-//				case KICK:
-//				case HEAD_START:
-//				case HEAD_MID:
-//				case HEAD_END:
-//					kick.scale(2.5);
-//					kick.z = 4;
-//					ball.setVelocity(kick);
-//					break;
-//				case RUN:
-//				case TACKLE:
-//					ball.setVelocity(kick);
-//			}
-//		}
-
-//		for (PlayerMC pm : as) {
-//			pm.tick(dt);
-//		}
-//		for (GoalkeeperM gk : goalkeepers) {
-//			gk.tick(dt);
-//		}
-//		ball.tick(dt);
 
 //		BoundingBox p = pitch.getPitch();
 //		Point3d lower = Utils.getLower(p);
@@ -260,43 +212,6 @@ public class GamePhysics {
 		selected = closest;
 	}
 
-	// <editor-fold defaultstate="collapsed" desc="BOILERPLATE GETTERS/SETTERS">
-	public Ball getBall() {
-		return ball;
-	}
-
-	public Iterable<Player> getPlayers() {
-		return as;
-	}
-
-	public Player getSelected() {
-		return selected;
-	}
-
-	public double getTimestamp() {
-		return time;
-	}
-
-	public Team getTeamA() {
-		return a;
-	}
-
-	public Iterable<Goalkeeper> getGoalkeepers() {
-		return goalkeepers;
-	}
-
-	Collection<DGeom> getGeoms() {
-		Collection<DGeom> geoms = Lists.newArrayList();
-		int num = space.getNumGeoms();
-		for (int i = 0; i < num; i++) {
-			geoms.add(space.getGeom(i));
-		}
-		return geoms;
-	}
-	// </editor-fold>
-
-	private static final int MAX_CONTACTS = 8;
-
 	private class NearCallback implements DNearCallback {
 
 		@Override
@@ -345,4 +260,39 @@ public class GamePhysics {
 			}
 		}
 	};
+
+	// <editor-fold defaultstate="collapsed" desc="BOILERPLATE GETTERS/SETTERS">
+	public Ball getBall() {
+		return ball;
+	}
+
+	public Iterable<Player> getPlayers() {
+		return as;
+	}
+
+	public Player getSelected() {
+		return selected;
+	}
+
+	public double getTimestamp() {
+		return time;
+	}
+
+	public Team getTeamA() {
+		return a;
+	}
+
+	public Iterable<Goalkeeper> getGoalkeepers() {
+		return Collections.emptyList(); // TODO: goalkeepers
+	}
+
+	Collection<DGeom> getGeoms() {
+		Collection<DGeom> geoms = Lists.newArrayList();
+		int num = space.getNumGeoms();
+		for (int i = 0; i < num; i++) {
+			geoms.add(space.getGeom(i));
+		}
+		return geoms;
+	}
+	// </editor-fold>
 }
