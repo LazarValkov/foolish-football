@@ -15,7 +15,9 @@
 package uk.me.fommil.ff.physics;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.logging.Logger;
 import org.ode4j.math.DVector3;
 import org.ode4j.math.DVector3C;
@@ -38,9 +40,11 @@ public class Ball {
 
 	private static final double MASS_KG = 0.45;
 
+	private static final double RADIUS = 0.7 / (2 * Math.PI);
+
 	private final DSphere sphere;
 
-	private final double g;
+	private volatile Collection<Aftertouch> aftertouches = Collections.emptyList();
 
 	/** The aftertouch that a ball may exhibit. Aftertouch depends on the direction of motion. */
 	public enum Aftertouch {
@@ -51,11 +55,6 @@ public class Ball {
 
 	private static final Logger log = Logger.getLogger(Ball.class.getName());
 
-	// aftertouch
-//	private final Vector3d after = new Vector3d();
-	// no aftertouch after a bounce
-//	private volatile boolean bounced = false;
-	// creates Ball and assign it to the body
 	Ball(DWorld world, DSpace space) {
 		Preconditions.checkNotNull(world);
 		Preconditions.checkNotNull(space);
@@ -65,63 +64,13 @@ public class Ball {
 		g = gravity.length();
 
 		DBody body = OdeHelper.createBody(world);
-		double radius = 0.7 / (2 * Math.PI);
-		sphere = OdeHelper.createSphere(radius);
+		sphere = OdeHelper.createSphere(RADIUS);
 		sphere.setBody(body);
 		DMass mass = OdeHelper.createMass();
-		mass.setSphereTotal(MASS_KG, radius);
+		mass.setSphereTotal(MASS_KG, RADIUS);
 		body.setMass(mass);
 		space.add(sphere);
 		body.setData(this);
-	}
-
-	private volatile double mu;
-
-	@Deprecated // HACK to workaround ODE lack of friction on spheres
-	void applyFriction() {
-		if (mu == 0)
-			return;
-		DVector3 friction = new DVector3(sphere.getBody().getLinearVel());
-		friction.scale(-1);
-		friction.scale(mu * MASS_KG * g);
-		sphere.getBody().addForce(friction);
-	}
-
-	@Deprecated // HACK to workaround ODE lack of friction on spheres
-	void setFriction(double mu) {
-		this.mu = mu;
-	}
-
-	private volatile DVector3 kick;
-
-	@Deprecated // HACK
-	void applyKick() {
-		if (kick != null)
-			sphere.getBody().setLinearVel(kick);
-	}
-
-	@Deprecated // HACK
-	void setKick(DVector3 kick) {
-		this.kick = kick;
-	}
-
-	void addForce(DVector3C force) {
-		assert force != null;
-		DBody body = sphere.getBody();
-		body.addForce(force);
-	}
-
-	void setVelocity(DVector3 v) {
-		sphere.getBody().setLinearVel(v);
-	}
-
-	/**
-	 * @param pitch
-	 * @return
-	 */
-	public BallZone getZone(Pitch pitch) {
-		Preconditions.checkNotNull(pitch);
-		return new BallZone(new Position(sphere.getPosition()), pitch);
 	}
 
 	/**
@@ -130,7 +79,17 @@ public class Ball {
 	 * @param aftertouches
 	 */
 	public void setAftertouch(Collection<Aftertouch> aftertouches) {
-//		// TODO: consider the player who applies the aftertouch
+		Preconditions.checkNotNull(aftertouches);
+		this.aftertouches = aftertouches;
+	}
+
+	void applyAftertouch() {
+		Collection<Aftertouch> touches = Lists.newArrayList(aftertouches); // concurrency
+		if (touches.isEmpty())
+			return;
+
+
+		//		// TODO: consider the player who applies the aftertouch
 //		Vector3d aftertouch = new Vector3d();
 //		for (Aftertouch at : aftertouches) {
 //			switch (at) {
@@ -217,6 +176,15 @@ public class Ball {
 //		}
 	}
 
+	/**
+	 * @param pitch
+	 * @return
+	 */
+	public BallZone getZone(Pitch pitch) {
+		Preconditions.checkNotNull(pitch);
+		return new BallZone(new Position(sphere.getPosition()), pitch);
+	}
+
 	public Velocity getVelocity() {
 		return new Velocity(sphere.getBody().getLinearVel());
 	}
@@ -225,10 +193,48 @@ public class Ball {
 		return new Position(sphere.getPosition());
 	}
 
+	/**
+	 * Places the ball, at rest, at the given position.
+	 *
+	 * @param p
+	 */
 	public void setPosition(Position p) {
 		DVector3 vector = p.toDVector();
 		vector.add(0, 0, sphere.getRadius());
-//		vector.add(0, 0, sphere.getLengths().get2() / 2);
 		sphere.setPosition(vector);
+		setVelocity(new DVector3());
 	}
+
+	void setVelocity(DVector3 v) {
+		sphere.getBody().setLinearVel(v);
+	}
+
+	void addForce(DVector3C force) {
+		assert force != null;
+		DBody body = sphere.getBody();
+		body.addForce(force);
+	}
+
+	// <editor-fold defaultstate="collapsed" desc="HACK TO DEAL WITH FRICTION">
+	@Deprecated // HACK to workaround ODE lack of friction on spheres
+	private final double g;
+
+	@Deprecated // HACK to workaround ODE lack of friction on spheres
+	private volatile double mu;
+
+	@Deprecated // HACK to workaround ODE lack of friction on spheres
+	void applyFriction() {
+		if (mu == 0)
+			return;
+		DVector3 friction = new DVector3(sphere.getBody().getLinearVel());
+		friction.scale(-1);
+		friction.scale(mu * MASS_KG * g);
+		sphere.getBody().addForce(friction);
+	}
+
+	@Deprecated // HACK to workaround ODE lack of friction on spheres
+	void setFriction(double mu) {
+		this.mu = mu;
+	}
+	// </editor-fold>
 }

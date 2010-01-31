@@ -16,15 +16,13 @@ package uk.me.fommil.ff.physics;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
-import org.ode4j.math.DVector3;
-import org.ode4j.math.DVector3C;
 import org.ode4j.ode.DBody;
-import org.ode4j.ode.DBox;
 import org.ode4j.ode.DContact;
 import org.ode4j.ode.DContact.dSurfaceParameters;
 import org.ode4j.ode.DContactBuffer;
@@ -34,7 +32,6 @@ import org.ode4j.ode.DJoint;
 import org.ode4j.ode.DJointGroup;
 import org.ode4j.ode.DPlane;
 import org.ode4j.ode.DSpace;
-import org.ode4j.ode.DSphere;
 import org.ode4j.ode.DWorld;
 import org.ode4j.ode.OdeConstants;
 import org.ode4j.ode.OdeHelper;
@@ -44,6 +41,7 @@ import uk.me.fommil.ff.PlayerStats;
 import uk.me.fommil.ff.Tactics;
 import uk.me.fommil.ff.Tactics.BallZone;
 import uk.me.fommil.ff.Tactics.PlayerZone;
+import uk.me.fommil.ff.physics.Ball.Aftertouch;
 import uk.me.fommil.ff.physics.Player.Action;
 import uk.me.fommil.ff.Team;
 
@@ -70,8 +68,6 @@ public class GamePhysics {
 
 	private final Random random = new Random();
 
-	private Collection<Action> actions = Collections.emptyList();
-
 //	private final GoalMC goalTop, goalBottom;
 	private final List<Goalkeeper> goalkeepers = Lists.newArrayList();
 
@@ -84,6 +80,10 @@ public class GamePhysics {
 	private final DPlane ground;
 
 	private final NearCallback collision = new NearCallback();
+
+	private Collection<Action> actions = Collections.emptyList();
+
+	private Collection<Aftertouch> aftertouches = Collections.emptyList();
 
 	/**
 	 * @param a
@@ -129,18 +129,18 @@ public class GamePhysics {
 	 * @param aftertouches
 	 */
 	public void setUserActions(Collection<Player.Action> actions, Collection<Ball.Aftertouch> aftertouches) {
-		this.actions = Lists.newArrayList(actions);
+		Preconditions.checkNotNull(actions);
+		Preconditions.checkNotNull(aftertouches);
+		this.actions = Sets.newHashSet(actions);
+		this.aftertouches = Sets.newHashSet(aftertouches);
 		if (actions.contains(Player.Action.KICK))
-			updateSelected(null);
-		else
-			selected.setActions(actions);
-		ball.setAftertouch(aftertouches);
+			updateSelected();
 	}
 
 	public void tick(double dt) {
 		time += dt;
 
-		// TODO: be consistent with vector implementation
+		// TODO: be consistent with position/velocity implementations
 		Position bp = ball.getPosition();
 		BallZone bz = ball.getZone(pitch);
 		Tactics tactics = a.getCurrentTactics();
@@ -157,16 +157,15 @@ public class GamePhysics {
 			}
 		}
 		selected.setActions(actions);
+		ball.setAftertouch(aftertouches);
 
-//		ball.setKick(null);
 		ball.setFriction(0);
 		space.collide(null, collision);
 		ball.applyFriction();
-//		ball.applyKick();
+		ball.applyAftertouch();
 
 		world.step(dt);
 		joints.empty();
-
 
 //		List<PlayerMC> candidate = Lists.newArrayList();
 //		for (PlayerMC pm : as) {
@@ -239,30 +238,26 @@ public class GamePhysics {
 //		}
 	}
 
-	private void updateSelected(Player closest) {
+	private void updateSelected() {
 		assert selected != null;
-
-		if (closest == null) {
-			closest = selected;
-			double distance = Double.MAX_VALUE;
-			for (Player model : as) {
-				switch (model.getState()) {
-					case GROUND:
-					case INJURED:
-					case HEAD_START:
-					case HEAD_MID:
-					case HEAD_END:
-						continue;
-				}
-				double ds2 = model.getPosition().distance(ball.getPosition());
-				if (ds2 < distance) {
-					distance = ds2;
-					closest = model;
-				}
+		Player closest = selected;
+		double distance = Double.MAX_VALUE;
+		for (Player model : as) {
+			switch (model.getState()) {
+				case GROUND:
+				case INJURED:
+				case HEAD_START:
+				case HEAD_MID:
+				case HEAD_END:
+					continue;
+			}
+			double ds2 = model.getPosition().distance(ball.getPosition());
+			if (ds2 < distance) {
+				distance = ds2;
+				closest = model;
 			}
 		}
 		selected = closest;
-		selected.setActions(actions);
 	}
 
 	// <editor-fold defaultstate="collapsed" desc="BOILERPLATE GETTERS/SETTERS">
