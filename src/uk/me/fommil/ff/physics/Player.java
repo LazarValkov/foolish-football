@@ -138,7 +138,7 @@ public class Player {
 		direction = computeDirection(vector);
 
 		DMatrix3 rotation = new DMatrix3();
-		Rotation.dRFromAxisAndAngle(rotation, 0, 0, 1, direction);
+		Rotation.dRFromAxisAndAngle(rotation, 0, 0, -1, direction);
 		box.setRotation(rotation);
 	}
 
@@ -169,7 +169,7 @@ public class Player {
 	private double computeDirection(DVector3 vector) {
 		if (vector.length() == 0)
 			return direction;
-		return dePhase(Math.atan2(-vector.get1(), vector.get0()) + Math.PI / 2);
+		return dePhase(Math.PI / 2 - Math.atan2(vector.get1(), vector.get0()));
 	}
 
 	private double dePhase(double d) {

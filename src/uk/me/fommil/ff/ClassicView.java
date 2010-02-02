@@ -284,7 +284,8 @@ public class ClassicView extends JPanel {
 		}
 		Sprite sprite = teamSprites.get(spriteIndex);
 		Point s = sprite.getCentre();
-		g.drawImage(sprite.getImage(), gPos.x - s.x / 2 - 1, gPos.y - s.y / 2, null);
+		int yoffset = 4; // to align with physics model
+		g.drawImage(sprite.getImage(), gPos.x - s.x / 2 - 1, gPos.y - s.y / 2 - yoffset, null);
 
 		if (pm == game.getSelected()) {
 			sprite = teamNumberSprites.get(pm.getShirt());
