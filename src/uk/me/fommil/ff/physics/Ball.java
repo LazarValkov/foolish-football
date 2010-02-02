@@ -228,7 +228,14 @@ public class Ball {
 	void applyFriction() {
 		if (mu == 0)
 			return;
-		DVector3 friction = new DVector3(sphere.getBody().getLinearVel());
+		DVector3C vel = sphere.getBody().getLinearVel();
+		if (vel.length() == 0)
+			return;
+		if (vel.length() < 0.1) {
+			sphere.getBody().setLinearVel(new DVector3());
+			return;
+		}
+		DVector3 friction = new DVector3(vel);
 		friction.scale(-1);
 		friction.scale(mu * MASS_KG * g);
 		sphere.getBody().addForce(friction);
