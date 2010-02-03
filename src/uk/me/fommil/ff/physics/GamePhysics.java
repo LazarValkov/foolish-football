@@ -249,6 +249,7 @@ public class GamePhysics {
 						selected.control(ball);
 						if (selected.kick(ball))
 							break;
+						// TODO: alternative approach is to create joint but apply after-step velocity
 						// and do not create a joint
 					}
 					if (playerInvolved) {
