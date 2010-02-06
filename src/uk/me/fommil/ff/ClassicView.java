@@ -59,7 +59,7 @@ public class ClassicView extends JPanel {
 
 	private final boolean debugging = false;
 
-	private final int zoom = 4;
+	private final int zoom = 2;
 
 	private final Team a;
 

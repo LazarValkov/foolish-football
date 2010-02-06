@@ -65,7 +65,7 @@ public class Tactics {
 			double height = upper.y - lower.y;
 
 			int xx = (int) (5 * (upper.x - s.x) / width);
-			int yy = (int) (7 * (upper.y - s.y) / height);
+			int yy = (int) (7 * (s.y - lower.y) / height);
 
 			this.x = Utils.bounded(0, xx, 4);
 			this.y = Utils.bounded(0, yy, 6);
