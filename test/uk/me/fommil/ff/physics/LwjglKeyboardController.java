@@ -20,9 +20,9 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Map.Entry;
 import org.lwjgl.input.Keyboard;
 import uk.me.fommil.ff.physics.GamePhysics.Action;
+import uk.me.fommil.ff.physics.GamePhysics.Aftertouch;
 
 /**
  * Keyboard listening is synchronous, not asynchronous, with LWJGL - this class provides the poll.
@@ -33,7 +33,7 @@ class LwjglKeyboardController {
 
 	private static final Multimap<Integer, Action> actionLookup = HashMultimap.create();
 
-	private static final Map<Integer, Ball.Aftertouch> aftertouchLookup = Maps.newHashMap();
+	private static final Map<Integer, Aftertouch> aftertouchLookup = Maps.newHashMap();
 
 	static {
 		actionLookup.put(Keyboard.KEY_UP, Action.UP);
@@ -45,10 +45,10 @@ class LwjglKeyboardController {
 		actionLookup.put(Keyboard.KEY_RETURN, Action.TACKLE);
 		actionLookup.put(Keyboard.KEY_A, Action.HEAD);
 
-		aftertouchLookup.put(Keyboard.KEY_UP, Ball.Aftertouch.UP);
-		aftertouchLookup.put(Keyboard.KEY_DOWN, Ball.Aftertouch.DOWN);
-		aftertouchLookup.put(Keyboard.KEY_LEFT, Ball.Aftertouch.LEFT);
-		aftertouchLookup.put(Keyboard.KEY_RIGHT, Ball.Aftertouch.RIGHT);
+		aftertouchLookup.put(Keyboard.KEY_UP, Aftertouch.UP);
+		aftertouchLookup.put(Keyboard.KEY_DOWN, Aftertouch.DOWN);
+		aftertouchLookup.put(Keyboard.KEY_LEFT, Aftertouch.LEFT);
+		aftertouchLookup.put(Keyboard.KEY_RIGHT, Aftertouch.RIGHT);
 	}
 
 	private final Collection<Integer> lastKeys = Sets.newHashSet();
@@ -62,10 +62,10 @@ class LwjglKeyboardController {
 	synchronized void poll() {
 		boolean change = false;
 		Collection<Action> allActions = Sets.newHashSet();
-		Collection<Ball.Aftertouch> aftertouches = Sets.newHashSet();
+		Collection<Aftertouch> aftertouches = Sets.newHashSet();
 		for (Integer key : actionLookup.keySet()) {
 			Collection<Action> theseActions = actionLookup.get(key);
-			Ball.Aftertouch aftertouch = aftertouchLookup.get(key);
+			Aftertouch aftertouch = aftertouchLookup.get(key);
 			boolean lastActive = lastKeys.contains(key);
 			boolean active = Keyboard.isKeyDown(key);
 			if (lastActive && !active) {
@@ -75,12 +75,14 @@ class LwjglKeyboardController {
 				lastKeys.remove(key);
 			} else if (!lastActive && active) {
 				allActions.addAll(theseActions);
-				aftertouches.add(aftertouch);
+				if (aftertouch != null)
+					aftertouches.add(aftertouch);
 				change = true;
 				lastKeys.add(key);
 			} else if (active) {
 				allActions.addAll(theseActions);
-				aftertouches.add(aftertouch);
+				if (aftertouch != null)
+					aftertouches.add(aftertouch);
 			}
 		}
 		if (change) {

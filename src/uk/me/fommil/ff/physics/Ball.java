@@ -15,9 +15,7 @@
 package uk.me.fommil.ff.physics;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.logging.Logger;
 import org.ode4j.math.DVector3;
 import org.ode4j.math.DVector3C;
@@ -29,6 +27,7 @@ import org.ode4j.ode.DWorld;
 import org.ode4j.ode.OdeHelper;
 import uk.me.fommil.ff.Pitch;
 import uk.me.fommil.ff.Tactics.BallZone;
+import uk.me.fommil.ff.physics.GamePhysics.Aftertouch;
 
 /**
  * The model (M) and controller (C) for the ball during game play.
@@ -44,16 +43,17 @@ public class Ball {
 
 	private static final double RADIUS = 0.2; // official size = 0.7 / (2 * Math.PI);
 
+	private static final double LIFT = 10;
+
+	private static final double POWER = 1;
+
+	private static final double BEND = 2;
+
+	private static final double MAX_HEIGHT = 5;
+
 	private final DSphere sphere;
 
-	private volatile Collection<Aftertouch> aftertouches = Collections.emptyList();
-
-	/** The aftertouch that a ball may exhibit. Aftertouch depends on the direction of motion. */
-	public enum Aftertouch {
-
-		UP, DOWN, LEFT, RIGHT
-
-	}
+	private volatile boolean aftertouchEnabled;
 
 	Ball(DWorld world, DSpace space) {
 		Preconditions.checkNotNull(world);
@@ -67,6 +67,7 @@ public class Ball {
 		body.setMass(mass);
 		space.add(sphere);
 		body.setData(this);
+		body.setLinearDampingThreshold(0.1);
 	}
 
 	/**
@@ -76,103 +77,44 @@ public class Ball {
 	 */
 	public void setAftertouch(Collection<Aftertouch> aftertouches) {
 		Preconditions.checkNotNull(aftertouches);
-		this.aftertouches = aftertouches;
-		applyAftertouch();
-	}
-
-	private void applyAftertouch() {
-		Collection<Aftertouch> touches = Lists.newArrayList(aftertouches); // concurrency
-		if (touches.isEmpty())
+		if (!aftertouchEnabled)
+			return;
+		DVector3C velocity = sphere.getBody().getLinearVel();
+		DVector3 forward = new DVector3(velocity);
+		forward.set2(0);
+		if (aftertouches.isEmpty() || forward.length() == 0)
+			return;
+		forward.normalize();
+		double vz = velocity.get2();
+		if (vz < 0)
 			return;
 
-//		if (touches.contains(Aftertouch.RIGHT))
-//			addForce(new DVector3(10, 0, 0)); // ?? testing
+		DVector3 touch = Aftertouch.asVector(aftertouches);
+		DVector3 sideways = new DVector3(-forward.get1(), forward.get0(), 0);
 
-		//		// TODO: consider the player who applies the aftertouch
-//		Vector3d aftertouch = new Vector3d();
-//		for (Aftertouch at : aftertouches) {
-//			switch (at) {
-//				case UP:
-//					aftertouch.y -= 1;
-//					break;
-//				case DOWN:
-//					aftertouch.y += 1;
-//					break;
-//				case LEFT:
-//					aftertouch.x -= 1;
-//					break;
-//				case RIGHT:
-//					aftertouch.x += 1;
-//					break;
-//			}
-//		}
-////		log.info(aftertouches + " " + aftertouch);
-//		after.scale(0);
-//		Direction direction = Direction.valueOf(Utils.getBearing(v));
-//		if (v.lengthSquared() == 0 || direction == null) {
-//			return;
-//		}
-//		// TODO: clean up horrible code duplication
-//		double power = 200;
-//		double power_gravity = GRAVITY / 3;
-//		double power_bendy = 200;
-//		double lift = 20;
-//		double lift_gravity = 3 * GRAVITY;
-//		double lift_bendy = 50;
-//
-//		// log.info("BALL FACING " + direction + " AFTERTOUCH " + aftertouch);
-//		switch (direction) {
-//			case UP_RIGHT:
-//			case UP_LEFT:
-//			case UP:
-//				if (aftertouch.y < 0) {
-//					// power shot
-//					after.x = power_bendy * aftertouch.x;
-//					after.y = -power;
-//					after.z = power_gravity;
-//				} else if (aftertouch.y > 0) {
-//					// lift
-//					after.x = lift_bendy * aftertouch.x;
-//					after.y = -lift;
-//					after.z = lift_gravity;
-//				}
-//				break;
-//			case DOWN_LEFT:
-//			case DOWN_RIGHT:
-//			case DOWN:
-//				if (aftertouch.y > 0) {
-//					after.x = power_bendy * aftertouch.x;
-//					after.y = power;
-//					after.z = power_gravity;
-//				} else if (aftertouch.y < 0) {
-//					after.x = lift_bendy * aftertouch.x;
-//					after.y = lift;
-//					after.z = lift_gravity;
-//				}
-//				break;
-//			case RIGHT:
-//				if (aftertouch.x > 0) {
-//					after.x = power;
-//					after.y = power_bendy * aftertouch.y;
-//					after.z = power_gravity;
-//				} else if (aftertouch.x < 0) {
-//					after.x = lift;
-//					after.y = lift_bendy * aftertouch.y;
-//					after.z = lift_gravity;
-//				}
-//				break;
-//			case LEFT:
-//				if (aftertouch.x < 0) {
-//					after.x = -power;
-//					after.y = power_bendy * aftertouch.y;
-//					after.z = power_gravity;
-//				} else if (aftertouch.x > 0) {
-//					after.x = -lift;
-//					after.y = lift_bendy * aftertouch.y;
-//					after.z = lift_gravity;
-//				}
-//				break;
-//		}
+		double bend = sideways.dot(touch);
+		if (Math.abs(bend) > 0.1) {
+			DVector3 bendy = new DVector3(sideways);
+			bendy.scale(bend * BEND);
+			addForce(bendy);
+		}
+
+		double z = sphere.getBody().getPosition().get2() - RADIUS;
+		if (z > MAX_HEIGHT)
+			return;
+
+		double power = forward.dot(touch);
+		if (Math.abs(power) > 0.1) {
+			if (power < 0) {
+				DVector3 lift = new DVector3(0, 0, 1);
+				lift.scale(LIFT);
+				addForce(lift);
+			} else {
+				DVector3 powery = new DVector3(forward);
+				powery.scale(POWER);
+				addForce(powery);
+			}
+		}
 	}
 
 	/**
@@ -216,5 +158,9 @@ public class Ball {
 
 	void setDamping(double damping) {
 		sphere.getBody().setLinearDamping(damping);
+	}
+
+	void setAftertouchEnabled(boolean aftertouchEnabled) {
+		this.aftertouchEnabled = aftertouchEnabled;
 	}
 }

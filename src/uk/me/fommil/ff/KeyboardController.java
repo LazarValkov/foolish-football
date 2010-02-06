@@ -18,9 +18,9 @@ import com.google.common.collect.Sets;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.Collection;
-import uk.me.fommil.ff.physics.Ball;
 import uk.me.fommil.ff.physics.GamePhysics;
 import uk.me.fommil.ff.physics.GamePhysics.Action;
+import uk.me.fommil.ff.physics.GamePhysics.Aftertouch;
 
 /**
  *
@@ -36,26 +36,26 @@ public class KeyboardController extends KeyAdapter {
 
 	private final Collection<Action> actions = Sets.newHashSet();
 
-	private final Collection<Ball.Aftertouch> aftertouches = Sets.newHashSet();
+	private final Collection<Aftertouch> aftertouches = Sets.newHashSet();
 
 	@Override
 	public synchronized void keyPressed(KeyEvent e) {
 		switch (e.getKeyCode()) {
 			case KeyEvent.VK_LEFT:
 				actions.add(Action.LEFT);
-				aftertouches.add(Ball.Aftertouch.LEFT);
+				aftertouches.add(Aftertouch.LEFT);
 				break;
 			case KeyEvent.VK_RIGHT:
 				actions.add(Action.RIGHT);
-				aftertouches.add(Ball.Aftertouch.RIGHT);
+				aftertouches.add(Aftertouch.RIGHT);
 				break;
 			case KeyEvent.VK_UP:
 				actions.add(Action.UP);
-				aftertouches.add(Ball.Aftertouch.UP);
+				aftertouches.add(Aftertouch.UP);
 				break;
 			case KeyEvent.VK_DOWN:
 				actions.add(Action.DOWN);
-				aftertouches.add(Ball.Aftertouch.DOWN);
+				aftertouches.add(Aftertouch.DOWN);
 				break;
 			case KeyEvent.VK_SPACE:
 				actions.add(Action.KICK);
@@ -78,19 +78,19 @@ public class KeyboardController extends KeyAdapter {
 		switch (e.getKeyCode()) {
 			case KeyEvent.VK_LEFT:
 				actions.remove(Action.LEFT);
-				aftertouches.remove(Ball.Aftertouch.LEFT);
+				aftertouches.remove(Aftertouch.LEFT);
 				break;
 			case KeyEvent.VK_RIGHT:
 				actions.remove(Action.RIGHT);
-				aftertouches.remove(Ball.Aftertouch.RIGHT);
+				aftertouches.remove(Aftertouch.RIGHT);
 				break;
 			case KeyEvent.VK_UP:
 				actions.remove(Action.UP);
-				aftertouches.remove(Ball.Aftertouch.UP);
+				aftertouches.remove(Aftertouch.UP);
 				break;
 			case KeyEvent.VK_DOWN:
 				actions.remove(Action.DOWN);
-				aftertouches.remove(Ball.Aftertouch.DOWN);
+				aftertouches.remove(Aftertouch.DOWN);
 				break;
 			case KeyEvent.VK_SPACE:
 				actions.remove(Action.KICK);

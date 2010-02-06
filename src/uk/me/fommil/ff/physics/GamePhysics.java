@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
+import org.ode4j.math.DVector3;
 import org.ode4j.ode.DBody;
 import org.ode4j.ode.DContact;
 import org.ode4j.ode.DContact.DSurfaceParameters;
@@ -35,12 +36,12 @@ import org.ode4j.ode.DWorld;
 import org.ode4j.ode.OdeConstants;
 import org.ode4j.ode.OdeHelper;
 import org.ode4j.ode.internal.OdeInit;
+import uk.me.fommil.ff.Direction;
 import uk.me.fommil.ff.Pitch;
 import uk.me.fommil.ff.PlayerStats;
 import uk.me.fommil.ff.Tactics;
 import uk.me.fommil.ff.Tactics.BallZone;
 import uk.me.fommil.ff.Tactics.PlayerZone;
-import uk.me.fommil.ff.physics.Ball.Aftertouch;
 import uk.me.fommil.ff.Team;
 import uk.me.fommil.ff.physics.Player.PlayerState;
 
@@ -63,7 +64,84 @@ public class GamePhysics {
 
 		UP, DOWN, LEFT, RIGHT, KICK, TACKLE, HEAD, CHANGE;
 
+		// returns a normalised vector that represents the UP/DOWN/LEFT/RIGHT user input
+		static DVector3 asVector(Collection<Action> actions) {
+			DVector3 move = new DVector3();
+			for (Action action : actions) {
+				switch (action) {
+					case UP:
+						move.add(0, 1, 0);
+						break;
+					case DOWN:
+						move.sub(0, 1, 0);
+						break;
+					case LEFT:
+						move.sub(1, 0, 0);
+						break;
+					case RIGHT:
+						move.add(1, 0, 0);
+						break;
+				}
+			}
+			if (move.length() > 0) {
+				move.normalize();
+			}
+			return move;
+		}
 	};
+
+	/** The aftertouch that a ball may exhibit. Aftertouch depends on the direction of motion. */
+	public enum Aftertouch {
+
+		UP, DOWN, LEFT, RIGHT;
+
+		// returns a normalised vector that represents the aftertouch user input
+		static DVector3 asVector(Collection<Aftertouch> touches) {
+			Preconditions.checkNotNull(touches);
+			DVector3 aftertouch = new DVector3();
+			for (Aftertouch touch : touches) {
+				assert touch != null;
+				switch (touch) {
+					case UP:
+						aftertouch.add(0, 1, 0);
+						break;
+					case DOWN:
+						aftertouch.sub(0, 1, 0);
+						break;
+					case LEFT:
+						aftertouch.sub(1, 0, 0);
+						break;
+					case RIGHT:
+						aftertouch.add(1, 0, 0);
+						break;
+				}
+			}
+			if (aftertouch.length() > 0) {
+				aftertouch.normalize();
+			}
+			return aftertouch;
+		}
+
+		static Direction toDirection(Collection<Aftertouch> touches) {
+			DVector3 vector = asVector(touches);
+			double angle = toAngle(vector, 0);
+			return Direction.valueOf(angle);
+		}
+	}
+
+	static double toAngle(DVector3 vector, double fallback) {
+		if (vector.length() == 0)
+			return fallback;
+		return dePhase(Math.PI / 2 - Math.atan2(vector.get1(), vector.get0()));
+	}
+
+	private static double dePhase(double d) {
+		if (d > Math.PI)
+			return dePhase(d - 2 * Math.PI);
+		if (d <= -Math.PI)
+			return dePhase(d + 2 * Math.PI);
+		return d;
+	}
 
 	private final Team a;
 
@@ -109,7 +187,6 @@ public class GamePhysics {
 
 		ball = new Ball(world, space);
 		Position centre = pitch.getCentre();
-		centre = new Position(centre.x, centre.y, 5);
 		ball.setPosition(centre);
 
 		BallZone bz = ball.getZone(pitch);
@@ -130,7 +207,7 @@ public class GamePhysics {
 	 * @param actions
 	 * @param aftertouches
 	 */
-	public void setUserActions(Collection<Action> actions, Collection<Ball.Aftertouch> aftertouches) {
+	public void setUserActions(Collection<Action> actions, Collection<Aftertouch> aftertouches) {
 		Preconditions.checkNotNull(actions);
 		Preconditions.checkNotNull(aftertouches);
 		this.actions = Sets.newHashSet(actions);
@@ -143,16 +220,14 @@ public class GamePhysics {
 		if (actions.contains(Action.CHANGE))
 			updateSelected();
 
-		// TODO: be consistent with position/velocity implementations
 		Position bp = ball.getPosition();
 		BallZone bz = ball.getZone(pitch);
 		Tactics tactics = a.getCurrentTactics();
 		for (Player p : as) {
 			if (p != selected) {
-				Position target;
-				if (bp.distance(p.getPosition()) < Math.min(10, bp.distance(selected.getPosition()))) {
-					target = bp;
-				} else {
+				Position target = bp;
+				double near = Math.min(10, bp.distance(selected.getPosition()));
+				if (bp.distance(p.getPosition()) > near) {
 					PlayerZone pz = tactics.getZone(bz, p.getShirt());
 					target = pz.getCentre(pitch, Pitch.Facing.NORTH);
 				}
@@ -162,13 +237,12 @@ public class GamePhysics {
 		selected.setActions(actions);
 		ball.setAftertouch(aftertouches);
 
-		ball.setDamping(0.01);
+		ball.setDamping(0);
 		space.collide(null, collision);
 
 		world.step(dt);
 
 		if (selected.getState() == PlayerState.KICK) {
-			// FIXME: this is sometimes ignored
 			selected.kick(ball);
 		}
 
@@ -233,6 +307,7 @@ public class GamePhysics {
 						surface.bounce = 0.1;
 					} else if (groundInvolved) {
 						surface.bounce = 0.5;
+						ball.setAftertouchEnabled(false);
 					}
 				}
 

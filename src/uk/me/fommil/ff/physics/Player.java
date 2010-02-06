@@ -98,13 +98,17 @@ public class Player {
 		assert actions.contains(Action.KICK);
 		if (getPosition().distance(ball.getPosition()) > 2)
 			return;
-		log.info("KICK");
 
 		DVector3 kick = new DVector3(body.getLinearVel());
+		kick.set2(0);
+		if (kick.length() == 0)
+			return;
+
 		kick.safeNormalize();
-		kick.scale(20);
+		kick.scale(10);
 		kick.set(2, 2);
 		ball.setVelocity(kick);
+		ball.setAftertouchEnabled(true);
 	}
 
 	/**
@@ -122,8 +126,9 @@ public class Player {
 			default:
 				return;
 		}
-		DVector3 move = moveActionsToDirection(actions);
-		direction = computeDirection(move);
+		DVector3 move = Action.asVector(actions);
+		direction = GamePhysics.toAngle(move, direction);
+		move.scale(SPEED);
 
 		move.add(2, body.getLinearVel().get(2));
 		if (actions.contains(Action.HEAD)) {
@@ -136,45 +141,6 @@ public class Player {
 		DMatrix3 rotation = new DMatrix3();
 		Rotation.dRFromAxisAndAngle(rotation, 0, 0, -1, direction);
 		box.setRotation(rotation);
-	}
-
-	private DVector3 moveActionsToDirection(Collection<Action> actions) {
-		DVector3 move = new DVector3();
-		for (Action action : actions) {
-			switch (action) {
-				case UP:
-					move.add(0, 1, 0);
-					break;
-				case DOWN:
-					move.sub(0, 1, 0);
-					break;
-				case LEFT:
-					move.sub(1, 0, 0);
-					break;
-				case RIGHT:
-					move.add(1, 0, 0);
-					break;
-			}
-		}
-		if (move.length() > 0) {
-			move.normalize();
-			move.scale(SPEED);
-		}
-		return move;
-	}
-
-	private double computeDirection(DVector3 vector) {
-		if (vector.length() == 0)
-			return direction;
-		return dePhase(Math.PI / 2 - Math.atan2(vector.get1(), vector.get0()));
-	}
-
-	private double dePhase(double d) {
-		if (d > Math.PI)
-			return dePhase(d - 2 * Math.PI);
-		if (d <= -Math.PI)
-			return dePhase(d + 2 * Math.PI);
-		return d;
 	}
 
 	/**

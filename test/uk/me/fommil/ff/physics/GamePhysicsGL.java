@@ -23,6 +23,7 @@ import java.util.logging.Logger;
 import javax.swing.JFrame;
 import org.ode4j.drawstuff.DrawStuff;
 import org.ode4j.drawstuff.DrawStuff.dsFunctions;
+import org.ode4j.math.DVector3;
 import org.ode4j.ode.DBox;
 import org.ode4j.ode.DGeom;
 import org.ode4j.ode.DSphere;
@@ -53,6 +54,10 @@ public class GamePhysicsGL extends dsFunctions {
 		Pitch pitch = new Pitch();
 
 		GamePhysics game = new GamePhysics(a, pitch);
+		DVector3 ballStart = game.getBall().getPosition().toDVector();
+		game.getSelected().setPosition(ballStart);
+		ballStart.set2(10);
+		game.getBall().setPosition(new Position(ballStart));
 
 		GamePhysicsGL demo = new GamePhysicsGL(game);
 		DrawStuff.dsSimulationLoop(args, width, height, demo);
@@ -92,7 +97,7 @@ public class GamePhysicsGL extends dsFunctions {
 	public void step(boolean pause) {
 		controller.poll();
 
-		game.tick(0.02); // ?? don't know what the step should really be
+		game.tick(0.017); // ?? about 60Hz
 
 		Position c = game.getBall().getPosition();
 		float[] xyz = {(float) c.x, (float) c.y - 5, 15f};
