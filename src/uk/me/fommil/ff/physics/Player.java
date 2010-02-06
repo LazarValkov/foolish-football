@@ -50,6 +50,8 @@ public class Player {
 
 	private static final double AUTOPILOT_TOLERANCE = 1;
 
+	private static final double HEADER_BOOST = 2;
+
 	public enum PlayerState {
 
 		RUN, KICK, TACKLE, HEAD_START, HEAD_MID, HEAD_END, GROUND, INJURED,
@@ -132,7 +134,7 @@ public class Player {
 
 		move.add(2, body.getLinearVel().get(2));
 		if (actions.contains(Action.HEAD)) {
-			log.info("HEAD");
+			move.scale(HEADER_BOOST);
 			move.add(0, 0, 3);
 		}
 

@@ -59,7 +59,7 @@ public class ClassicView extends JPanel {
 
 	private final boolean debugging = false;
 
-	private final int zoom = 2;
+	private final int zoom = 4;
 
 	private final Team a;
 
@@ -287,20 +287,19 @@ public class ClassicView extends JPanel {
 				spriteIndex += 3;
 			}
 		}
-		// TODO: calibrate the Z drawing with the sprites
 		double z = ball.getPosition().z;
 		int diff = (int) (3 * z);
 		{	// the drop shadow
 			Sprite sprite = ballSprites.get(4);
 			Point s = sprite.getCentre();
 			Point gPos = pToG(ball.getPosition());
-			g.drawImage(sprite.getImage(), gPos.x - s.x + diff / 2 + 1, gPos.y - s.y + diff + 1, null);
+			g.drawImage(sprite.getImage(), gPos.x - s.x + diff + 1, gPos.y - s.y + 1, null);
 		}
 		{	// the moving ball
 			Sprite sprite = ballSprites.get(spriteIndex);
 			Point s = sprite.getCentre();
 			Point gPos = pToG(ball.getPosition());
-			g.drawImage(sprite.getImage(), gPos.x - s.x - diff / 2, gPos.y - s.y - diff, null);
+			g.drawImage(sprite.getImage(), gPos.x - s.x, gPos.y - s.y - 2 * diff, null);
 		}
 	}
 

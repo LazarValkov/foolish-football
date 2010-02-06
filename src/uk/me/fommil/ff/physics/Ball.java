@@ -43,13 +43,13 @@ public class Ball {
 
 	private static final double RADIUS = 0.2; // official size = 0.7 / (2 * Math.PI);
 
-	private static final double LIFT = 10;
+	private static final double LIFT = 6;
 
-	private static final double POWER = 1;
+	private static final double POWER = 10;
 
 	private static final double BEND = 2;
 
-	private static final double MAX_HEIGHT = 5;
+	private static final double MAX_HEIGHT = 4;
 
 	private final DSphere sphere;
 
