@@ -96,7 +96,7 @@ public class Player {
 
 	void kick(Ball ball) {
 		assert actions.contains(Action.KICK);
-		if (getPosition().distance(ball.getPosition()) > 1)
+		if (getPosition().distance(ball.getPosition()) > 2)
 			return;
 		log.info("KICK");
 

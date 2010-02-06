@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.swing.JFrame;
 import uk.me.fommil.ff.swos.SpriteParser;
 
@@ -67,13 +68,17 @@ public class Main {
 		frame.setUndecorated(true);
 		frame.setVisible(true);
 
-		final long period = 25L;
+		final long period = 10L;
+		final int redraw = 5;
 		TimerTask ticker = new TimerTask() {
+			private final AtomicLong counter = new AtomicLong();
 
 			@Override
 			public synchronized void run() {
 				game.tick(period / 1000.0);
-				gv.repaint();
+				long count = counter.incrementAndGet();
+				if (count % redraw == 0)
+					gv.repaint();
 			}
 		};
 		new Timer().schedule(ticker, 0L, period);

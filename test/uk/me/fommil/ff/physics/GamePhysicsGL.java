@@ -92,7 +92,7 @@ public class GamePhysicsGL extends dsFunctions {
 	public void step(boolean pause) {
 		controller.poll();
 
-		game.tick(0.01);
+		game.tick(0.02); // ?? don't know what the step should really be
 
 		Position c = game.getBall().getPosition();
 		float[] xyz = {(float) c.x, (float) c.y - 5, 15f};
@@ -123,5 +123,9 @@ public class GamePhysicsGL extends dsFunctions {
 			DSphere sphere = (DSphere) geometry;
 			DrawStuff.dsDrawSphere(sphere.getPosition(), sphere.getRotation(), (float) sphere.getRadius());
 		}
+	}
+
+	@Override
+	public void dsPrintHelp() {
 	}
 }
