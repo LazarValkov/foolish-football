@@ -17,13 +17,14 @@ package uk.me.fommil.ff.physics;
 import java.util.Collection;
 import uk.me.fommil.ff.Direction;
 import uk.me.fommil.ff.PlayerStats;
+import uk.me.fommil.ff.physics.Player.Action;
 
 /**
  * The model (M) for a goalkeeper.
  *
  * @author Samuel Halliday
  */
-public class Goalkeeper extends Player {
+public class Goalkeeper {
 
 	public enum GoalkeeperState {
 
@@ -45,14 +46,12 @@ public class Goalkeeper extends Player {
 	}
 
 	public Goalkeeper(int i, PlayerStats player) {
-		super(i, player, null);
 	}
 
 	public GoalkeeperState getGkState() {
 		return gkState;
 	}
 
-	@Override
 	public void setActions(Collection<Action> actions) {
 		// TODO: allow player to direct and kick
 		throw new UnsupportedOperationException("actions not available for goalkeeper");
@@ -64,6 +63,11 @@ public class Goalkeeper extends Player {
 	}
 
 	public Position getPosition() {
+		// TODO: implement method
+		throw new UnsupportedOperationException("not implemented yet");
+	}
+
+	public double getDirection() {
 		// TODO: implement method
 		throw new UnsupportedOperationException("not implemented yet");
 	}

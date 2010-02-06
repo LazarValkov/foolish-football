@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JFrame;
 import org.ode4j.drawstuff.DrawStuff;
 import org.ode4j.drawstuff.DrawStuff.dsFunctions;
 import org.ode4j.ode.DBox;
@@ -52,10 +51,6 @@ public class GamePhysicsGL extends dsFunctions {
 		a.setCurrentTactics(TacticsParser.getSwosTactics(Main.SWOS).get("442"));
 		Pitch pitch = new Pitch();
 
-		Position lower = pitch.getPitchLowerLeft();
-		Position upper = pitch.getPitchUpperRight();
-		log.info(lower + " " + upper);
-
 		GamePhysics game = new GamePhysics(a, pitch);
 
 		GamePhysicsGL demo = new GamePhysicsGL(game);
@@ -79,14 +74,14 @@ public class GamePhysicsGL extends dsFunctions {
 		try {
 			pitchImage = PitchParser.getPitch(Main.SWOS, 6);
 			Map<Integer, Sprite> sprites = SpriteParser.getSprites(Main.SWOS);
-			gv = new ClassicView(game, pitchImage, sprites);
-			JFrame frame = new JFrame();
-			frame.add(gv);
-			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			frame.setSize(400, 300);
-			frame.setLocationRelativeTo(null);
-			frame.setTitle("Foolish Football");
-			frame.setVisible(true);
+//			gv = new ClassicView(game, pitchImage, sprites);
+//			JFrame frame = new JFrame();
+//			frame.add(gv);
+//			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//			frame.setSize(400, 300);
+//			frame.setLocationRelativeTo(null);
+//			frame.setTitle("Foolish Football");
+//			frame.setVisible(true);
 		} catch (IOException ex) {
 			Logger.getLogger(GamePhysicsGL.class.getName()).log(Level.SEVERE, null, ex);
 		}
@@ -99,14 +94,14 @@ public class GamePhysicsGL extends dsFunctions {
 		game.tick(0.01);
 
 		Position c = game.getBall().getPosition();
-		float[] xyz = {(float) c.x, (float) c.y - 5, 20f};
+		float[] xyz = {(float) c.x, (float) c.y - 5, 15f};
 		float[] hpr = {90, -70, 0}; // ?? heading definition wrong in drawStuff API
 		DrawStuff.dsSetViewpoint(xyz, hpr);
 
 		for (DGeom geom : game.getGeoms()) {
 			draw(geom, Color.RED);
 		}
-		gv.repaint();
+//		gv.repaint();
 	}
 
 	@Override

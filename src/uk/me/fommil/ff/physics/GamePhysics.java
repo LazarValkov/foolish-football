@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.logging.Logger;
 import org.ode4j.ode.DBody;
 import org.ode4j.ode.DContact;
-import org.ode4j.ode.DContact.dSurfaceParameters;
+import org.ode4j.ode.DContact.DSurfaceParameters;
 import org.ode4j.ode.DContactBuffer;
 import org.ode4j.ode.DGeom;
 import org.ode4j.ode.DGeom.DNearCallback;
@@ -156,41 +156,10 @@ public class GamePhysics {
 		ball.setFriction(0);
 		space.collide(null, collision);
 		ball.applyFriction();
-		ball.applyAftertouch();
 
 		world.step(dt);
+
 		joints.empty();
-
-//		BoundingBox p = pitch.getPitch();
-//		Point3d lower = Utils.getLower(p);
-//		Point3d upper = Utils.getUpper(p);
-//
-//		Point3d bNewP = ball.getPosition();
-//		if (bNewP.x < lower.x || bNewP.x > upper.x) {
-//			ball.setVelocity(new Vector3d());
-//			bNewP.z = 0;
-//			ball.setPosition(bNewP);
-//			selected.setPosition(bNewP);
-//			selected.setThrowIn();
-//		}
-
-//		if (bNewP.y >= upper.y || bNewP.y <= lower.y) {
-//			Point3d bouncePos = ball.getPosition();
-//			Vector3d bounceVel = ball.getVelocity();
-//			goalTop.bounce(bouncePos, bounceVel, bp);
-//			goalBottom.bounce(bouncePos, bounceVel, bp);
-//			if (!bouncePos.equals(ball.getPosition())) {
-//				ball.setPosition(bouncePos);
-//				ball.setVelocity(bounceVel);
-//			}
-//
-//			if (goalTop.inside(ball.getPosition()))
-//				log.fine("GOAL!!!!");
-//			else if (goalBottom.inside(ball.getPosition()))
-//				log.fine("OWN GOAL!!!!");
-//			else
-//				log.fine("CORNER/GOAL KICK");
-//		}
 	}
 
 	private void updateSelected() {
@@ -238,13 +207,12 @@ public class GamePhysics {
 
 			for (int i = 0; i < numc; i++) {
 				DContact contact = contacts.get(i);
-				dSurfaceParameters surface = contact.surface;
-				surface.mode = OdeConstants.dContactBounce;// | OdeConstants.dContactSoftERP;
+				DSurfaceParameters surface = contact.surface;
+				surface.mode = OdeConstants.dContactBounce | OdeConstants.dContactSoftERP;
 				surface.bounce_vel = 0.1;
 
 				if (ballInvolved) {
 					ball.setFriction(0.5);
-					surface.mu = OdeConstants.dInfinity; // ball never slips
 					if (selectedInvolved) {
 						selected.control(ball);
 						if (selected.kick(ball))

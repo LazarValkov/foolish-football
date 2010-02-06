@@ -14,6 +14,7 @@
  */
 package uk.me.fommil.ff.physics;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import java.util.Collection;
@@ -45,6 +46,10 @@ public class Player {
 
 	private static final double height = 2;
 
+	private static final double speed = 6.5; // about 15 MPH
+
+	private static final double MASS = 100;
+
 	private volatile double direction;
 
 	private volatile Collection<Action> actions;
@@ -73,8 +78,6 @@ public class Player {
 
 	protected final int shirt;
 
-	protected volatile PlayerState mode = PlayerState.RUN;
-
 	protected final Random random = new Random();
 
 	Player(int i, PlayerStats stats, DWorld world, DSpace space) {
@@ -87,23 +90,23 @@ public class Player {
 		box.setBody(body);
 
 		DMass mass = OdeHelper.createMass();
-		mass.setBoxTotal(80, 1, 0.5, height); // ?? code dupe
+		mass.setBoxTotal(MASS, 1, 0.5, height); // ?? code dupe
 		body.setMass(mass);
 		body.setData(this);
+		body.setAngularDamping(1.0);
 	}
 
 	void control(Ball ball) {
 		Preconditions.checkNotNull(ball);
 		// TODO: come up with a solution that avoids the oscillation
 		DVector3 control = getPosition().toDVector().sub(ball.getPosition().toDVector());
-//		control.normalize();
 		control.set(2, 0);
 		control.scale(25);
 		ball.addForce(control);
 	}
 
 	boolean kick(Ball ball) {
-		// TODO: alternative is to create temporary body/geomety with momentum to perform the kick
+		// TODO: alternative is to create temporary body/geometry with momentum to perform the kick
 		if (!actions.contains(Action.KICK))
 			return false;
 		DVector3 kick = new DVector3(body.getLinearVel());
@@ -115,34 +118,37 @@ public class Player {
 	}
 
 	/**
-	 * Controller.
+	 * Controller, must be called for each time step.
 	 * 
 	 * @param actions
 	 */
 	public void setActions(Collection<Action> actions) {
 		Preconditions.checkNotNull(actions);
 		this.actions = actions;
-		switch (mode) {
+		switch (getState()) {
 			case RUN:
 			case THROW:
 				break;
 			default:
 				return;
 		}
-		// stabilise
-		setPosition(body.getPosition());
+		DVector3 move = moveActionsToDirection(actions);
+		direction = computeDirection(move);
 
-		DVector3 vector = actionsToVector(actions);
-		vector.scale(7.5);
-		body.setLinearVel(vector);
-		direction = computeDirection(vector);
+		move.add(2, body.getLinearVel().get(2));
+		if (actions.contains(Action.HEAD)) {
+			log.info("HEAD");
+			move.add(0, 0, 3);
+		}
+
+		body.setLinearVel(move);
 
 		DMatrix3 rotation = new DMatrix3();
 		Rotation.dRFromAxisAndAngle(rotation, 0, 0, -1, direction);
 		box.setRotation(rotation);
 	}
 
-	private DVector3 actionsToVector(Collection<Action> actions) {
+	private DVector3 moveActionsToDirection(Collection<Action> actions) {
 		DVector3 move = new DVector3();
 		for (Action action : actions) {
 			switch (action) {
@@ -162,6 +168,7 @@ public class Player {
 		}
 		if (move.length() > 0) {
 			move.normalize();
+			move.scale(speed);
 		}
 		return move;
 	}
@@ -204,7 +211,7 @@ public class Player {
 	}
 
 	/**
-	 * @return the angle relate to NORTH {@code (- PI, + PI]}.
+	 * @return the angle relative to NORTH {@code (- PI, + PI]}.
 	 */
 	public double getDirection() {
 		return direction;
@@ -215,7 +222,25 @@ public class Player {
 	}
 
 	public PlayerState getState() {
-		return PlayerState.RUN; // TODO: calculate state
+		DVector3C position = body.getPosition();
+		DVector3C velocity = body.getLinearVel();
+		DVector3C angular = body.getAngularVel();
+		double z = position.get2() - height / 2;
+		double vz = velocity.get2();
+		double a = angular.length();
+
+		if (z < 0)
+			return PlayerState.RUN; // ?? should be GROUND but numerical errors
+		if (vz > 0) {
+			if (z < 0.2)
+				return PlayerState.HEAD_START;
+			if (z < 0.4)
+				return PlayerState.HEAD_MID;
+			return PlayerState.HEAD_END;
+		}
+		if (z > 0.1)
+			return PlayerState.HEAD_END;
+		return PlayerState.RUN;
 	}
 
 	public Velocity getVelocity() {
@@ -232,7 +257,6 @@ public class Player {
 
 	void setPosition(DVector3C p) {
 		DVector3 position = new DVector3(p);
-		body.setAngularVel(0, 0, 0);
 		position.set(2, height / 2);
 		body.setPosition(position);
 	}

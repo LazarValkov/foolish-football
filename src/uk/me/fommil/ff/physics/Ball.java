@@ -40,7 +40,7 @@ public class Ball {
 
 	private static final double MASS_KG = 0.45;
 
-	private static final double RADIUS = 0.7 / (2 * Math.PI);
+	private static final double RADIUS = 0.2; // official size = 0.7 / (2 * Math.PI);
 
 	private final DSphere sphere;
 
@@ -81,9 +81,10 @@ public class Ball {
 	public void setAftertouch(Collection<Aftertouch> aftertouches) {
 		Preconditions.checkNotNull(aftertouches);
 		this.aftertouches = aftertouches;
+		applyAftertouch();
 	}
 
-	void applyAftertouch() {
+	private void applyAftertouch() {
 		Collection<Aftertouch> touches = Lists.newArrayList(aftertouches); // concurrency
 		if (touches.isEmpty())
 			return;

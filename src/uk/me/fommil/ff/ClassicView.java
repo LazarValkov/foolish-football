@@ -176,27 +176,7 @@ public class ClassicView extends JPanel {
 		Position pPos = pm.getPosition();
 		Point gPos = pToG(pPos);
 
-		// TODO: draw only what is needed
-		// assumes sprite size
-//		Rectangle vPmSprite = new Rectangle(vBounds.x + gPos.x - 20, vBounds.y + gPos.y - 20, 40, 40);
-//		if (!vBounds.intersects(vPmSprite)) {
-//			return;
-//		}
-
-//		if (debugging && pm == game.getSelected()) {
-//			// draw the bounds, scattergun and not efficient
-//			g.setColor(Color.WHITE);
-//			BoundingPolytope pBounds = pm.getBounds();
-//			for (int x = (int) (pPos.x - 50); x < pPos.x + 50; x++) {
-//				for (int y = (int) (pPos.y - 50); y < pPos.y + 50; y++) {
-//					Position pTest = new Position(x, y, 0); // TODO: use ball height
-//					if (pBounds.intersect(pTest)) {
-//						Point gP = pToG(vBounds, pTest);
-//						g.fillRect(gP.x, gP.y, 1, 1);
-//					}
-//				}
-//			}
-//		}
+		// TODO: draw only when in the region
 
 		int spriteIndex = 0;
 		Direction direction = Direction.valueOf(pm.getDirection());
@@ -284,13 +264,12 @@ public class ClassicView extends JPanel {
 		}
 		Sprite sprite = teamSprites.get(spriteIndex);
 		Point s = sprite.getCentre();
-		int yoffset = 4; // to align with physics model
-		g.drawImage(sprite.getImage(), gPos.x - s.x / 2 - 1, gPos.y - s.y / 2 - yoffset, null);
+		g.drawImage(sprite.getImage(), gPos.x - s.x, gPos.y - s.y, null);
 
 		if (pm == game.getSelected()) {
 			sprite = teamNumberSprites.get(pm.getShirt());
 			s = sprite.getCentre();
-			g.drawImage(sprite.getImage(), gPos.x - s.x / 2 - 1, gPos.y - s.y / 2 - 13, null);
+			g.drawImage(sprite.getImage(), gPos.x - s.x, gPos.y - s.y - 13, null);
 		}
 	}
 
@@ -315,13 +294,13 @@ public class ClassicView extends JPanel {
 			Sprite sprite = ballSprites.get(4);
 			Point s = sprite.getCentre();
 			Point gPos = pToG(ball.getPosition());
-			g.drawImage(sprite.getImage(), gPos.x - s.x / 2 + diff / 2, gPos.y - s.y / 2 + diff, null);
+			g.drawImage(sprite.getImage(), gPos.x - s.x + diff / 2 + 1, gPos.y - s.y + diff + 1, null);
 		}
 		{	// the moving ball
 			Sprite sprite = ballSprites.get(spriteIndex);
 			Point s = sprite.getCentre();
 			Point gPos = pToG(ball.getPosition());
-			g.drawImage(sprite.getImage(), gPos.x - s.x / 2 - 1 - diff / 2, gPos.y - s.y / 2 - 1 - diff, null);
+			g.drawImage(sprite.getImage(), gPos.x - s.x - diff / 2, gPos.y - s.y - diff, null);
 		}
 	}
 
