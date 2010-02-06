@@ -159,11 +159,12 @@ public class GamePhysics {
 				p.autoPilot(target);
 			}
 		}
-		selected.setActions(actions);
-		ball.setAftertouch(aftertouches);
 		if (selected.getState() == PlayerState.KICK) {
+			// FIXME: this is sometimes ignored
 			selected.kick(ball);
 		}
+		selected.setActions(actions);
+		ball.setAftertouch(aftertouches);
 
 		ball.setDamping(0.01);
 		space.collide(null, collision);

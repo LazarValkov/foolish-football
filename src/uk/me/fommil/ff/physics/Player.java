@@ -17,6 +17,7 @@ package uk.me.fommil.ff.physics;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 import org.ode4j.math.DMatrix3;
@@ -43,7 +44,7 @@ public class Player {
 
 	private static final double SPEED = 6.5; // about 15 MPH
 
-	private static final double MASS = 100;
+	private static final double MASS = 60;
 
 	private static final Logger log = Logger.getLogger(Player.class.getName());
 
@@ -66,7 +67,7 @@ public class Player {
 
 	private volatile double direction;
 
-	private volatile Collection<Action> actions;
+	private volatile Collection<Action> actions = Collections.emptySet();
 
 	Player(int i, PlayerStats stats, DWorld world, DSpace space) {
 		Preconditions.checkArgument(i >= 1 && i <= 11, i);
@@ -97,6 +98,7 @@ public class Player {
 		assert actions.contains(Action.KICK);
 		if (getPosition().distance(ball.getPosition()) > 1)
 			return;
+		log.info("KICK");
 
 		DVector3 kick = new DVector3(body.getLinearVel());
 		kick.safeNormalize();
@@ -216,8 +218,6 @@ public class Player {
 		double z = position.get2() - HEIGHT / 2 + 0.01;
 		double vz = velocity.get2();
 
-		if (z < 0)
-			return PlayerState.RUN; // ?? should be GROUND but numerical errors
 		if (vz > 0) {
 			if (z < 0.2)
 				return PlayerState.HEAD_START;
@@ -229,6 +229,8 @@ public class Player {
 			return PlayerState.HEAD_END;
 		if (actions.contains(Action.KICK))
 			return PlayerState.KICK;
+		if (z < 0)
+			return PlayerState.RUN; // ?? should be GROUND but numerical errors
 		return PlayerState.RUN;
 	}
 

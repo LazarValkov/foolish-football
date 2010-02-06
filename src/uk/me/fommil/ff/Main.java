@@ -67,7 +67,7 @@ public class Main {
 		frame.setUndecorated(true);
 		frame.setVisible(true);
 
-		final long period = 50L;
+		final long period = 25L;
 		TimerTask ticker = new TimerTask() {
 
 			@Override
