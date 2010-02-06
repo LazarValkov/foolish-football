@@ -14,12 +14,15 @@
  */
 package uk.me.fommil.ff.physics;
 
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.lwjgl.input.Keyboard;
+import uk.me.fommil.ff.physics.GamePhysics.Action;
 
 /**
  * Keyboard listening is synchronous, not asynchronous, with LWJGL - this class provides the poll.
@@ -28,18 +31,19 @@ import org.lwjgl.input.Keyboard;
  */
 class LwjglKeyboardController {
 
-	private static final Map<Integer, Player.Action> actionLookup = Maps.newHashMap();
+	private static final Multimap<Integer, Action> actionLookup = HashMultimap.create();
 
 	private static final Map<Integer, Ball.Aftertouch> aftertouchLookup = Maps.newHashMap();
 
 	static {
-		actionLookup.put(Keyboard.KEY_UP, Player.Action.UP);
-		actionLookup.put(Keyboard.KEY_DOWN, Player.Action.DOWN);
-		actionLookup.put(Keyboard.KEY_LEFT, Player.Action.LEFT);
-		actionLookup.put(Keyboard.KEY_RIGHT, Player.Action.RIGHT);
-		actionLookup.put(Keyboard.KEY_SPACE, Player.Action.KICK);
-		actionLookup.put(Keyboard.KEY_RETURN, Player.Action.TACKLE);
-		actionLookup.put(Keyboard.KEY_A, Player.Action.HEAD);
+		actionLookup.put(Keyboard.KEY_UP, Action.UP);
+		actionLookup.put(Keyboard.KEY_DOWN, Action.DOWN);
+		actionLookup.put(Keyboard.KEY_LEFT, Action.LEFT);
+		actionLookup.put(Keyboard.KEY_RIGHT, Action.RIGHT);
+		actionLookup.put(Keyboard.KEY_SPACE, Action.KICK);
+		actionLookup.put(Keyboard.KEY_SPACE, Action.CHANGE);
+		actionLookup.put(Keyboard.KEY_RETURN, Action.TACKLE);
+		actionLookup.put(Keyboard.KEY_A, Action.HEAD);
 
 		aftertouchLookup.put(Keyboard.KEY_UP, Ball.Aftertouch.UP);
 		aftertouchLookup.put(Keyboard.KEY_DOWN, Ball.Aftertouch.DOWN);
@@ -55,33 +59,32 @@ class LwjglKeyboardController {
 		this.game = game;
 	}
 
-	void poll() {
+	synchronized void poll() {
 		boolean change = false;
-		Collection<Player.Action> actions = Sets.newHashSet();
+		Collection<Action> allActions = Sets.newHashSet();
 		Collection<Ball.Aftertouch> aftertouches = Sets.newHashSet();
-		for (Entry<Integer, Player.Action> e : actionLookup.entrySet()) {
-			int key = e.getKey();
-			Player.Action action = e.getValue();
+		for (Integer key : actionLookup.keySet()) {
+			Collection<Action> theseActions = actionLookup.get(key);
 			Ball.Aftertouch aftertouch = aftertouchLookup.get(key);
 			boolean lastActive = lastKeys.contains(key);
 			boolean active = Keyboard.isKeyDown(key);
 			if (lastActive && !active) {
-				actions.remove(action);
+				allActions.removeAll(theseActions);
 				aftertouches.remove(aftertouch);
 				change = true;
 				lastKeys.remove(key);
 			} else if (!lastActive && active) {
-				actions.add(action);
+				allActions.addAll(theseActions);
 				aftertouches.add(aftertouch);
 				change = true;
 				lastKeys.add(key);
 			} else if (active) {
-				actions.add(action);
+				allActions.addAll(theseActions);
 				aftertouches.add(aftertouch);
 			}
 		}
 		if (change) {
-			game.setUserActions(actions, aftertouches);
+			game.setUserActions(allActions, aftertouches);
 		}
 	}
 }

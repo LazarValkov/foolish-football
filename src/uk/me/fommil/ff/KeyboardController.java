@@ -20,7 +20,7 @@ import java.awt.event.KeyEvent;
 import java.util.Collection;
 import uk.me.fommil.ff.physics.Ball;
 import uk.me.fommil.ff.physics.GamePhysics;
-import uk.me.fommil.ff.physics.Player;
+import uk.me.fommil.ff.physics.GamePhysics.Action;
 
 /**
  *
@@ -34,7 +34,7 @@ public class KeyboardController extends KeyAdapter {
 		this.game = game;
 	}
 
-	private final Collection<Player.Action> actions = Sets.newHashSet();
+	private final Collection<Action> actions = Sets.newHashSet();
 
 	private final Collection<Ball.Aftertouch> aftertouches = Sets.newHashSet();
 
@@ -42,29 +42,30 @@ public class KeyboardController extends KeyAdapter {
 	public synchronized void keyPressed(KeyEvent e) {
 		switch (e.getKeyCode()) {
 			case KeyEvent.VK_LEFT:
-				actions.add(Player.Action.LEFT);
+				actions.add(Action.LEFT);
 				aftertouches.add(Ball.Aftertouch.LEFT);
 				break;
 			case KeyEvent.VK_RIGHT:
-				actions.add(Player.Action.RIGHT);
+				actions.add(Action.RIGHT);
 				aftertouches.add(Ball.Aftertouch.RIGHT);
 				break;
 			case KeyEvent.VK_UP:
-				actions.add(Player.Action.UP);
+				actions.add(Action.UP);
 				aftertouches.add(Ball.Aftertouch.UP);
 				break;
 			case KeyEvent.VK_DOWN:
-				actions.add(Player.Action.DOWN);
+				actions.add(Action.DOWN);
 				aftertouches.add(Ball.Aftertouch.DOWN);
 				break;
 			case KeyEvent.VK_SPACE:
-				actions.add(Player.Action.KICK);
+				actions.add(Action.KICK);
+				actions.add(Action.CHANGE);
 				break;
 			case KeyEvent.VK_ENTER:
-				actions.add(Player.Action.TACKLE);
+				actions.add(Action.TACKLE);
 				break;
 			case KeyEvent.VK_A:
-				actions.add(Player.Action.HEAD);
+				actions.add(Action.HEAD);
 				break;
 			default:
 				return;
@@ -76,29 +77,30 @@ public class KeyboardController extends KeyAdapter {
 	public synchronized void keyReleased(KeyEvent e) {
 		switch (e.getKeyCode()) {
 			case KeyEvent.VK_LEFT:
-				actions.remove(Player.Action.LEFT);
+				actions.remove(Action.LEFT);
 				aftertouches.remove(Ball.Aftertouch.LEFT);
 				break;
 			case KeyEvent.VK_RIGHT:
-				actions.remove(Player.Action.RIGHT);
+				actions.remove(Action.RIGHT);
 				aftertouches.remove(Ball.Aftertouch.RIGHT);
 				break;
 			case KeyEvent.VK_UP:
-				actions.remove(Player.Action.UP);
+				actions.remove(Action.UP);
 				aftertouches.remove(Ball.Aftertouch.UP);
 				break;
 			case KeyEvent.VK_DOWN:
-				actions.remove(Player.Action.DOWN);
+				actions.remove(Action.DOWN);
 				aftertouches.remove(Ball.Aftertouch.DOWN);
 				break;
 			case KeyEvent.VK_SPACE:
-				actions.remove(Player.Action.KICK);
+				actions.remove(Action.KICK);
+				actions.remove(Action.CHANGE);
 				break;
 			case KeyEvent.VK_ENTER:
-				actions.remove(Player.Action.TACKLE);
+				actions.remove(Action.TACKLE);
 				break;
 			case KeyEvent.VK_A:
-				actions.remove(Player.Action.HEAD);
+				actions.remove(Action.HEAD);
 				break;
 			case KeyEvent.VK_ESCAPE:
 				System.exit(0);

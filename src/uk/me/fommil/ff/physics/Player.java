@@ -14,12 +14,10 @@
  */
 package uk.me.fommil.ff.physics;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import java.util.Collection;
 import java.util.List;
-import java.util.Random;
 import java.util.logging.Logger;
 import org.ode4j.math.DMatrix3;
 import org.ode4j.math.DVector3;
@@ -32,6 +30,7 @@ import org.ode4j.ode.DWorld;
 import org.ode4j.ode.OdeHelper;
 import org.ode4j.ode.internal.Rotation;
 import uk.me.fommil.ff.PlayerStats;
+import uk.me.fommil.ff.physics.GamePhysics.Action;
 
 /**
  * The model (M) and controller (C) for a {@link Player} during game play.
@@ -49,15 +48,6 @@ public class Player {
 	private static final Logger log = Logger.getLogger(Player.class.getName());
 
 	private static final double AUTOPILOT_TOLERANCE = 1;
-
-	/**
-	 * The actions that a player can perform.
-	 */
-	public enum Action {
-
-		UP, DOWN, LEFT, RIGHT, KICK, TACKLE, HEAD;
-
-	};
 
 	public enum PlayerState {
 
@@ -192,18 +182,18 @@ public class Player {
 	 */
 	public void autoPilot(Position attractor) {
 		Preconditions.checkNotNull(attractor);
-		List<Player.Action> auto = Lists.newArrayList();
+		List<Action> auto = Lists.newArrayList();
 		double dx = body.getPosition().get0() - attractor.x;
 		if (dx < -AUTOPILOT_TOLERANCE) {
-			auto.add(Player.Action.RIGHT);
+			auto.add(Action.RIGHT);
 		} else if (dx > AUTOPILOT_TOLERANCE) {
-			auto.add(Player.Action.LEFT);
+			auto.add(Action.LEFT);
 		}
 		double dy = body.getPosition().get1() - attractor.y;
 		if (dy < -AUTOPILOT_TOLERANCE) {
-			auto.add(Player.Action.UP);
+			auto.add(Action.UP);
 		} else if (dy > AUTOPILOT_TOLERANCE) {
-			auto.add(Player.Action.DOWN);
+			auto.add(Action.DOWN);
 		}
 		setActions(auto);
 	}

@@ -41,7 +41,6 @@ import uk.me.fommil.ff.Tactics;
 import uk.me.fommil.ff.Tactics.BallZone;
 import uk.me.fommil.ff.Tactics.PlayerZone;
 import uk.me.fommil.ff.physics.Ball.Aftertouch;
-import uk.me.fommil.ff.physics.Player.Action;
 import uk.me.fommil.ff.Team;
 import uk.me.fommil.ff.physics.Player.PlayerState;
 
@@ -56,6 +55,15 @@ public class GamePhysics {
 	private static final Logger log = Logger.getLogger(GamePhysics.class.getName());
 
 	private static final int MAX_CONTACTS = 8; // for collision detection
+
+	/**
+	 * The actions that a user can perform.
+	 */
+	public enum Action {
+
+		UP, DOWN, LEFT, RIGHT, KICK, TACKLE, HEAD, CHANGE;
+
+	};
 
 	private final Team a;
 
@@ -122,7 +130,7 @@ public class GamePhysics {
 	 * @param actions
 	 * @param aftertouches
 	 */
-	public void setUserActions(Collection<Player.Action> actions, Collection<Ball.Aftertouch> aftertouches) {
+	public void setUserActions(Collection<Action> actions, Collection<Ball.Aftertouch> aftertouches) {
 		Preconditions.checkNotNull(actions);
 		Preconditions.checkNotNull(aftertouches);
 		this.actions = Sets.newHashSet(actions);
@@ -132,7 +140,7 @@ public class GamePhysics {
 	public void tick(double dt) {
 		time += dt;
 
-		if (actions.contains(Player.Action.KICK))
+		if (actions.contains(Action.CHANGE))
 			updateSelected();
 
 		// TODO: be consistent with position/velocity implementations
