@@ -157,9 +157,8 @@ public class GamePhysics {
 			selected.kick(ball);
 		}
 
-		ball.setFriction(0);
+		ball.setDamping(0.01);
 		space.collide(null, collision);
-		ball.applyFriction();
 
 		world.step(dt);
 
@@ -216,10 +215,10 @@ public class GamePhysics {
 				surface.bounce_vel = 0.1;
 
 				if (ballInvolved) {
-					ball.setFriction(0.5);
-					if (selectedInvolved) {
-						selected.control(ball);
-					}
+					ball.setDamping(0.1);
+//					if (selectedInvolved) {
+//						selected.control(ball);
+//					}
 					if (playerInvolved) {
 						surface.bounce = 0.1;
 					} else if (groundInvolved) {

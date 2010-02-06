@@ -38,6 +38,8 @@ import uk.me.fommil.ff.Tactics.BallZone;
  */
 public class Ball {
 
+	private static final Logger log = Logger.getLogger(Ball.class.getName());
+
 	private static final double MASS_KG = 0.45;
 
 	private static final double RADIUS = 0.2; // official size = 0.7 / (2 * Math.PI);
@@ -53,15 +55,9 @@ public class Ball {
 
 	}
 
-	private static final Logger log = Logger.getLogger(Ball.class.getName());
-
 	Ball(DWorld world, DSpace space) {
 		Preconditions.checkNotNull(world);
 		Preconditions.checkNotNull(space);
-
-		DVector3 gravity = new DVector3();
-		world.getGravity(gravity);
-		g = gravity.length();
 
 		DBody body = OdeHelper.createBody(world);
 		sphere = OdeHelper.createSphere(RADIUS);
@@ -218,33 +214,7 @@ public class Ball {
 		body.addForce(force);
 	}
 
-	// <editor-fold defaultstate="collapsed" desc="HACK TO DEAL WITH FRICTION">
-	@Deprecated // HACK to workaround ODE lack of friction on spheres
-	private final double g;
-
-	@Deprecated // HACK to workaround ODE lack of friction on spheres
-	private volatile double mu;
-
-	@Deprecated // HACK to workaround ODE lack of friction on spheres
-	void applyFriction() {
-		if (mu == 0)
-			return;
-		DVector3C vel = sphere.getBody().getLinearVel();
-		if (vel.length() == 0)
-			return;
-		if (vel.length() < 0.1) {
-			sphere.getBody().setLinearVel(new DVector3());
-			return;
-		}
-		DVector3 friction = new DVector3(vel);
-		friction.scale(-1);
-		friction.scale(mu * MASS_KG * g);
-		sphere.getBody().addForce(friction);
+	void setDamping(double damping) {
+		sphere.getBody().setLinearDamping(damping);
 	}
-
-	@Deprecated // HACK to workaround ODE lack of friction on spheres
-	void setFriction(double mu) {
-		this.mu = mu;
-	}
-	// </editor-fold>
 }

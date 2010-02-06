@@ -110,7 +110,7 @@ public class Player {
 
 		DVector3 kick = new DVector3(body.getLinearVel());
 		kick.safeNormalize();
-		kick.scale(30);
+		kick.scale(20);
 		kick.set(2, 2);
 		ball.setVelocity(kick);
 	}
