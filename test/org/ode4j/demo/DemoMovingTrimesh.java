@@ -24,99 +24,104 @@
  *************************************************************************/
 package org.ode4j.demo;
 
-import org.ode4j.drawstuff.DrawStuff.dsFunctions;
 import org.ode4j.math.DMatrix3;
 import org.ode4j.math.DMatrix3C;
 import org.ode4j.math.DVector3;
 import org.ode4j.math.DVector3C;
 import org.ode4j.ode.DAABBC;
+import org.ode4j.ode.DBody;
 import org.ode4j.ode.DBox;
 import org.ode4j.ode.DCapsule;
-import org.ode4j.ode.DContactJoint;
-import org.ode4j.ode.DGeomTransform;
-import org.ode4j.ode.DSphere;
-import org.ode4j.ode.OdeConstants;
-import org.ode4j.ode.OdeHelper;
-import org.ode4j.ode.DBody;
 import org.ode4j.ode.DContact;
 import org.ode4j.ode.DContactBuffer;
+import org.ode4j.ode.DContactJoint;
+import org.ode4j.ode.DCylinder;
 import org.ode4j.ode.DGeom;
+import org.ode4j.ode.DGeomTransform;
 import org.ode4j.ode.DJoint;
 import org.ode4j.ode.DJointGroup;
 import org.ode4j.ode.DMass;
 import org.ode4j.ode.DSpace;
+import org.ode4j.ode.DSphere;
+import org.ode4j.ode.DTriMesh;
+import org.ode4j.ode.DTriMeshData;
 import org.ode4j.ode.DWorld;
+import org.ode4j.ode.OdeConstants;
+import org.ode4j.ode.OdeHelper;
 import org.ode4j.ode.DGeom.DNearCallback;
+import org.ode4j.ode.DSapSpace.AXES;
 
 import static org.ode4j.drawstuff.DrawStuff.*;
 import static org.ode4j.ode.OdeMath.*;
+import static org.ode4j.demo.BunnyGeom.*;
 
 
-class DemoSpaceStress extends dsFunctions {
+public class DemoMovingTrimesh extends dsFunctions {
+
 	// some constants
 
-	private static final int NUM = 10000;			// max number of objects
-	private static final float DENSITY = 5.0f;		// density of all objects
+	private static final int NUM = 200;			// max number of objects
+	private static final double DENSITY = (5.0);		// density of all objects
 	private static final int GPB = 3;			// maximum number of geometries per body
-	private static final int MAX_CONTACTS = 4;		// maximum number of contact points per body
-	private static final int WORLD_SIZE = 100;
+	private static final int MAX_CONTACTS = 64;		// maximum number of contact points per body
 
 
 	// dynamics and collision objects
 
-	private class MyObject {
+	private static class MyObject {
 		DBody body;			// the body
-		DGeom[] geom=new DGeom[GPB];		// geometries representing this body
+		DGeom[] geom = new DGeom[GPB];		// geometries representing this body
 	};
 
 	private static int num=0;		// number of objects in simulation
 	private static int nextobj=0;		// next object to recycle if num==NUM
 	private static DWorld world;
 	private static DSpace space;
-	private static MyObject[] obj=new MyObject[NUM];
+	private static MyObject[] obj = new MyObject[NUM];
 	private static DJointGroup contactgroup;
 	private static int selected = -1;	// selected object
 	private static boolean show_aabb = false;	// show geom AABBs?
 	private static boolean show_contacts = false;	// show contact points?
 	private static boolean random_pos = true;	// drop objects from random position?
-	private static boolean draw_geom = true;
+
+	private DGeom TriMesh1;
+	private DGeom TriMesh2;
+	private static DTriMeshData TriData1, TriData2;  // reusable static trimesh data
 
 
-	private DNearCallback nearCallback = new DNearCallback() {
+	private static DNearCallback nearCallback = new DNearCallback() {
 		@Override
 		public void call(Object data, DGeom o1, DGeom o2) {
 			nearCallback(data, o1, o2);
 		}
 	};
 
+
 	// this is called by dSpaceCollide when two objects in space are
 	// potentially colliding.
-	private void nearCallback (Object data, DGeom o1, DGeom o2)
-	{
-		int i;
-		// if (o1->body && o2->body) return;
 
+	private static void nearCallback (Object data, DGeom o1, DGeom o2)
+	{
 		// exit without doing anything if the two bodies are connected by a joint
 		DBody b1 = o1.getBody();
 		DBody b2 = o2.getBody();
 		if (b1!=null && b2!=null && OdeHelper.areConnectedExcluding (b1,b2,DContactJoint.class)) return;
-
 		DContactBuffer contacts = new DContactBuffer(MAX_CONTACTS);   // up to MAX_CONTACTS contacts per box-box
-		for (i=0; i<MAX_CONTACTS; i++) {
+		for (int i=0; i<MAX_CONTACTS; i++) {
 			DContact contact = contacts.get(i);
-			contact.surface.mode = dContactBounce | dContactSoftCFM;
-			contact.surface.mu = dInfinity;
+			contact.surface.mode = OdeConstants.dContactBounce | OdeConstants.dContactSoftCFM;
+			contact.surface.mu = OdeConstants.dInfinity;
 			contact.surface.mu2 = 0;
 			contact.surface.bounce = 0.1;
 			contact.surface.bounce_vel = 0.1;
 			contact.surface.soft_cfm = 0.01;
 		}
 		int numc = OdeHelper.collide (o1,o2,MAX_CONTACTS,contacts.getGeomBuffer());
-		if (numc != 0) {
+		if (numc!=0) {
 			DMatrix3 RI = new DMatrix3();
-			RI.setIdentity();
-			final DVector3 ss = new DVector3(0.02,0.02,0.02);
-			for (i=0; i<numc; i++) {
+			RI.setIdentity ();
+			DVector3 ss = new DVector3(0.02,0.02,0.02);
+			for (int i=0; i<numc; i++) {
 				DJoint c = OdeHelper.createContactJoint (world,contactgroup,contacts.get(i));
 				c.attach (b1,b2);
 				if (show_contacts) dsDrawBox (contacts.get(i).geom.pos,RI,ss);
@@ -127,18 +132,23 @@ class DemoSpaceStress extends dsFunctions {
 
 	private static float[] xyz = {2.1640f,-1.3079f,1.7600f};
 	private static float[] hpr = {125.5000f,-17.0000f,0.0000f};
+
+
 	// start simulation - set viewpoint
+
+	@Override
 	public void start()
 	{
 		OdeHelper.allocateODEDataForThread(OdeConstants.dAllocateMaskAll);
 
 		dsSetViewpoint (xyz,hpr);
 		System.out.println ("To drop another object, press:");
-		System.out.println ("   o to disable rendering.");
 		System.out.println ("   b for box.");
 		System.out.println ("   s for sphere.");
-		System.out.println ("   c for cylinder.");
+		System.out.println ("   y for cylinder.");
+		System.out.println ("   c for capsule.");
 		System.out.println ("   x for a composite object.");
+		System.out.println ("   m for a trimesh.");
 		System.out.println ("To select an object, press space.");
 		System.out.println ("To disable the selected object, press d.");
 		System.out.println ("To enable the selected object, press e.");
@@ -148,24 +158,17 @@ class DemoSpaceStress extends dsFunctions {
 	}
 
 
-	//private char locase (char c)
-	//{
-	//  if (c >= 'A' && c <= 'Z') return c - ('a'-'A');
-	//  else return c;
-	//}
-
-
 	// called when a key pressed
 
+	@Override
 	public void command (char cmd)
 	{
 		int i,j,k;
 		double[] sides = new double[3];
 		DMass m = OdeHelper.createMass();
 
-		cmd = Character.toLowerCase(cmd);//locase (cmd);
-		if (cmd == 'b' || cmd == 's' || cmd == 'c' || cmd == 'x'
-		/* || cmd == 'l' */) {
+		cmd = Character.toLowerCase (cmd);
+		if (cmd == 'b' || cmd == 's' || cmd == 'c' || cmd == 'x' || cmd == 'm' || cmd == 'y' ) {
 			if (num < NUM) {
 				i = num;
 				num++;
@@ -176,11 +179,10 @@ class DemoSpaceStress extends dsFunctions {
 				if (nextobj >= num) nextobj = 0;
 
 				// destroy the body and geoms for slot i
-				obj[i].body.destroy();
+				obj[i].body.destroy ();
 				for (k=0; k < GPB; k++) {
-					if (obj[i].geom[k]!=null) obj[i].geom[k].destroy();
+					if (obj[i].geom[k]!=null) obj[i].geom[k].destroy ();
 				}
-				//memset (&obj[i],0,sizeof(obj[i]));
 				obj[i] = new MyObject();
 			}
 
@@ -190,14 +192,14 @@ class DemoSpaceStress extends dsFunctions {
 			DMatrix3 R = new DMatrix3();
 			if (random_pos) {
 				obj[i].body.setPosition (
-						dRandReal()*WORLD_SIZE-(WORLD_SIZE/2),dRandReal()*WORLD_SIZE-(WORLD_SIZE/2),dRandReal()+1);
+						dRandReal()*2-1,dRandReal()*2-1,dRandReal()+3);
 				dRFromAxisAndAngle (R,dRandReal()*2.0-1.0,dRandReal()*2.0-1.0,
 						dRandReal()*2.0-1.0,dRandReal()*10.0-5.0);
 			}
 			else {
 				double maxheight = 0;
 				for (k=0; k<num; k++) {
-					DVector3C pos = obj[k].body.getPosition();
+					DVector3C pos = obj[k].body.getPosition ();
 					if (pos.get2() > maxheight) maxheight = pos.get2();
 				}
 				obj[i].body.setPosition (0,0,maxheight+1);
@@ -207,30 +209,45 @@ class DemoSpaceStress extends dsFunctions {
 			obj[i].body.setData (i);
 
 			if (cmd == 'b') {
-				m.setBox (DENSITY,sides[0],sides[1],sides[2]);
-				obj[i].geom[0] = OdeHelper.createBox (space,sides[0],sides[1],sides[2]);
+				m.setBox (DENSITY,sides[0], sides[1], sides[2]);
+				obj[i].geom[0] = OdeHelper.createBox (space,sides[0], sides[1], sides[2]);
 			}
 			else if (cmd == 'c') {
 				sides[0] *= 0.5;
 				m.setCapsule (DENSITY,3,sides[0],sides[1]);
 				obj[i].geom[0] = OdeHelper.createCapsule (space,sides[0],sides[1]);
 			}
-			/*
-    // cylinder option not yet implemented
-    else if (cmd == 'l') {
-      sides[1] *= 0.5;
-      dMassSetCapsule (&m,DENSITY,3,sides[0],sides[1]);
-      obj[i].geom[0] = dCreateCylinder (space,sides[0],sides[1]);
-    }
-			 */
+			else if (cmd == 'y') {
+				sides[1] *= 0.5;
+				m.setCylinder (DENSITY,3,sides[0],sides[1]);
+				obj[i].geom[0] = OdeHelper.createCylinder (space,sides[0],sides[1]);
+			}
 			else if (cmd == 's') {
 				sides[0] *= 0.5;
 				m.setSphere (DENSITY,sides[0]);
 				obj[i].geom[0] = OdeHelper.createSphere (space,sides[0]);
 			}
+			else if (cmd == 'm') {
+				DTriMeshData new_tmdata = OdeHelper.createTriMeshData();
+				//      dGeomTriMeshDataBuildSingle(new_tmdata, Vertices[0], 3 * sizeof(float), VertexCount, 
+				//		  (dTriIndex*)&Indices[0], IndexCount, 3 * sizeof(dTriIndex));
+				new_tmdata.build( Vertices, Indices );
+
+				obj[i].geom[0] = OdeHelper.createTriMesh(space, new_tmdata, null, null, null);
+
+				// remember the mesh's dTriMeshDataID on its userdata for convenience.
+				obj[i].geom[0].setData(new_tmdata);
+
+				m.setTrimesh( DENSITY, (DTriMesh) obj[i].geom[0] );
+				DVector3 c = new DVector3( m.getC() );
+				System.out.println("mass at " + c);
+				c.scale(-1);
+				obj[i].geom[0].setPosition( c );
+				m.translate( c );
+			}
 			else if (cmd == 'x') {
-				DGeom[] g2=new DGeom[GPB];		// encapsulated geometries
-				DVector3[] dpos = new DVector3[GPB];	// delta-positions for encapsulated geometries
+				DGeom[] g2 = new DGeom[GPB];		// encapsulated geometries
+				DVector3[] dpos = new DVector3[GPB];//[3];	// delta-positions for encapsulated geometries
 
 				// start accumulating masses for the encapsulated geometries
 				DMass m2 = OdeHelper.createMass();
@@ -243,17 +260,16 @@ class DemoSpaceStress extends dsFunctions {
 				}
 
 				for (k=0; k<GPB; k++) {
-					DGeomTransform gt = OdeHelper.createGeomTransform (space); 
-					obj[i].geom[k] = gt;
-					gt.setCleanup (true);
+					obj[i].geom[k] = OdeHelper.createGeomTransform (space);
+					((DGeomTransform)obj[i].geom[k]).setCleanup (true);
 					if (k==0) {
 						double radius = dRandReal()*0.25+0.05;
 						g2[k] = OdeHelper.createSphere (null,radius);
 						m2.setSphere (DENSITY,radius);
 					}
 					else if (k==1) {
-						g2[k] = OdeHelper.createBox (null,sides[0],sides[1],sides[2]);
-						m2.setBox (DENSITY,sides[0],sides[1],sides[2]);
+						g2[k] = OdeHelper.createBox (null,sides[0], sides[1], sides[2]);
+						m2.setBox (DENSITY,sides[0], sides[1], sides[2]);
 					}
 					else {
 						double radius = dRandReal()*0.1+0.05;
@@ -261,13 +277,11 @@ class DemoSpaceStress extends dsFunctions {
 						g2[k] = OdeHelper.createCapsule (null,radius,length);
 						m2.setCapsule (DENSITY,3,radius,length);
 					}
-					gt.setGeom (g2[k]);
+					((DGeomTransform)obj[i].geom[k]).setGeom (g2[k]);
 
 					// set the transformation (adjust the mass too)
-					//dGeomSetPosition (g2[k],dpos[k][0],dpos[k][1],dpos[k][2]);
-					g2[k].setPosition(dpos[k]);
-					//dMassTranslate (m2,dpos[k][0],dpos[k][1],dpos[k][2]);
-					m2.translate(dpos[k]);
+					g2[k].setPosition (dpos[k]);
+					m2.translate (dpos[k]);
 					DMatrix3 Rtx = new DMatrix3();
 					dRFromAxisAndAngle (Rtx,dRandReal()*2.0-1.0,dRandReal()*2.0-1.0,
 							dRandReal()*2.0-1.0,dRandReal()*10.0-5.0);
@@ -279,16 +293,12 @@ class DemoSpaceStress extends dsFunctions {
 				}
 
 				// move all encapsulated objects so that the center of mass is (0,0,0)
-				DVector3C negC = m.getC().clone().scale(-1);
+				DVector3 c = new DVector3( m.getC() );
 				for (k=0; k<2; k++) {
-//					dGeomSetPosition (g2[k],
-//							dpos[k][0]-m.c[0],
-//							dpos[k][1]-m.c[1],
-//							dpos[k][2]-m.c[2]);
-					g2[k].setPosition(dpos[k].reAdd(negC));
+					g2[k].setPosition (	dpos[k].reSub(c) );
 				}
-				//dMassTranslate (m,-m.c[0],-m.c[1],-m.c[2]);
-				m.translate(negC);
+				c.scale(-1);
+				m.translate (c);
 			}
 
 			for (k=0; k < GPB; k++) {
@@ -304,10 +314,10 @@ class DemoSpaceStress extends dsFunctions {
 			if (selected < 0) selected = 0;
 		}
 		else if (cmd == 'd' && selected >= 0 && selected < num) {
-			obj[selected].body.disable();
+			obj[selected].body.disable ();
 		}
 		else if (cmd == 'e' && selected >= 0 && selected < num) {
-			obj[selected].body.enable();
+			obj[selected].body.enable ();
 		}
 		else if (cmd == 'a') {
 			show_aabb ^= true;
@@ -318,9 +328,6 @@ class DemoSpaceStress extends dsFunctions {
 		else if (cmd == 'r') {
 			random_pos ^= true;
 		}
-		else if (cmd == 'o') {
-			draw_geom ^= true;
-		}
 	}
 
 
@@ -328,43 +335,33 @@ class DemoSpaceStress extends dsFunctions {
 
 	private void drawGeom (DGeom g, DVector3C pos, DMatrix3C R, boolean show_aabb)
 	{
-		if (!draw_geom){
-			return;
-		}
-
 		if (g==null) return;
-		if (pos==null) pos = g.getPosition();
-		if (R==null) R = g.getRotation();
+		if (pos==null) pos = g.getPosition ();
+		if (R==null) R = g.getRotation ();
 
 		if (g instanceof DBox) {
 			DVector3C sides = ((DBox)g).getLengths();
 			dsDrawBox (pos,R,sides);
 		}
 		else if (g instanceof DSphere) {
-			dsDrawSphere (pos,R,((DSphere)g).getRadius());
+			dsDrawSphere (pos,R, ((DSphere)g).getRadius ());
 		}
 		else if (g instanceof DCapsule) {
-			DCapsule cap = (DCapsule) g; 
-			dsDrawCapsule (pos,R,cap.getLength(), cap.getRadius());
+			DCapsule cap = (DCapsule) g;
+			dsDrawCapsule (pos,R, cap.getLength(), cap.getRadius());
 		}
-		/*
-  // cylinder option not yet implemented
-  else if (type == dCylinderClass) {
-    dReal radius,length;
-    dGeomCylinderGetParams (g,&radius,&length);
-    dsDrawCylinder (pos,R,length,radius);
-  }
-		 */
+		else if (g instanceof DCylinder) {
+			DCylinder c = (DCylinder) g;
+			dsDrawCylinder (pos,R, c.getLength(), c.getRadius());
+		}
+
 		else if (g instanceof DGeomTransform) {
-			DGeom g2 = ((DGeomTransform)g).getGeom ();
-			DVector3C pos2 = g2.getPosition();
-			DMatrix3C R2 = g2.getRotation();
+			DGeom g2 = ((DGeomTransform)g).getGeom();
+			DVector3C pos2 = g2.getPosition ();
+			DMatrix3C R2 = g2.getRotation ();
 			DVector3 actual_pos = new DVector3();
 			DMatrix3 actual_R = new DMatrix3();
 			dMULTIPLY0_331 (actual_pos,R,pos2);
-			//    actual_pos[0] += pos[0];
-			//    actual_pos[1] += pos[1];
-			//    actual_pos[2] += pos[2];
 			actual_pos.add(pos);
 			dMULTIPLY0_333 (actual_R,R,R2);
 			drawGeom (g2,actual_pos,actual_R,false);
@@ -376,8 +373,8 @@ class DemoSpaceStress extends dsFunctions {
 			DVector3 bbpos = aabb.getCenter();
 			DVector3 bbsides = aabb.getLengths();
 			DMatrix3 RI = new DMatrix3();
-			RI.setIdentity();
-			dsSetColorAlpha (1,0,0,0.5f);
+			RI.setIdentity ();
+			dsSetColorAlpha (1f,0,0f,0.5f);
 			dsDrawBox (bbpos,RI,bbsides);
 		}
 	}
@@ -385,79 +382,128 @@ class DemoSpaceStress extends dsFunctions {
 
 	// simulation loop
 
-	private void simLoop (boolean pause)
+	@Override
+	public void step (boolean pause)
 	{
 		dsSetColor (0,0,2);
-		OdeHelper.spaceCollide (space,0,nearCallback);
-		//if (!pause) dWorldStep (world,0.05);
-		//if (!pause) dWorldStepFast (world,0.05, 1);
+		space.collide (0,nearCallback);
+
+		if (!pause) world.step (0.05);
+
+		for (int j = 0; j < space.getNumGeoms(); j++) {
+			space.getGeom(j);
+		}
 
 		// remove all contact joints
-		contactgroup.empty();
+		contactgroup.empty ();
 
 		dsSetColor (1,1,0);
 		dsSetTexture (DS_TEXTURE_NUMBER.DS_WOOD);
 		for (int i=0; i<num; i++) {
 			for (int j=0; j < GPB; j++) {
-				if (i==selected) {
-					dsSetColor (0,0.7f,1);
+				if (obj[i].geom[j]!=null) {
+					if (i==selected) {
+						dsSetColor (0f,0.7f,1f);
+					}
+					else if ( !obj[i].body.isEnabled () ) {
+						dsSetColor (1,0,0);
+					}
+					else {
+						dsSetColor (1,1,0);
+					}
+
+					if (obj[i].geom[j] instanceof DTriMesh) {
+						// assume all trimeshes are drawn as bunnies
+						DVector3C Pos = obj[i].geom[j].getPosition();
+						DMatrix3C Rot = obj[i].geom[j].getRotation();
+
+						for (int ii = 0; ii < IndexCount; ii+=3) {
+							int v0 = Indices[ii + 0] * 3;
+							int v1 = Indices[ii + 1] * 3;
+							int v2 = Indices[ii + 2] * 3;
+							dsDrawTriangle(Pos, Rot, Vertices, v0, v1, v2, true);
+						}
+					} else {
+						drawGeom (obj[i].geom[j],null,null,show_aabb);
+					}
 				}
-				else if ( !obj[i].body.isEnabled() ) {
-					dsSetColor (1,0,0);
-				}
-				else {
-					dsSetColor (1,1,0);
-				}
-				drawGeom (obj[i].geom[j],null,null,show_aabb);
 			}
+		}
+
+//		{
+//			DVector3C Pos = TriMesh1.getPosition();
+//			DMatrix3C Rot = TriMesh1.getRotation();
+//
+//			DVector3[] v = { new DVector3(), new DVector3(), new DVector3() };
+//			for (int i = 0; i < IndexCount/3; i++) {
+//				((DxGimpact)TriMesh1).FetchTransformedTriangle(i, v);
+//				dsDrawTriangle(Pos, Rot, v[0], v[1], v[2], false);
+//			}}
+		DVector3C Pos1 = TriMesh1.getPosition();
+		DMatrix3C Rot1 = TriMesh1.getRotation();
+		for (int i = 0; i < IndexCount; i+=3) {
+			int v0 = Indices[i + 0] * 3;
+			int v1 = Indices[i + 1] * 3;
+			int v2 = Indices[i + 2] * 3;
+			dsDrawTriangle(Pos1, Rot1, Vertices, v0, v1, v2, false);
+		}
+
+		DVector3C Pos2 = TriMesh2.getPosition();
+		DMatrix3C Rot2 = TriMesh2.getRotation();
+		for (int i = 0; i < IndexCount; i+=3) {
+			int v0 = Indices[i + 0] * 3;
+			int v1 = Indices[i + 1] * 3;
+			int v2 = Indices[i + 2] * 3;
+			dsDrawTriangle(Pos2, Rot2, Vertices, v0, v1, v2, true);
 		}
 	}
 
 
 	public static void main(String[] args) {
-		new DemoSpaceStress().demo(args);
+		new DemoMovingTrimesh().demo(args);
 	}
 
-	private void demo(String[] args) {
-
+	private void demo (String[] args)
+	{
 		// create world
 		OdeHelper.initODE2(0);
 		world = OdeHelper.createWorld();
 
-
-		DVector3 Center = new DVector3();//{0, 0, 0, 0};
-		DVector3 Extents = new DVector3(WORLD_SIZE * 0.55, WORLD_SIZE * 0.55, WORLD_SIZE * 0.55);//, 0};
-
-		//space = dSimpleSpaceCreate(0);
-		//space = dHashSpaceCreate (0);
-		space = OdeHelper.createQuadTreeSpace (null, Center, Extents, 6);
-
+		space = OdeHelper.createSapSpace(AXES.XYZ);//SimpleSpace();
 		contactgroup = OdeHelper.createJointGroup();
 		world.setGravity (0,0,-0.5);
 		world.setCFM (1e-5);
 		OdeHelper.createPlane (space,0,0,1,0);
-		//memset (obj,0,sizeof(obj));
-		for (int i = 0; i < obj.length; i++) {
-			obj[i] = new MyObject();
-		}
+		for (int i = 0; i < obj.length; i++) obj[i] = new MyObject(); //TODO really? TZ (obj,0,sizeof(obj));
 
-		for (int i = 0; i < NUM; i++){
-			command('s');
-		}
+		// note: can't share tridata if intending to trimesh-trimesh collide
+		TriData1 = OdeHelper.createTriMeshData();
+		TriData1.build(Vertices, Indices);
+		TriData2 = OdeHelper.createTriMeshData();
+		TriData2.build(Vertices, Indices);
+
+		TriMesh1 = OdeHelper.createTriMesh(space, TriData1, null, null, null);
+		TriMesh2 = OdeHelper.createTriMesh(space, TriData2, null, null, null);
+		TriMesh1.setData(TriData1);
+		TriMesh2.setData(TriData2);
+
+		TriMesh1.setPosition(0, 0, 0.9);
+		DMatrix3 Rotation1 = new DMatrix3();
+		dRFromAxisAndAngle(Rotation1, 1, 0, 0, M_PI / 2.);
+		TriMesh1.setRotation(Rotation1);
+
+		TriMesh2.setPosition(1, 0, 0.9);
+		DMatrix3 Rotation2 = new DMatrix3();
+		dRFromAxisAndAngle(Rotation2, 1, 0, 0, M_PI / 2.);
+		TriMesh2.setRotation(Rotation2);
 
 		// run simulation
 		dsSimulationLoop (args,352,288,this);
 
-		contactgroup.destroy();
-		space.destroy();
-		world.destroy();
+		contactgroup.destroy ();
+		space.destroy ();
+		world.destroy ();
 		OdeHelper.closeODE();
-	}
-
-
-	@Override
-	public void step(boolean pause) {
-		simLoop(pause);
 	}
 
 

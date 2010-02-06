@@ -2,6 +2,8 @@
  *                                                                       *
  * Open Dynamics Engine, Copyright (C) 2001,2002 Russell L. Smith.       *
  * All rights reserved.  Email: russ@q12.org   Web: www.q12.org          *
+ * Open Dynamics Engine 4J, Copyright (C) 2007-2010 Tilmann Zäschke      *
+ * All rights reserved.  Email: ode4j@gmx.de   Web: www.ode4j.org        *
  *                                                                       *
  * This library is free software; you can redistribute it and/or         *
  * modify it under the terms of EITHER:                                  *
@@ -11,12 +13,13 @@
  *       General Public License is included with this library in the     *
  *       file LICENSE.TXT.                                               *
  *   (2) The BSD-style license that is included with this library in     *
- *       the file LICENSE-BSD.TXT.                                       *
+ *       the file ODE-LICENSE-BSD.TXT and ODE4J-LICENSE-BSD.TXT.         *
  *                                                                       *
  * This library is distributed in the hope that it will be useful,       *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the files    *
- * LICENSE.TXT and LICENSE-BSD.TXT for more details.                     *
+ * LICENSE.TXT, ODE-LICENSE-BSD.TXT and ODE4J-LICENSE-BSD.TXT for more   *
+ * details.                                                              *
  *                                                                       *
  *************************************************************************/
 package org.ode4j.demo;
@@ -151,6 +154,7 @@ public class DemoCards extends dsFunctions {
 	}
 
 
+	@Override
 	public void start()
 	{
 		System.out.println("Controls:");
@@ -177,8 +181,7 @@ public class DemoCards extends dsFunctions {
 		DContactBuffer contacts = new DContactBuffer(MAX_CONTACTS);
 
 		int numc = OdeHelper.collide (o1, o2, MAX_CONTACTS,
-				contacts.getGeomBuffer()
-				);//sizeof(dContact));
+				contacts.getGeomBuffer());
 
 		for (int i=0; i<numc; i++) {
 			contacts.get(i).surface.mode = dContactApprox1;
@@ -188,7 +191,8 @@ public class DemoCards extends dsFunctions {
 		}
 	}
 	
-	private void simLoop(boolean pause)
+	@Override
+	public void step(boolean pause)
 	{
 		if (!pause) {
 			space.collide(null, nearCallback);
@@ -230,7 +234,7 @@ public class DemoCards extends dsFunctions {
 	}
 
 	private void demo(String[] args) {
-		OdeHelper.initODE();
+		OdeHelper.initODE2(0);
 
 		world = OdeHelper.createWorld();
 		world.setGravity(0, 0, -0.5);
@@ -255,11 +259,6 @@ public class DemoCards extends dsFunctions {
 		OdeHelper.closeODE();
 	}
 
-
-	@Override
-	public void step(boolean pause) {
-		simLoop(pause);
-	}
 
 	@Override
 	public void stop() {

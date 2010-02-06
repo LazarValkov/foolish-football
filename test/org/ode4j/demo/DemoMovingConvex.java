@@ -1,7 +1,9 @@
 /*************************************************************************
  *                                                                       *
- * Open Dynamics Engine, Copyright (C) 2001-2003 Russell L. Smith.       *
+ * Open Dynamics Engine, Copyright (C) 2001,2002 Russell L. Smith.       *
  * All rights reserved.  Email: russ@q12.org   Web: www.q12.org          *
+ * Open Dynamics Engine 4J, Copyright (C) 2007-2010 Tilmann Zäschke      *
+ * All rights reserved.  Email: ode4j@gmx.de   Web: www.ode4j.org        *
  *                                                                       *
  * This library is free software; you can redistribute it and/or         *
  * modify it under the terms of EITHER:                                  *
@@ -11,12 +13,13 @@
  *       General Public License is included with this library in the     *
  *       file LICENSE.TXT.                                               *
  *   (2) The BSD-style license that is included with this library in     *
- *       the file LICENSE-BSD.TXT.                                       *
+ *       the file ODE-LICENSE-BSD.TXT and ODE4J-LICENSE-BSD.TXT.         *
  *                                                                       *
  * This library is distributed in the hope that it will be useful,       *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the files    *
- * LICENSE.TXT and LICENSE-BSD.TXT for more details.                     *
+ * LICENSE.TXT, ODE-LICENSE-BSD.TXT and ODE4J-LICENSE-BSD.TXT for more   *
+ * details.                                                              *
  *                                                                       *
  *************************************************************************/
 package org.ode4j.demo;
@@ -81,24 +84,19 @@ public class DemoMovingConvex extends dsFunctions {
 	private static boolean show_contacts = false;	// show contact points?
 	private static boolean random_pos = true;	// drop objects from random position?
 
-	//TODO? typedef double dVector3R[3];
-
 	private DNearCallback nearCallback = new DNearCallback() {
 		@Override
 		public void call(Object data, DGeom o1, DGeom o2) {
 			nearCallback(data, o1, o2);
 		}
 	};
-	
-	
+
+
 	// this is called by dSpaceCollide when two objects in space are
 	// potentially colliding.
 
 	private void nearCallback( Object data, DGeom o1, DGeom o2 )
 	{
-		int i;
-		// if (o1->body && o2->body) return;
-
 		// exit without doing anything if the two bodies are connected by a joint
 		DBody b1 = o1.getBody();
 		DBody b2 = o2.getBody();
@@ -106,8 +104,8 @@ public class DemoMovingConvex extends dsFunctions {
 
 		//dContact contact[MAX_CONTACTS];   // up to MAX_CONTACTS contacts per box-box
 		DContactBuffer contacts = new DContactBuffer(MAX_CONTACTS);
-		
-		for ( i=0; i<MAX_CONTACTS; i++ )
+
+		for ( int i=0; i<MAX_CONTACTS; i++ )
 		{
 			DContact contact = contacts.get(i);
 			contact.surface.mode = dContactBounce | dContactSoftCFM;
@@ -118,13 +116,13 @@ public class DemoMovingConvex extends dsFunctions {
 			contact.surface.soft_cfm = 0.01;
 		}
 		int numc = OdeHelper.collide( o1,o2,MAX_CONTACTS,contacts.getGeomBuffer() );//].geom,
-                //sizeof( dContact ) )
+		//sizeof( dContact ) )
 		if ( numc != 0 )
 		{
 			DMatrix3 RI = new DMatrix3();
 			RI.setIdentity();
 			DVector3C ss = new DVector3(0.02,0.02,0.02);
-			for ( i=0; i<numc; i++ )
+			for ( int i=0; i<numc; i++ )
 			{
 				DJoint c = OdeHelper.createContactJoint( world,contactgroup,contacts.get(i) );
 				c.attach( b1,b2 );
@@ -139,6 +137,7 @@ public class DemoMovingConvex extends dsFunctions {
 
 	// start simulation - set viewpoint
 
+	@Override
 	public void start()
 	{
 		OdeHelper.allocateODEDataForThread( dAllocateMaskAll );
@@ -159,6 +158,7 @@ public class DemoMovingConvex extends dsFunctions {
 
 
 	// called when a key pressed
+	@Override
 	public void command( char cmd )
 	{
 		int i,k;
@@ -195,9 +195,9 @@ public class DemoMovingConvex extends dsFunctions {
 			if ( random_pos )
 			{
 				obj[i].body.setPosition(
-				                  dRandReal()*2-1,dRandReal()*2-1,dRandReal()+3 );
+						dRandReal()*2-1,dRandReal()*2-1,dRandReal()+3 );
 				dRFromAxisAndAngle( R,dRandReal()*2.0-1.0,dRandReal()*2.0-1.0,
-				                    dRandReal()*2.0-1.0,dRandReal()*10.0-5.0 );
+						dRandReal()*2.0-1.0,dRandReal()*10.0-5.0 );
 			}
 			else
 			{
@@ -233,18 +233,17 @@ public class DemoMovingConvex extends dsFunctions {
 			else  if ( cmd == 'v' )
 			{
 				obj[i].geom[0] = OdeHelper.createConvex( space,
-				                                convexBunnyPlanes,
-				                                convexBunnyPlaneCount,
-				                                convexBunnyPoints,
-				                                convexBunnyPointCount,
-				                                convexBunnyPolygons );
+						convexBunnyPlanes,
+						convexBunnyPlaneCount,
+						convexBunnyPoints,
+						convexBunnyPointCount,
+						convexBunnyPolygons );
 
 				/// Use equivalent TriMesh to set mass
 				DTriMeshData new_tmdata = OdeHelper.createTriMeshData();
-//				dGeomTriMeshDataBuildSingle( new_tmdata, &Vertices[0], 3 * sizeof( float ), VertexCount,
-//				                             ( dTriIndex* )&Indices[0], IndexCount, 3 * sizeof( dTriIndex ) );
-				new_tmdata.buildSingle( Vertices, 3, VertexCount,
-                        Indices, IndexCount, 3 );
+				//				dGeomTriMeshDataBuildSingle( new_tmdata, &Vertices[0], 3 * sizeof( float ), VertexCount,
+				//				                             ( dTriIndex* )&Indices[0], IndexCount, 3 * sizeof( dTriIndex ) );
+				new_tmdata.build( Vertices, Indices );
 
 				DTriMesh triMesh = OdeHelper.createTriMesh( null, new_tmdata, null, null, null );
 
@@ -253,10 +252,11 @@ public class DemoMovingConvex extends dsFunctions {
 				triMesh.destroy();
 				new_tmdata.destroy();
 
-				DVector3C mc = m.getC();
+				DVector3 mc = new DVector3( m.getC() );
 				System.out.println( "mass at " + mc );
-				obj[i].geom[0].setPosition( mc.reScale(-1) );
-				m.translate( mc.reScale(-1) );
+				mc.scale( -1 );
+				obj[i].geom[0].setPosition( mc );
+				m.translate( mc );
 			}
 
 			for ( k=0; k < GPB; k++ )
@@ -321,11 +321,11 @@ public class DemoMovingConvex extends dsFunctions {
 		else if ( g instanceof DConvex )
 		{
 			dsDrawConvex( pos,R,
-			              convexBunnyPlanes,
-			              convexBunnyPlaneCount,
-			              convexBunnyPoints,
-			              convexBunnyPointCount,
-			              convexBunnyPolygons );
+					convexBunnyPlanes,
+					convexBunnyPlaneCount,
+					convexBunnyPoints,
+					convexBunnyPointCount,
+					convexBunnyPolygons );
 		}
 
 		if ( show_aabb )
@@ -333,13 +333,11 @@ public class DemoMovingConvex extends dsFunctions {
 			// draw the bounding box for this geom
 			DAABBC aabb = g.getAABB();
 			DVector3 bbpos = aabb.getCenter();
-			//for ( int i=0; i<3; i++ ) bbpos[i] = 0.5*( aabb[i*2] + aabb[i*2+1] );
 			DVector3 bbsides = aabb.getLengths();
-			//for ( int j=0; j<3; j++ ) bbsides[j] = aabb[j*2+1] - aabb[j*2];
 			DMatrix3 RI = new DMatrix3();
 			RI.setIdentity();
-			dsSetColorAlpha( 1f,0f,0f,0.5f );
-			dsDrawBox( bbpos,RI,bbsides );
+			dsSetColorAlpha( 1f, 0f, 0f, 0.5f );
+			dsDrawBox( bbpos, RI, bbsides );
 		}
 	}
 
@@ -350,8 +348,6 @@ public class DemoMovingConvex extends dsFunctions {
 		dsSetColor( 0,0,2 );
 		space.collide( null,nearCallback );
 
-		//TODO TZ report and remove
-		//if ( !pause ) dWorldStepFast1( world,0.05, 5 );
 		if ( !pause ) world.quickStep( 0.05 );
 
 		for ( int j = 0; j < space.getNumGeoms(); j++ )
@@ -393,8 +389,8 @@ public class DemoMovingConvex extends dsFunctions {
 	public static void main(String[] args) {
 		new DemoMovingConvex().demo(args);
 	}
-	
-	
+
+
 	private void demo(String[] args)
 	{
 

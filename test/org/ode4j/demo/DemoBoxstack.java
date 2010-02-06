@@ -2,6 +2,8 @@
  *                                                                       *
  * Open Dynamics Engine, Copyright (C) 2001,2002 Russell L. Smith.       *
  * All rights reserved.  Email: russ@q12.org   Web: www.q12.org          *
+ * Open Dynamics Engine 4J, Copyright (C) 2007-2010 Tilmann Zäschke      *
+ * All rights reserved.  Email: ode4j@gmx.de   Web: www.ode4j.org        *
  *                                                                       *
  * This library is free software; you can redistribute it and/or         *
  * modify it under the terms of EITHER:                                  *
@@ -11,12 +13,13 @@
  *       General Public License is included with this library in the     *
  *       file LICENSE.TXT.                                               *
  *   (2) The BSD-style license that is included with this library in     *
- *       the file LICENSE-BSD.TXT.                                       *
+ *       the file ODE-LICENSE-BSD.TXT and ODE4J-LICENSE-BSD.TXT.         *
  *                                                                       *
  * This library is distributed in the hope that it will be useful,       *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the files    *
- * LICENSE.TXT and LICENSE-BSD.TXT for more details.                     *
+ * LICENSE.TXT, ODE-LICENSE-BSD.TXT and ODE4J-LICENSE-BSD.TXT for more   *
+ * details.                                                              *
  *                                                                       *
  *************************************************************************/
 package org.ode4j.demo;
@@ -160,6 +163,14 @@ class DemoBoxstack extends dsFunctions {
 	private static MyFeedback[] feedbacks=new MyFeedback[MAX_FEEDBACKNUM];
 	private static int fbnum=0;
 
+	
+	private DNearCallback nearCallback = new DNearCallback(){
+		@Override
+		public void call(Object data, DGeom o1, DGeom o2) {
+			nearCallback(data, o1, o2);
+		}};
+	
+	
 	// this is called by dSpaceCollide when two objects in space are
 	// potentially colliding.
 
@@ -216,6 +227,7 @@ class DemoBoxstack extends dsFunctions {
 
 	// start simulation - set viewpoint
 
+	@Override
 	public void start()
 	{
 		OdeHelper.allocateODEDataForThread(dAllocateMaskAll);
@@ -242,15 +254,8 @@ class DemoBoxstack extends dsFunctions {
 	}
 
 
-	private char locase (char c)
-	{
-		//  if (c >= 'A' && c <= 'Z') return c - ('a'-'A');
-		//  else return c;
-		return Character.toLowerCase(c);
-	}
-
-
 	// called when a key pressed
+	@Override
 	public void command (char cmd)
 	{
 		int i;//size_t i;
@@ -259,7 +264,7 @@ class DemoBoxstack extends dsFunctions {
 		DMass m = OdeHelper.createMass();
 		boolean setBody;
 
-		cmd = locase (cmd);
+		cmd = Character.toLowerCase (cmd);
 		if (cmd == 'b' || cmd == 's' || cmd == 'c' || cmd == 'x' || cmd == 'y' || cmd == 'v')
 		{
 			setBody = false;
@@ -298,7 +303,7 @@ class DemoBoxstack extends dsFunctions {
 				for (k=0; k<num; k++) 
 				{
 					final DVector3C pos = obj[k].body.getPosition();
-					if (pos.get(2) > maxheight) maxheight = pos.get(2);
+					if (pos.get2() > maxheight) maxheight = pos.get2();
 				}
 				obj[i].body.setPosition( 0,0,maxheight+1);
 				R.setIdentity();
@@ -451,9 +456,9 @@ class DemoBoxstack extends dsFunctions {
 				}
 
 				// move all encapsulated objects so that the center of mass is (0,0,0)
-				DVector3C m_c = m.getC().clone().scale(-1);
+				DVector3C m_c = m.getC().clone();
 				for (k=0; k<GPB; k++) {
-					g2[k].setPosition( dpos[k].reAdd(m_c) );
+					g2[k].setPosition( dpos[k].reSub(m_c) );
 				}
 				m.translate(m_c);
 			}
@@ -478,13 +483,13 @@ class DemoBoxstack extends dsFunctions {
 			obj[selected].body.enable();
 		}
 		else if (cmd == 'a') {
-			show_aabb = !show_aabb;//^= 1;
+			show_aabb ^= true;
 		}
 		else if (cmd == 't') {
-			show_contacts = !show_contacts;//^= 1;
+			show_contacts ^= true;
 		}
 		else if (cmd == 'r') {
-			random_pos =!random_pos;//^= 1;
+			random_pos ^= true;
 		}
 		else if (cmd == '1') {
 			write_world = true;
@@ -508,8 +513,6 @@ class DemoBoxstack extends dsFunctions {
 	//void drawGeom (dGeom g, final double *pos, final double *R, boolean show_aabb)
 	private void drawGeom (DGeom g, DVector3C pos, DMatrix3C R, boolean show_aabb)
 	{
-		int i;
-
 		if (g==null) return;
 		if (pos==null) pos = g.getPosition();
 		if (R==null) R = g.getRotation();
@@ -592,15 +595,12 @@ class DemoBoxstack extends dsFunctions {
 
 	// simulation loop
 
-	private void simLoop (boolean pause)
+	@Override
+	public void step (boolean pause)
 	{
 		dsSetColor (0,0,2);
 		//  dSpaceCollide (space,null,nearCallback);
-		space.collide(null,new DNearCallback(){
-			@Override
-			public void call(Object data, DGeom o1, DGeom o2) {
-				nearCallback(data, o1, o2);
-			}});
+		space.collide(null,nearCallback);
 		if (!pause) world.quickStep (0.02);
 
 		if (write_world) {
@@ -660,9 +660,10 @@ class DemoBoxstack extends dsFunctions {
 
 	public static void main (String[] args)
 	{
-		// setup pointers to drawstuff callback functions
-		dsFunctions fn = new DemoBoxstack();
-
+		new DemoBoxstack().demo(args);
+	}
+	
+	private void demo(String[] args) {
 		// create world
 		OdeHelper.initODE2(0);
 		world = OdeHelper.createWorld();
@@ -687,18 +688,12 @@ class DemoBoxstack extends dsFunctions {
 		for (int i = 0; i < obj.length; i++) obj[i] = new MyObject();
 
 		// run simulation
-		dsSimulationLoop (args,352,288,fn);
+		dsSimulationLoop (args,352,288,this);
 
 		contactgroup.destroy ();
 		space.destroy ();
 		world.destroy ();
 		OdeHelper.closeODE();
-	}
-
-
-	@Override
-	public void step(boolean pause) {
-		simLoop(pause);
 	}
 
 

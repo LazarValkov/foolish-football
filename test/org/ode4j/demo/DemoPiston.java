@@ -2,6 +2,8 @@
  *                                                                       *
  * Open Dynamics Engine, Copyright (C) 2001,2002 Russell L. Smith.       *
  * All rights reserved.  Email: russ@q12.org   Web: www.q12.org          *
+ * Open Dynamics Engine 4J, Copyright (C) 2007-2010 Tilmann Zäschke      *
+ * All rights reserved.  Email: ode4j@gmx.de   Web: www.ode4j.org        *
  *                                                                       *
  * This library is free software; you can redistribute it and/or         *
  * modify it under the terms of EITHER:                                  *
@@ -11,12 +13,13 @@
  *       General Public License is included with this library in the     *
  *       file LICENSE.TXT.                                               *
  *   (2) The BSD-style license that is included with this library in     *
- *       the file LICENSE-BSD.TXT.                                       *
+ *       the file ODE-LICENSE-BSD.TXT and ODE4J-LICENSE-BSD.TXT.         *
  *                                                                       *
  * This library is distributed in the hope that it will be useful,       *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the files    *
- * LICENSE.TXT and LICENSE-BSD.TXT for more details.                     *
+ * LICENSE.TXT, ODE-LICENSE-BSD.TXT and ODE4J-LICENSE-BSD.TXT for more   *
+ * details.                                                              *
  *                                                                       *
  * Created by:    Remi Ricard                                            *
  *                (remi.ricard@simlog.com or papaDoc@videotron.ca)       *
@@ -563,10 +566,10 @@ class DemoPiston extends dsFunctions {
 	}
 
 
-	private void Help (String[] args)
+	@Override
+	public void dsPrintHelp()
 	{
-		System.out.println (args[0]);
-		System.out.println (" -h | --help   : print this help");
+		super.dsPrintHelp();
 		System.out.println (" -s | --slider : Set the joint as a slider");
 		System.out.println (" -p | --piston : Set the joint as a Piston. (Default joint)");
 		System.out.println (" -1 | --offset1 : Create an offset between the 2 bodies");
@@ -578,13 +581,7 @@ class DemoPiston extends dsFunctions {
 		System.out.println (" -3 | --offset3 : Create an offset between the 2 bodies");
 		System.out.println ("                  Offset one of the body by z=-0.5 and set the anchor");
 		System.out.println ("                  point in the middle of the 2 bodies");
-		System.out.println (" -t | --texture-path path  : Path to the texture.");
-		System.out.println ("                             Default = " + DRAWSTUFF_TEXTURE_PATH);
 		System.out.println (" -n | --notFixed : In free space with no gravity mode");
-		System.out.println ("-notex          : Don't use texture");
-		System.out.println ("-noshadow       : No shadow");
-		System.out.println ("-noshadows      : No shadows");
-		System.out.println ("-pause          : Initial pause");
 		System.out.println ("--------------------------------------------------\n");
 		System.out.println ("Hit any key to continue:");
 		//getchar();
@@ -602,40 +599,35 @@ class DemoPiston extends dsFunctions {
 
 		// Default test case
 
-		if (args.length >= 2 ) {
-			for (int i=1; i < args.length; ++i) {
-				//static int tata = 0;
+		for (int i=0; i < args.length; ++i) {
+			//static int tata = 0;
 
-				if (true) {
-					if ( "-h".equals(args[i]) || "--help".equals(args[i]) )
-						Help (args);
-
-					if ( "-s".equals(args[i]) || "--slider".equals(args[i]) )
-						type = DSliderJoint.class;
-
-					if ( "-t".equals(args[i]) || "--texture-path".equals(args[i]) ) {
-						int j = i+1;
-						if ( j+1 > args.length      ||  // Check if we have enough arguments
-								//TZ ? args[j] == '\0' ||  // We should have a path here
-								args[j].charAt(0) == '-' ) // We should have a path not a command line
-							Help (args);
-						else
-							this.path_to_textures = args[++i]; // Increase i since we use this argument
-					}
+			if (true) {
+				if ( "-s".equals(args[i]) || "--slider".equals(args[i]) ) {
+					type = DSliderJoint.class;
+					args[i] = "";
 				}
+			}
 
 
-				if ( "-1".equals(args[i]) || "--offset1".equals(args[i]) )
-					tc = 1;
+			if ( "-1".equals(args[i]) || "--offset1".equals(args[i]) ) {
+				tc = 1;
+				args[i] = "";
+			}
 
-				if ( "-2".equals(args[i]) || "--offset2".equals(args[i]) )
-					tc = 2;
+			if ( "-2".equals(args[i]) || "--offset2".equals(args[i]) ) {
+				tc = 2;
+				args[i] = "";
+			}
 
-				if ( "-3".equals(args[i]) || "--offset3".equals(args[i]) )
-					tc = 3;
+			if ( "-3".equals(args[i]) || "--offset3".equals(args[i]) ) {
+				tc = 3;
+				args[i] = "";
+			}
 
-				if ( "-n".equals(args[i]) || "--notFixed".equals(args[i]) )
-					fixed = false;
+			if ( "-n".equals(args[i]) || "--notFixed".equals(args[i]) ) {
+				fixed = false;
+				args[i] = "";
 			}
 		}
 

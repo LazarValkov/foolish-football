@@ -1,3 +1,24 @@
+/*************************************************************************
+ *                                                                       *
+ * Open Dynamics Engine 4J, Copyright (C) 2007-2010 Tilmann Zäschke      *
+ * All rights reserved.  Email: ode4j@gmx.de   Web: www.ode4j.org        *
+ *                                                                       *
+ * This library is free software; you can redistribute it and/or         *
+ * modify it under the terms of EITHER:                                  *
+ *   (1) The GNU Lesser General Public License as published by the Free  *
+ *       Software Foundation; either version 2.1 of the License, or (at  *
+ *       your option) any later version. The text of the GNU Lesser      *
+ *       General Public License is included with this library in the     *
+ *       file LICENSE.TXT.                                               *
+ *   (2) The BSD-style license that is included with this library in     *
+ *       the file ODE4J-LICENSE-BSD.TXT.                                 *
+ *                                                                       *
+ * This library is distributed in the hope that it will be useful,       *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the files    *
+ * LICENSE.TXT and ODE4J-LICENSE-BSD.TXT for more details.               *
+ *                                                                       *
+ *************************************************************************/
 package org.ode4j.drawstuff.internal;
 
 import static org.cpp4j.Cstdio.fprintf;
@@ -107,7 +128,7 @@ public class DrawStuffNull implements DrawStuffApi {
 
 		long startTime = System.currentTimeMillis() + 5000;
 		long fps = 0;
-		int loops = 0;
+//		int loops = 0;
 		_run = true;
 		while (_run) {
 			//  while (run) {
@@ -228,6 +249,12 @@ public class DrawStuffNull implements DrawStuffApi {
 	@Override
 	public void dsDrawTriangle(DVector3C pos, DMatrix3C r, DVector3C v0,
 			DVector3C v1, DVector3C v2, boolean solid) {
+		// Nothing
+	}
+
+	@Override
+	public void dsDrawTriangle(DVector3C pos, DMatrix3C R, float[] v0,
+			float[] v1, float[] v2, boolean solid) {
 		// Nothing
 	}
 }

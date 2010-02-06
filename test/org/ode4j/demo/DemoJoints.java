@@ -2,6 +2,8 @@
  *                                                                       *
  * Open Dynamics Engine, Copyright (C) 2001,2002 Russell L. Smith.       *
  * All rights reserved.  Email: russ@q12.org   Web: www.q12.org          *
+ * Open Dynamics Engine 4J, Copyright (C) 2007-2010 Tilmann Zäschke      *
+ * All rights reserved.  Email: ode4j@gmx.de   Web: www.ode4j.org        *
  *                                                                       *
  * This library is free software; you can redistribute it and/or         *
  * modify it under the terms of EITHER:                                  *
@@ -11,17 +13,17 @@
  *       General Public License is included with this library in the     *
  *       file LICENSE.TXT.                                               *
  *   (2) The BSD-style license that is included with this library in     *
- *       the file LICENSE-BSD.TXT.                                       *
+ *       the file ODE-LICENSE-BSD.TXT and ODE4J-LICENSE-BSD.TXT.         *
  *                                                                       *
  * This library is distributed in the hope that it will be useful,       *
  * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the files    *
- * LICENSE.TXT and LICENSE-BSD.TXT for more details.                     *
+ * LICENSE.TXT, ODE-LICENSE-BSD.TXT and ODE4J-LICENSE-BSD.TXT for more   *
+ * details.                                                              *
  *                                                                       *
  *************************************************************************/
 package org.ode4j.demo;
 
-import org.ode4j.drawstuff.DrawStuff;
 import org.ode4j.math.DMatrix3;
 import org.ode4j.math.DMatrix3C;
 import org.ode4j.math.DQuaternion;
@@ -100,7 +102,6 @@ public class DemoJoints extends dsFunctions {
 	//static int cmd_graphics = 1;
 	private static boolean cmd_interactive = false;
 	private static boolean cmd_graphics = true;
-	private static String cmd_path_to_textures = null;
 	private static int cmd_occasional_error = 0;	// perturb occasionally
 
 
@@ -1000,6 +1001,7 @@ public class DemoJoints extends dsFunctions {
 
 	private static float[] xyz = {1.0382f,-1.0811f,1.4700f};
 	private static float[] hpr = {135.0000f,-19.5000f,0.0000f};
+	@Override
 	public void start()
 	{
 		OdeHelper.allocateODEDataForThread(OdeConstants.dAllocateMaskAll);
@@ -1090,21 +1092,9 @@ public class DemoJoints extends dsFunctions {
 			return;
 		}
 
-		// setup pointers to drawstuff callback functions
-		dsFunctions fn = this;
-		fn.version = DS_VERSION;
-//		fn.start = &start;
-//		fn.step = &simLoop;
-//		fn.command = 0;
-//		fn.stop = 0;
-		if (cmd_path_to_textures != null)
-			fn.path_to_textures = cmd_path_to_textures;
-		else
-			fn.path_to_textures = DRAWSTUFF_TEXTURE_PATH;
-
 		// run simulation
 		if (cmd_graphics) {
-			dsSimulationLoop (args,352,288,fn);
+			dsSimulationLoop (args,352,288,this);
 			//dsSimulationLoop (args,288,288,fn);
 			//dsSimulationLoop (args,400,400,fn);
 		}
@@ -1133,33 +1123,34 @@ public class DemoJoints extends dsFunctions {
 		}
 	}
 
+	@Override
+	public void dsPrintHelp() {
+		super.dsPrintHelp();
+		System.out.println("-i              : Interactive.");
+		System.out.println("-g              : Disable graphics.");
+		System.out.println("-e              : Disable graphics.");
+		System.out.println("-n<testNo>      : Run selected test.");
+	}
+	
+	
 	//****************************************************************************
 	// main
 
 	public static void main (String[] args)
 	{
 		OdeHelper.initODE2(0);
-		DrawStuff.setOutputNull();  //Avoid Drawstuff TZ
+		//DrawStuff.setOutputNull();  //Avoid Drawstuff TZ
 
 		// process the command line args. anything that starts with `-' is assumed
 		// to be a drawstuff argument.
-		for (int i=1; i<args.length; i++) {
-			//    if ( args[i][0]=='-' && args[i][1]=='i' && args[i][2]==0) cmd_interactive = true;
-			//	  else if ( args[i][0]=='-' && args[i][1]=='g' && args[i][2]==0) cmd_graphics = false;
-			//else if ( args[i][0]=='-' && args[i][1]=='e' && args[i][2]==0) cmd_graphics = false;
-			//	    else if ( args[i][0]=='-' && args[i][1]=='n' && isdigit(args[i][2]) ) {
-			//	        char *endptr;
-			//	        long int n = strtol (&(argv[i][2]),&endptr,10);
-			//	  			if (*endptr == 0) cmd_test_num = n;
-			//	  		}
-			if (args[i].equals("-i")) cmd_interactive = true;
-			else if (args[i].equals("-g")) cmd_graphics = false;
-			else if (args[i].equals("-e")) cmd_graphics = false;
-			else if (args[i].startsWith("-n") && Character.isDigit(args[i].charAt(2))) {
+		for (int i=0; i<args.length; i++) {
+			if (args[i].equals("-i")) { cmd_interactive = true; args[i] = ""; }
+			if (args[i].equals("-g")) { cmd_graphics = false; args[i] = ""; }
+			if (args[i].equals("-e")) { cmd_graphics = false; args[i] = ""; }
+			if (args[i].startsWith("-n") && Character.isDigit(args[i].charAt(2))) {
 				cmd_test_num = Integer.parseInt(args[i].substring(2));
+				args[i] = "";
 			}
-			else
-				cmd_path_to_textures = args[i];
 		}
 
 		DemoJoints demo = new DemoJoints();
