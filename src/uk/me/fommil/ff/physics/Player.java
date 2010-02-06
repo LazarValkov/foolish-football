@@ -40,19 +40,15 @@ import uk.me.fommil.ff.PlayerStats;
  */
 public class Player {
 
-	private final DBox box;
+	private static final double HEIGHT = 2;
 
-	private final DBody body;
-
-	private static final double height = 2;
-
-	private static final double speed = 6.5; // about 15 MPH
+	private static final double SPEED = 6.5; // about 15 MPH
 
 	private static final double MASS = 100;
 
-	private volatile double direction;
+	private static final Logger log = Logger.getLogger(Player.class.getName());
 
-	private volatile Collection<Action> actions;
+	private static final double AUTOPILOT_TOLERANCE = 1;
 
 	/**
 	 * The actions that a player can perform.
@@ -70,15 +66,17 @@ public class Player {
 		// TODO CELEBRATE, PUNISH
 	}
 
-	private static final Logger log = Logger.getLogger(Player.class.getName());
-
-	protected static final double AUTO = 1;
-
 	protected final PlayerStats stats;
 
 	protected final int shirt;
 
-	protected final Random random = new Random();
+	private final DBox box;
+
+	private final DBody body;
+
+	private volatile double direction;
+
+	private volatile Collection<Action> actions;
 
 	Player(int i, PlayerStats stats, DWorld world, DSpace space) {
 		Preconditions.checkArgument(i >= 1 && i <= 11, i);
@@ -86,11 +84,11 @@ public class Player {
 		this.shirt = i;
 		this.stats = stats;
 		this.body = OdeHelper.createBody(world);
-		box = OdeHelper.createBox(space, 1, 0.5, height);
+		box = OdeHelper.createBox(space, 1, 0.5, HEIGHT);
 		box.setBody(body);
 
 		DMass mass = OdeHelper.createMass();
-		mass.setBoxTotal(MASS, 1, 0.5, height); // ?? code dupe
+		mass.setBoxTotal(MASS, 1, 0.5, HEIGHT); // ?? code dupe
 		body.setMass(mass);
 		body.setData(this);
 		body.setAngularDamping(1.0);
@@ -105,16 +103,16 @@ public class Player {
 		ball.addForce(control);
 	}
 
-	boolean kick(Ball ball) {
-		// TODO: alternative is to create temporary body/geometry with momentum to perform the kick
-		if (!actions.contains(Action.KICK))
-			return false;
+	void kick(Ball ball) {
+		assert actions.contains(Action.KICK);
+		if (getPosition().distance(ball.getPosition()) > 1)
+			return;
+
 		DVector3 kick = new DVector3(body.getLinearVel());
 		kick.safeNormalize();
-		kick.scale(20);
+		kick.scale(30);
 		kick.set(2, 2);
 		ball.setVelocity(kick);
-		return true;
 	}
 
 	/**
@@ -168,7 +166,7 @@ public class Player {
 		}
 		if (move.length() > 0) {
 			move.normalize();
-			move.scale(speed);
+			move.scale(SPEED);
 		}
 		return move;
 	}
@@ -196,15 +194,15 @@ public class Player {
 		Preconditions.checkNotNull(attractor);
 		List<Player.Action> auto = Lists.newArrayList();
 		double dx = body.getPosition().get0() - attractor.x;
-		if (dx < -AUTO) {
+		if (dx < -AUTOPILOT_TOLERANCE) {
 			auto.add(Player.Action.RIGHT);
-		} else if (dx > AUTO) {
+		} else if (dx > AUTOPILOT_TOLERANCE) {
 			auto.add(Player.Action.LEFT);
 		}
 		double dy = body.getPosition().get1() - attractor.y;
-		if (dy < -AUTO) {
+		if (dy < -AUTOPILOT_TOLERANCE) {
 			auto.add(Player.Action.UP);
-		} else if (dy > AUTO) {
+		} else if (dy > AUTOPILOT_TOLERANCE) {
 			auto.add(Player.Action.DOWN);
 		}
 		setActions(auto);
@@ -225,9 +223,8 @@ public class Player {
 		DVector3C position = body.getPosition();
 		DVector3C velocity = body.getLinearVel();
 		DVector3C angular = body.getAngularVel();
-		double z = position.get2() - height / 2;
+		double z = position.get2() - HEIGHT / 2 + 0.01;
 		double vz = velocity.get2();
-		double a = angular.length();
 
 		if (z < 0)
 			return PlayerState.RUN; // ?? should be GROUND but numerical errors
@@ -240,6 +237,8 @@ public class Player {
 		}
 		if (z > 0.1)
 			return PlayerState.HEAD_END;
+		if (actions.contains(Action.KICK))
+			return PlayerState.KICK;
 		return PlayerState.RUN;
 	}
 
@@ -257,7 +256,7 @@ public class Player {
 
 	void setPosition(DVector3C p) {
 		DVector3 position = new DVector3(p);
-		position.set(2, height / 2);
+		position.set(2, HEIGHT / 2);
 		body.setPosition(position);
 	}
 }

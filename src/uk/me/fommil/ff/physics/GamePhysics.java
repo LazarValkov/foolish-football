@@ -43,6 +43,7 @@ import uk.me.fommil.ff.Tactics.PlayerZone;
 import uk.me.fommil.ff.physics.Ball.Aftertouch;
 import uk.me.fommil.ff.physics.Player.Action;
 import uk.me.fommil.ff.Team;
+import uk.me.fommil.ff.physics.Player.PlayerState;
 
 /**
  * The model (M) and controller (C) for game play.
@@ -152,6 +153,9 @@ public class GamePhysics {
 		}
 		selected.setActions(actions);
 		ball.setAftertouch(aftertouches);
+		if (selected.getState() == PlayerState.KICK) {
+			selected.kick(ball);
+		}
 
 		ball.setFriction(0);
 		space.collide(null, collision);
@@ -215,10 +219,6 @@ public class GamePhysics {
 					ball.setFriction(0.5);
 					if (selectedInvolved) {
 						selected.control(ball);
-						if (selected.kick(ball))
-							break;
-						// TODO: alternative approach is to create joint but apply after-step velocity
-						// and do not create a joint
 					}
 					if (playerInvolved) {
 						surface.bounce = 0.1;
