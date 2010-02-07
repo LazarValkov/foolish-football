@@ -276,6 +276,8 @@ public class GamePhysics {
 
 		world.step(dt);
 
+		if (ball.getVelocity().speed() < 0.1)
+			ball.setVelocity(new DVector3()); // stops small movements
 		if (selected.getState() == PlayerState.KICK) {
 			selected.kick(ball);
 		}
