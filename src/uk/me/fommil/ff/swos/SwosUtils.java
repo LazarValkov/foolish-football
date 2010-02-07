@@ -90,6 +90,7 @@ public final class SwosUtils {
 
 	private static volatile List<Color> PAL;
 
+	// TODO: do not depend on hard-coded palette - read from the SWOS data files
 	private static final int[] PAL_RAW = new int[]{
 		0, 0, 36, 180, 180, 180, 252, 252, 252, 0, 0, 0, 108, 36, 0, 180, 72, 0,
 		252, 108, 0, 108, 108, 108, 36, 36, 36, 72, 72, 72, 252, 0, 0, 0, 0, 252,

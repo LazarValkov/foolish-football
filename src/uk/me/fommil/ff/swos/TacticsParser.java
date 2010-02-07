@@ -62,6 +62,7 @@ import uk.me.fommil.ff.Tactics.PlayerZone;
 public class TacticsParser {
 
 	private static final Logger log = Logger.getLogger(TacticsParser.class.getName());
+	// TODO: do not depend on offset values, parse from the names of the tactics
 	/** Offsets of the tactics in the SWOS ENGLISH.EXE file */
 	private static final int[] SWOS_OFFSETS = new int[]{
 		1528886, // 442
