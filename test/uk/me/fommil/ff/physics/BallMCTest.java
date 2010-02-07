@@ -17,6 +17,7 @@ package uk.me.fommil.ff.physics;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import java.util.List;
+import org.junit.Before;
 import org.junit.Test;
 import org.ode4j.math.DVector3;
 import uk.me.fommil.ff.Pitch;
@@ -28,6 +29,34 @@ import static org.junit.Assert.*;
 public class BallMCTest {
 
 	private final Pitch pitch = new Pitch();
+
+	@Before
+	public void setup() {
+		OdeInit.dInitODE();
+
+		world = OdeHelper.createWorld();
+		world.setGravity(0, 0, -9.81);
+
+		space = OdeHelper.createSimpleSpace();
+		joints = OdeHelper.createJointGroup();
+
+		OdeHelper.createPlane(space, 0, 0, 1, 0);
+
+		ball = new Ball(world, space);
+		Position centre = pitch.getCentre();
+		ball.setPosition(centre);
+
+	}
+
+	private List<Ball> createBalls(int number, Position position) {
+		List<Ball> balls = Lists.newArrayList();
+		for (int i = 0; i < number; i++) {
+			Ball ball = new Ball();
+			ball.setPosition(position);
+			balls.add(ball);
+		}
+		return balls;
+	}
 
 	@Test
 	public void testGravity() throws Exception {
@@ -181,15 +210,5 @@ public class BallMCTest {
 	@Test
 	public void testZone() {
 		fail("test not written");
-	}
-
-	private List<Ball> createBalls(int number, Position position) {
-		List<Ball> balls = Lists.newArrayList();
-		for (int i = 0; i < number; i++) {
-			Ball ball = new Ball();
-			ball.setPosition(position);
-			balls.add(ball);
-		}
-		return balls;
 	}
 }

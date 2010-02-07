@@ -22,15 +22,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 import org.ode4j.math.DVector3;
-import org.ode4j.ode.DBody;
-import org.ode4j.ode.DContact;
 import org.ode4j.ode.DContact.DSurfaceParameters;
-import org.ode4j.ode.DContactBuffer;
 import org.ode4j.ode.DGeom;
-import org.ode4j.ode.DGeom.DNearCallback;
-import org.ode4j.ode.DJoint;
 import org.ode4j.ode.DJointGroup;
-import org.ode4j.ode.DPlane;
 import org.ode4j.ode.DSpace;
 import org.ode4j.ode.DWorld;
 import org.ode4j.ode.OdeConstants;
@@ -43,6 +37,7 @@ import uk.me.fommil.ff.Tactics;
 import uk.me.fommil.ff.Tactics.BallZone;
 import uk.me.fommil.ff.Tactics.PlayerZone;
 import uk.me.fommil.ff.Team;
+import uk.me.fommil.ff.physics.CollisionCallback.CollisionHandler;
 import uk.me.fommil.ff.physics.Player.PlayerState;
 
 /**
@@ -54,8 +49,6 @@ import uk.me.fommil.ff.physics.Player.PlayerState;
 public class GamePhysics {
 
 	private static final Logger log = Logger.getLogger(GamePhysics.class.getName());
-
-	private static final int MAX_CONTACTS = 8; // for collision detection
 
 	/**
 	 * The actions that a user can perform.
@@ -161,7 +154,44 @@ public class GamePhysics {
 
 	private final DJointGroup joints;
 
-	private final NearCallback collision = new NearCallback();
+	private final CollisionCallback collision;
+
+	private final CollisionHandler collisionHandler = new CollisionHandler() {
+
+		@Override
+		public void collide(Ball ball, Player player, DSurfaceParameters surface) {
+			enableSoftBounce(surface);
+			ball.setDamping(0.1); // ?? can be overridden
+			surface.bounce = player.getBounce();
+			if (player.equals(getSelected())) {
+				selected.control(ball);
+			}
+		}
+
+		@Override
+		public void collide(Player player1, Player player2, DSurfaceParameters surface) {
+			enableSoftBounce(surface);
+			surface.bounce = 0.1;
+		}
+
+		@Override
+		public void collide(Ball ball, DSurfaceParameters surface) {
+			enableSoftBounce(surface);
+			surface.bounce = 0.5;
+			ball.setDamping(0.1); // ?? can be overridden
+			ball.setAftertouchEnabled(false);
+		}
+
+		@Override
+		public void collide(Player player, DSurfaceParameters surface) {
+			enableSoftBounce(surface);
+		}
+
+		private void enableSoftBounce(DSurfaceParameters surface) {
+			surface.mode = OdeConstants.dContactBounce | OdeConstants.dContactSoftERP;
+			surface.bounce_vel = 0.1;
+		}
+	};
 
 	private Collection<Action> actions = Collections.emptyList();
 
@@ -199,6 +229,8 @@ public class GamePhysics {
 			as.add(pma);
 		}
 		selected = as.get(9);
+
+		collision = new CollisionCallback(world, joints, collisionHandler);
 	}
 
 	/**
@@ -270,54 +302,8 @@ public class GamePhysics {
 		}
 		selected = closest;
 	}
-
-	private class NearCallback implements DNearCallback {
-
-		@Override
-		public void call(Object data, DGeom o1, DGeom o2) {
-			Preconditions.checkNotNull(o1, "o1");
-			Preconditions.checkNotNull(o2, "o2");
-
-			DBody b1 = o1.getBody();
-			DBody b2 = o2.getBody();
-
-			Object obj1 = b1 != null ? b1.getData() : null;
-			Object obj2 = b2 != null ? b2.getData() : null;
-
-			boolean ballInvolved = obj1 instanceof Ball || obj2 instanceof Ball;
-			boolean playerInvolved = obj1 instanceof Player || obj2 instanceof Player;
-			boolean selectedInvolved = selected == obj1 || selected == obj2;
-			boolean groundInvolved = o1 instanceof DPlane || o2 instanceof DPlane;
-
-			DContactBuffer contacts = new DContactBuffer(MAX_CONTACTS);
-			int numc = OdeHelper.collide(o1, o2, MAX_CONTACTS, contacts.getGeomBuffer());
-
-			for (int i = 0; i < numc; i++) {
-				DContact contact = contacts.get(i);
-				DSurfaceParameters surface = contact.surface;
-				surface.mode = OdeConstants.dContactBounce | OdeConstants.dContactSoftERP;
-				surface.bounce_vel = 0.1;
-
-				if (ballInvolved) {
-					ball.setDamping(0.1);
-//					if (selectedInvolved) {
-//						selected.control(ball);
-//					}
-					if (playerInvolved) {
-						surface.bounce = 0.1;
-					} else if (groundInvolved) {
-						surface.bounce = 0.5;
-						ball.setAftertouchEnabled(false);
-					}
-				}
-
-				DJoint c = OdeHelper.createContactJoint(world, joints, contact);
-				c.attach(b1, b2);
-			}
-		}
-	};
-
 	// <editor-fold defaultstate="collapsed" desc="BOILERPLATE GETTERS/SETTERS">
+
 	public Ball getBall() {
 		return ball;
 	}

@@ -40,13 +40,13 @@ import uk.me.fommil.ff.physics.GamePhysics.Action;
  */
 public class Player {
 
-	private static final double HEIGHT = 2;
+	private static final Logger log = Logger.getLogger(Player.class.getName());
+
+	private static final double HEIGHT = 1.7; // http://en.wikipedia.org/wiki/Human_height
 
 	private static final double SPEED = 6.5; // about 15 MPH
 
 	private static final double MASS = 60;
-
-	private static final Logger log = Logger.getLogger(Player.class.getName());
 
 	private static final double AUTOPILOT_TOLERANCE = 1;
 
@@ -98,7 +98,7 @@ public class Player {
 
 	void kick(Ball ball) {
 		assert actions.contains(Action.KICK);
-		if (getPosition().distance(ball.getPosition()) > 2)
+		if (getPosition().distance(ball.getPosition()) > 1)
 			return;
 
 		DVector3 kick = new DVector3(body.getLinearVel());
@@ -218,5 +218,17 @@ public class Player {
 		DVector3 position = new DVector3(p);
 		position.set(2, HEIGHT / 2);
 		body.setPosition(position);
+	}
+
+	// [0, 1] bounciness when contacting the ball
+	double getBounce() {
+		switch (getState()) {
+			case HEAD_START:
+			case HEAD_MID:
+			case HEAD_END:
+				return 1.0;
+			default:
+				return 0.1;
+		}
 	}
 }
