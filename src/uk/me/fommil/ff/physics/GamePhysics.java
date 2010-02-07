@@ -171,7 +171,7 @@ public class GamePhysics {
 		@Override
 		public void collide(Player player1, Player player2, DSurfaceParameters surface) {
 			enableSoftBounce(surface);
-			surface.bounce = 0.1;
+			surface.bounce = 0.75; // affects tackling
 		}
 
 		@Override
@@ -185,6 +185,8 @@ public class GamePhysics {
 		@Override
 		public void collide(Player player, DSurfaceParameters surface) {
 			enableSoftBounce(surface);
+			if (player.getTilt() > Math.PI / 8) // ?? exposing more than is needed?
+				surface.mu = 1000;
 		}
 
 		private void enableSoftBounce(DSurfaceParameters surface) {
@@ -256,15 +258,15 @@ public class GamePhysics {
 		BallZone bz = ball.getZone(pitch);
 		Tactics tactics = a.getCurrentTactics();
 		for (Player p : as) {
-			if (p != selected) {
-				Position target = bp;
-				double near = Math.min(10, bp.distance(selected.getPosition()));
-				if (bp.distance(p.getPosition()) > near) {
-					PlayerZone pz = tactics.getZone(bz, p.getShirt());
-					target = pz.getCentre(pitch, Pitch.Facing.NORTH);
-				}
-				p.autoPilot(target);
+			if (p == selected)
+				continue;
+			Position target = bp;
+			double near = Math.min(10, bp.distance(selected.getPosition()));
+			if (bp.distance(p.getPosition()) > near) {
+				PlayerZone pz = tactics.getZone(bz, p.getShirt());
+				target = pz.getCentre(pitch, Pitch.Facing.NORTH);
 			}
+			p.autoPilot(target);
 		}
 		selected.setActions(actions);
 		ball.setAftertouch(aftertouches);
@@ -292,6 +294,7 @@ public class GamePhysics {
 				case HEAD_START:
 				case HEAD_MID:
 				case HEAD_END:
+				case TACKLE:
 					continue;
 			}
 			double ds2 = model.getPosition().distance(ball.getPosition());

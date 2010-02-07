@@ -67,7 +67,6 @@ public class Ball {
 		body.setMass(mass);
 		space.add(sphere);
 		body.setData(this);
-		body.setLinearDampingThreshold(0.1);
 	}
 
 	/**

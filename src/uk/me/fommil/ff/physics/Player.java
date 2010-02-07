@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 import org.ode4j.math.DMatrix3;
+import org.ode4j.math.DMatrix3C;
 import org.ode4j.math.DVector3;
 import org.ode4j.math.DVector3C;
 import org.ode4j.ode.DBody;
@@ -51,6 +52,8 @@ public class Player {
 	private static final double AUTOPILOT_TOLERANCE = 1;
 
 	private static final double HEADER_BOOST = 2;
+
+	private static final double TACKLE_BOOST = 2;
 
 	public enum PlayerState {
 
@@ -84,7 +87,7 @@ public class Player {
 		mass.setBoxTotal(MASS, 1, 0.5, HEIGHT); // ?? code dupe
 		body.setMass(mass);
 		body.setData(this);
-		body.setAngularDamping(1.0);
+		body.setAngularDamping(0.1);
 	}
 
 	void control(Ball ball) {
@@ -98,7 +101,7 @@ public class Player {
 
 	void kick(Ball ball) {
 		assert actions.contains(Action.KICK);
-		if (getPosition().distance(ball.getPosition()) > 1)
+		if (getPosition().distance(ball.getPosition()) > 1) // TODO: better kick distance measure
 			return;
 
 		DVector3 kick = new DVector3(body.getLinearVel());
@@ -120,29 +123,38 @@ public class Player {
 	 */
 	public void setActions(Collection<Action> actions) {
 		Preconditions.checkNotNull(actions);
-		this.actions = actions;
 		switch (getState()) {
 			case RUN:
 			case THROW:
+			case KICK:
 				break;
 			default:
 				return;
 		}
+		this.actions = actions;
 		DVector3 move = Action.asVector(actions);
 		direction = GamePhysics.toAngle(move, direction);
 		move.scale(SPEED);
+
+		DMatrix3 rotation = new DMatrix3();
+		DMatrix3 tilt = new DMatrix3();
+		Rotation.dRFromAxisAndAngle(rotation, 0, 0, -1, direction);
+		Rotation.dRFromAxisAndAngle(tilt, -1, 0, 0, getTilt());
+		rotation.eqMul(rotation.clone(), tilt);
 
 		move.add(2, body.getLinearVel().get(2));
 		if (actions.contains(Action.HEAD)) {
 			move.scale(HEADER_BOOST);
 			move.add(0, 0, 3);
+		} else if (actions.contains(Action.TACKLE)) {
+			move.scale(TACKLE_BOOST);
+			DMatrix3 horizontal = new DMatrix3();
+			Rotation.dRFromAxisAndAngle(horizontal, -1, 0, 0, Math.PI / 2);
+			rotation.eqMul(rotation.clone(), horizontal);
 		}
 
 		body.setLinearVel(move);
-
-		DMatrix3 rotation = new DMatrix3();
-		Rotation.dRFromAxisAndAngle(rotation, 0, 0, -1, direction);
-		box.setRotation(rotation);
+		body.setRotation(rotation);
 	}
 
 	/**
@@ -182,10 +194,16 @@ public class Player {
 	public PlayerState getState() {
 		DVector3C position = body.getPosition();
 		DVector3C velocity = body.getLinearVel();
-		DVector3C angular = body.getAngularVel();
+
+		double tilt = getTilt();
 		double z = position.get2() - HEIGHT / 2 + 0.01;
 		double vz = velocity.get2();
 
+		if (tilt > Math.PI / 8) {
+			if (actions.contains(Action.TACKLE))
+				return PlayerState.TACKLE;
+			return PlayerState.GROUND;
+		}
 		if (vz > 0) {
 			if (z < 0.2)
 				return PlayerState.HEAD_START;
@@ -200,6 +218,13 @@ public class Player {
 		if (z < 0)
 			return PlayerState.RUN; // ?? should be GROUND but numerical errors
 		return PlayerState.RUN;
+	}
+
+	// returns the angle (radians) off the vertical
+	double getTilt() {
+		DMatrix3C rotation = body.getRotation();
+		DVector3 rotated = new DVector3(rotation.get02(), rotation.get12(), rotation.get22());
+		return Math.acos(rotated.dot(new DVector3(0, 0, 1)));
 	}
 
 	public Velocity getVelocity() {

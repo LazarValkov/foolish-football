@@ -80,16 +80,16 @@ public class GamePhysicsGL extends dsFunctions {
 		try {
 			pitchImage = PitchParser.getPitch(Main.SWOS, 6);
 			Map<Integer, Sprite> sprites = SpriteParser.getSprites(Main.SWOS);
-			gv = new ClassicView(game, pitchImage, sprites);
-			JFrame frame = new JFrame();
-			frame.add(gv);
-			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			frame.setSize(400, 300);
-			frame.setLocationRelativeTo(null);
-			frame.setTitle("Foolish Football");
-			frame.setVisible(true);
+//			gv = new ClassicView(game, pitchImage, sprites);
+//			JFrame frame = new JFrame();
+//			frame.add(gv);
+//			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//			frame.setSize(400, 300);
+//			frame.setLocationRelativeTo(null);
+//			frame.setTitle("Foolish Football");
+//			frame.setVisible(true);
 		} catch (IOException ex) {
-			Logger.getLogger(GamePhysicsGL.class.getName()).log(Level.SEVERE, null, ex);
+			log.log(Level.SEVERE, null, ex);
 		}
 	}
 
@@ -107,7 +107,7 @@ public class GamePhysicsGL extends dsFunctions {
 		for (DGeom geom : game.getGeoms()) {
 			draw(geom, Color.RED);
 		}
-		gv.repaint();
+//		gv.repaint();
 	}
 
 	@Override
