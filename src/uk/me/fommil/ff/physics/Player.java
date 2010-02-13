@@ -101,15 +101,20 @@ public class Player {
 		assert actions.contains(Action.KICK);
 		if (getPosition().distance(ball.getPosition()) > 1) // TODO: better kick distance measure
 			return;
+		hit(ball, 10, 2);
+	}
 
-		DVector3 kick = new DVector3(body.getLinearVel());
-		kick.set2(0);
-		if (kick.length() == 0)
+	void throwin(Ball ball) {
+		assert getState() == PlayerState.THROW;
+		assert actions.contains(Action.KICK);
+		if (getPosition().distance(ball.getPosition()) > 1) // TODO: better kick distance measure
 			return;
+		hit(ball, 5, 0);
+	}
 
-		kick.safeNormalize();
-		kick.scale(10);
-		kick.set(2, 2);
+	private void hit(Ball ball, double power, double lift) {
+		double direction = getDirection();
+		DVector3 kick = new DVector3(power * Math.sin(direction), power * Math.cos(direction), lift);
 		ball.setVelocity(kick);
 		ball.setAftertouchEnabled(true);
 	}
