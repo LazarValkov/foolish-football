@@ -37,6 +37,9 @@ public final class Position {
 	 * @param z
 	 */
 	public Position(double x, double y, double z) {
+		Preconditions.checkArgument(!Double.isNaN(x), "x cannot be NaN");
+		Preconditions.checkArgument(!Double.isNaN(y), "y cannot be NaN");
+		Preconditions.checkArgument(!Double.isNaN(z), "z cannot be NaN");
 		this.x = x;
 		this.y = y;
 		this.z = z;

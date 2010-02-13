@@ -76,12 +76,14 @@ public class Ball {
 	 */
 	public void setAftertouch(Collection<Aftertouch> aftertouches) {
 		Preconditions.checkNotNull(aftertouches);
-		if (!aftertouchEnabled)
+		if (!aftertouchEnabled || aftertouches.isEmpty())
 			return;
 		DVector3C velocity = sphere.getBody().getLinearVel();
+		if (velocity.length() < GamePhysics.MIN_SPEED)
+			return;
 		DVector3 forward = new DVector3(velocity);
 		forward.set2(0);
-		if (aftertouches.isEmpty() || forward.length() == 0)
+		if (forward.length() < GamePhysics.MIN_SPEED)
 			return;
 		forward.normalize();
 		double vz = velocity.get2();
@@ -139,6 +141,11 @@ public class Ball {
 	 * @param p
 	 */
 	public void setPosition(Position p) {
+		Preconditions.checkNotNull(p);
+		Preconditions.checkArgument(!Double.isNaN(p.x));
+		Preconditions.checkArgument(!Double.isNaN(p.y));
+		Preconditions.checkArgument(!Double.isNaN(p.z));
+
 		DVector3 vector = p.toDVector();
 		vector.add(0, 0, sphere.getRadius());
 		sphere.setPosition(vector);
@@ -151,6 +158,10 @@ public class Ball {
 
 	void addForce(DVector3C force) {
 		assert force != null;
+		assert !Double.isNaN(force.get0());
+		assert !Double.isNaN(force.get1());
+		assert !Double.isNaN(force.get2());
+
 		DBody body = sphere.getBody();
 		body.addForce(force);
 	}

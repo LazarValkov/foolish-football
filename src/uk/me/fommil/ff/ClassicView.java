@@ -136,6 +136,7 @@ public class ClassicView extends JPanel {
 		// FIXME: draw all sprites north to south to get layering correct
 
 		// draw the ball
+		// TODO: except when throw-in
 		drawBall(g);
 
 //		// draw the zones
@@ -268,8 +269,8 @@ public class ClassicView extends JPanel {
 
 		if (pm == game.getSelected()) {
 			sprite = teamNumberSprites.get(pm.getShirt());
-			s = sprite.getCentre();
-			g.drawImage(sprite.getImage(), gPos.x - s.x, gPos.y - s.y - 15, null);
+			Point ss = sprite.getCentre();
+			g.drawImage(sprite.getImage(), gPos.x - ss.x, gPos.y - ss.y - 15, null);
 		}
 	}
 
@@ -305,7 +306,6 @@ public class ClassicView extends JPanel {
 
 	private Point pToG(Position p) {
 		double scale = 1.0 / game.getPitch().getScale();
-		// FIXME: reverse Y to get graphics
 		return new Point(
 				round(scale * (p.x - pBottomLeft.x)),
 				gSize.height - round(scale * (p.y - pBottomLeft.y)));
@@ -320,6 +320,10 @@ public class ClassicView extends JPanel {
 		double scale = game.getPitch().getScale();
 		// centre over the ball
 		Position pBall = game.getBall().getPosition();
+		if (Double.isNaN(pBall.x)) {
+			log.severe(pBall.toString());
+		}
+
 		double pMinX = pBall.x - scale * gSize.width / 2.0;
 		double pMinY = pBall.y - scale * gSize.height / 2.0;
 		// account for falling off, where screen could be bigger than the pitch image
@@ -451,12 +455,7 @@ public class ClassicView extends JPanel {
 		int gWidth = Math.min(round((pTopRight.x - pBottomLeft.x) * scale) + 1, pitch.getWidth() - gTopLeftX);
 		int gHeight = Math.min(round((pTopRight.y - pBottomLeft.y) * scale) + 1, pitch.getHeight() - gTopLeftY);
 		// extra padding is for when a partial pixel is shown
-		try {
-			BufferedImage sub = pitch.getSubimage(gTopLeftX, gTopLeftY, gWidth, gHeight);
-			g.drawImage(sub, 0, 0, null);
-		} catch (RuntimeException e) {
-			log.info(Joiner.on(" ").join(gTopLeftX, gTopLeftY, gWidth, gHeight));
-			throw e;
-		}
+		BufferedImage sub = pitch.getSubimage(gTopLeftX, gTopLeftY, gWidth, gHeight);
+		g.drawImage(sub, 0, 0, null);
 	}
 }

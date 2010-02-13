@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.logging.Logger;
 import org.ode4j.math.DVector3;
 import org.ode4j.ode.DContact.DSurfaceParameters;
@@ -52,7 +53,17 @@ public class GamePhysics {
 
 	private static final Logger log = Logger.getLogger(GamePhysics.class.getName());
 
-	private static final double MIN_SPEED = 0.01;
+	static final double MIN_SPEED = 0.1;
+
+	@Deprecated // DEBUGGING
+	private void debugNaNs() {
+		ball.getPosition();
+		ball.getVelocity();
+		for (Player player : getPlayers()) {
+			player.getPosition();
+			player.getVelocity();
+		}
+	}
 
 	/**
 	 * The actions that a user can perform.
@@ -254,7 +265,10 @@ public class GamePhysics {
 		this.aftertouches = Sets.newHashSet(aftertouches);
 	}
 
-	public void tick(double dt) {
+	/**
+	 * @param dt in seconds
+	 */
+	public void step(double dt) {
 		time += dt;
 
 		if (actions.contains(Action.CHANGE))
@@ -279,9 +293,15 @@ public class GamePhysics {
 		selected.setActions(actions);
 		ball.setAftertouch(aftertouches);
 		ball.setDamping(0);
+
+		debugNaNs();
 		space.collide(null, collision);
+		debugNaNs();
 
 		world.step(dt);
+		joints.empty();
+		debugNaNs();
+
 		if (ball.getVelocity().speed() < MIN_SPEED)
 			ball.setVelocity(new DVector3()); // stops small movements
 		switch (selected.getState()) {
@@ -291,7 +311,6 @@ public class GamePhysics {
 			case THROWING:
 				selected.throwIn(ball);
 		}
-		joints.empty();
 	}
 
 	private void updateSelected() {
@@ -328,6 +347,19 @@ public class GamePhysics {
 				if (!grounded.containsKey(p)) {
 					grounded.put(p, time);
 				} else if ((time - grounded.get(p)) > 2) {
+//					if (p.getState() == PlayerState.GROUND && new Random().nextBoolean()) {
+//						p.setState(PlayerState.INJURED);
+//						return;
+//					}
+					p.setState(PlayerState.RUN);
+					grounded.remove(p);
+					break;
+				}
+			case INJURED:
+				if (!grounded.containsKey(p)) {
+					log.warning("WASN'T LISTED IN GROUNDED");
+					grounded.put(p, time);
+				} else if ((time - grounded.get(p)) > 5) {
 					p.setState(PlayerState.RUN);
 					grounded.remove(p);
 				}

@@ -45,6 +45,10 @@ public class Player {
 
 	private static final double HEIGHT = 1.7; // http://en.wikipedia.org/wiki/Human_height
 
+	private static final double WIDTH = 1.0;
+
+	private static final double DEPTH = 0.75;
+
 	private static final double SPEED = 6.5; // about 15 MPH
 
 	private static final double MASS = 60;
@@ -62,9 +66,9 @@ public class Player {
 
 	}
 
-	protected final PlayerStats stats;
+	private final PlayerStats stats;
 
-	protected final int shirt;
+	private final int shirt;
 
 	private final DBox box;
 
@@ -80,11 +84,11 @@ public class Player {
 		this.shirt = i;
 		this.stats = stats;
 		this.body = OdeHelper.createBody(world);
-		box = OdeHelper.createBox(space, 1, 0.5, HEIGHT);
+		box = OdeHelper.createBox(space, WIDTH, DEPTH, HEIGHT);
 		box.setBody(body);
 
 		DMass mass = OdeHelper.createMass();
-		mass.setBoxTotal(MASS, 1, 0.5, HEIGHT); // ?? code dupe
+		mass.setBoxTotal(MASS, WIDTH, DEPTH, HEIGHT);
 		body.setMass(mass);
 		body.setData(this);
 		body.setAngularDamping(0.1);
@@ -92,6 +96,8 @@ public class Player {
 
 	void control(Ball ball) {
 		Preconditions.checkNotNull(ball);
+		if (distanceTo(ball) > 2)
+			return;
 		// TODO: come up with a solution that avoids the oscillation
 		DVector3 control = getPosition().toDVector().sub(ball.getPosition().toDVector());
 		control.set(2, 0);
@@ -101,7 +107,7 @@ public class Player {
 
 	void kick(Ball ball) {
 		assert actions.contains(Action.KICK);
-		if (getPosition().distance(ball.getPosition()) > 1) // TODO: better kick distance measure
+		if (distanceTo(ball) > 1)
 			return;
 		hit(ball, 10, 2);
 	}
@@ -109,7 +115,7 @@ public class Player {
 	void throwIn(Ball ball) {
 		assert getState() == PlayerState.THROWING;
 		assert actions.contains(Action.KICK);
-		if (getPosition().distance(ball.getPosition()) > 1) // TODO: better kick distance measure
+		if (distanceTo(ball) > 1)
 			return;
 		hit(ball, 5, 0);
 		setState(PlayerState.RUN);
@@ -120,6 +126,11 @@ public class Player {
 		DVector3 kick = new DVector3(power * Math.sin(direction), power * Math.cos(direction), lift);
 		ball.setVelocity(kick);
 		ball.setAftertouchEnabled(true);
+	}
+
+	private double distanceTo(Ball ball) {
+		// TODO: better distance measure considering feet location and direction
+		return getPosition().distance(ball.getPosition());
 	}
 
 	/**
@@ -152,6 +163,7 @@ public class Player {
 		if (actions.contains(Action.HEAD)) {
 			move.scale(HEADER_BOOST);
 			move.add(0, 0, 3);
+			// TODO: trajectory that doesn't make player land with feet on ground after heading
 		} else if (actions.contains(Action.TACKLE)) {
 			move.scale(TACKLE_BOOST);
 			DMatrix3 horizontal = new DMatrix3();
@@ -187,11 +199,8 @@ public class Player {
 		setActions(auto);
 	}
 
-	public int getShirt() {
-		return shirt;
-	}
-
 	// only works for some states
+	@SuppressWarnings("fallthrough")
 	void setState(PlayerState state) {
 		switch (state) {
 			case RUN:
@@ -199,15 +208,19 @@ public class Player {
 			case CELEBRATE:
 			case PUNISH:
 				setUpright();
+			case INJURED:
 				this.state = state;
+				break;
+			default:
+				throw new UnsupportedOperationException();
 		}
 	}
 
 	private void setUpright() {
+		setPosition(getPosition());
 		DMatrix3 rotation = new DMatrix3();
 		Rotation.dRFromAxisAndAngle(rotation, 0, 0, -1, getDirection());
 		body.setRotation(rotation);
-		setPosition(getPosition());
 	}
 
 	/**
@@ -255,19 +268,24 @@ public class Player {
 	 * @return the angle relative to NORTH {@code (- PI, + PI]}.
 	 */
 	public double getDirection() {
+		// TODO: is there a cleaner way to calculate direction?
 		DMatrix3C rotation = body.getRotation();
 		if (getTilt() > Math.PI / 4) {
 			DVector3 rotated = new DVector3(rotation.get02(), rotation.get12(), rotation.get22());
+			rotated.normalize();
 			return Math.signum(rotated.get0()) * Math.acos(rotated.dot(new DVector3(0, 1, 0)));
 		}
 		DVector3 rotated = new DVector3(rotation.get01(), rotation.get11(), rotation.get21());
+		rotated.normalize();
 		return Math.signum(rotated.get0()) * Math.acos(rotated.dot(new DVector3(0, 1, 0)));
 	}
 
 	// returns the angle (radians) off the vertical [0, PI]
 	double getTilt() {
+		// TODO: a [-PI, PI] version for head over feet
 		DMatrix3C rotation = body.getRotation();
 		DVector3 rotated = new DVector3(rotation.get02(), rotation.get12(), rotation.get22());
+		rotated.normalize();
 		return Math.acos(rotated.dot(new DVector3(0, 0, 1)));
 	}
 
@@ -299,5 +317,9 @@ public class Player {
 			default:
 				return 0.1;
 		}
+	}
+
+	public int getShirt() {
+		return shirt;
 	}
 }

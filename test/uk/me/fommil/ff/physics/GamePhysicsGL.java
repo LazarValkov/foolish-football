@@ -103,7 +103,7 @@ public class GamePhysicsGL extends dsFunctions {
 	public void step(boolean pause) {
 		controller.poll();
 
-		game.tick(0.017); // ?? about 60Hz
+		game.step(0.017); // ?? about 60Hz
 
 		Position c = game.getBall().getPosition();
 		float[] xyz = {(float) c.x, (float) c.y - 5, 15f};
