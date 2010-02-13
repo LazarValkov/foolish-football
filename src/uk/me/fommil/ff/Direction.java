@@ -25,13 +25,13 @@ public enum Direction {
 	NORTH, SOUTH, WEST, EAST, NORTH_EAST, NORTH_WEST, SOUTH_EAST, SOUTH_WEST;
 
 	/**
-	 * @param angle {@code (-PI, PI]}
+	 * @param angle {@code [-PI, PI]}
 	 * @return
 	 */
 	public static Direction valueOf(double angle) {
 		if (Double.isNaN(angle))
 			return null;
-		Preconditions.checkArgument(angle <= Math.PI && angle > -Math.PI, angle);
+		Preconditions.checkArgument(angle <= Math.PI && angle >= -Math.PI, angle);
 		angle = angle - Math.PI / 8; // tolerance
 		if (angle <= -Math.PI) {
 			return SOUTH;

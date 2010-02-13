@@ -85,6 +85,7 @@ public class GamePhysicsGL extends dsFunctions {
 			frame.add(gv);
 			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			frame.setSize(400, 300);
+			frame.setLocation(800, 500);
 			frame.setLocationRelativeTo(null);
 			frame.setTitle("Foolish Football");
 			frame.setVisible(true);

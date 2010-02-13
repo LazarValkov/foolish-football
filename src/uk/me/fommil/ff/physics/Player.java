@@ -155,6 +155,13 @@ public class Player {
 		body.setRotation(rotation);
 	}
 
+	void setUpright() {
+		DMatrix3 rotation = new DMatrix3();
+		Rotation.dRFromAxisAndAngle(rotation, 0, 0, -1, getDirection());
+		body.setRotation(rotation);
+		setPosition(getPosition());
+	}
+
 	/**
 	 * Controller. Ignore user input and go to the zone indicated.
 	 *

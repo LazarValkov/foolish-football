@@ -16,10 +16,12 @@ package uk.me.fommil.ff.physics;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 import org.ode4j.math.DVector3;
 import org.ode4j.ode.DContact.DSurfaceParameters;
@@ -49,6 +51,8 @@ import uk.me.fommil.ff.physics.Player.PlayerState;
 public class GamePhysics {
 
 	private static final Logger log = Logger.getLogger(GamePhysics.class.getName());
+
+	private static final double MIN_SPEED = 0.01;
 
 	/**
 	 * The actions that a user can perform.
@@ -195,9 +199,11 @@ public class GamePhysics {
 		}
 	};
 
-	private Collection<Action> actions = Collections.emptyList();
+	private volatile Collection<Action> actions = Collections.emptyList();
 
-	private Collection<Aftertouch> aftertouches = Collections.emptyList();
+	private volatile Collection<Aftertouch> aftertouches = Collections.emptyList();
+
+	private final Map<Player, Double> grounded = Maps.newHashMap();
 
 	/**
 	 * @param a
@@ -258,6 +264,7 @@ public class GamePhysics {
 		BallZone bz = ball.getZone(pitch);
 		Tactics tactics = a.getCurrentTactics();
 		for (Player p : as) {
+			helpStandUp(p);
 			if (p == selected)
 				continue;
 			Position target = bp;
@@ -268,20 +275,18 @@ public class GamePhysics {
 			}
 			p.autoPilot(target);
 		}
+
 		selected.setActions(actions);
 		ball.setAftertouch(aftertouches);
-
 		ball.setDamping(0);
 		space.collide(null, collision);
 
 		world.step(dt);
-
-		if (ball.getVelocity().speed() < 0.1)
+		if (ball.getVelocity().speed() < MIN_SPEED)
 			ball.setVelocity(new DVector3()); // stops small movements
 		if (selected.getState() == PlayerState.KICK) {
 			selected.kick(ball);
 		}
-
 		joints.empty();
 	}
 
@@ -307,8 +312,24 @@ public class GamePhysics {
 		}
 		selected = closest;
 	}
-	// <editor-fold defaultstate="collapsed" desc="BOILERPLATE GETTERS/SETTERS">
 
+	@SuppressWarnings("fallthrough")
+	private void helpStandUp(Player p) {
+		switch (p.getState()) {
+			case TACKLE:
+				if (p.getVelocity().speed() > MIN_SPEED)
+					break;
+			case GROUND:
+				if (!grounded.containsKey(p)) {
+					grounded.put(p, time);
+				} else if ((time - grounded.get(p)) > 2) {
+					p.setUpright();
+					grounded.remove(p);
+				}
+		}
+	}
+
+	// <editor-fold defaultstate="collapsed" desc="BOILERPLATE GETTERS/SETTERS">
 	public Ball getBall() {
 		return ball;
 	}
@@ -329,21 +350,22 @@ public class GamePhysics {
 		return a;
 	}
 
-	public Iterable<Goalkeeper> getGoalkeepers() {
-		return Collections.emptyList(); // TODO: goalkeepers
-	}
-
 	public Pitch getPitch() {
 		return pitch;
+	}
+
+	// </editor-fold>
+	public Iterable<Goalkeeper> getGoalkeepers() {
+		return Collections.emptyList(); // TODO: goalkeepers
 	}
 
 	Collection<DGeom> getGeoms() {
 		Collection<DGeom> geoms = Lists.newArrayList();
 		int num = space.getNumGeoms();
-		for (int i = 0; i < num; i++) {
+		for (int i = 0; i
+				< num; i++) {
 			geoms.add(space.getGeom(i));
 		}
 		return geoms;
 	}
-	// </editor-fold>
 }
