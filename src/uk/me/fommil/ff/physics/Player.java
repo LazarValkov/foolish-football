@@ -58,8 +58,8 @@ public class Player {
 	public enum PlayerState {
 
 		RUN, KICK, TACKLE, HEAD_START, HEAD_MID, HEAD_END, GROUND, INJURED,
-		THROW,
-		// TODO CELEBRATE, PUNISH
+		THROW, THROWING, CELEBRATE, PUNISH
+
 	}
 
 	protected final PlayerStats stats;
@@ -71,6 +71,8 @@ public class Player {
 	private final DBody body;
 
 	private volatile Collection<Action> actions = Collections.emptySet();
+
+	private volatile PlayerState state;
 
 	Player(int i, PlayerStats stats, DWorld world, DSpace space) {
 		Preconditions.checkArgument(i >= 1 && i <= 11, i);
@@ -104,12 +106,13 @@ public class Player {
 		hit(ball, 10, 2);
 	}
 
-	void throwin(Ball ball) {
-		assert getState() == PlayerState.THROW;
+	void throwIn(Ball ball) {
+		assert getState() == PlayerState.THROWING;
 		assert actions.contains(Action.KICK);
 		if (getPosition().distance(ball.getPosition()) > 1) // TODO: better kick distance measure
 			return;
 		hit(ball, 5, 0);
+		setState(PlayerState.RUN);
 	}
 
 	private void hit(Ball ball, double power, double lift) {
@@ -156,15 +159,9 @@ public class Player {
 			rotation.eqMul(rotation.clone(), horizontal);
 		}
 
-		body.setLinearVel(move);
+		if (getState() != PlayerState.THROW)
+			body.setLinearVel(move);
 		body.setRotation(rotation);
-	}
-
-	void setUpright() {
-		DMatrix3 rotation = new DMatrix3();
-		Rotation.dRFromAxisAndAngle(rotation, 0, 0, -1, getDirection());
-		body.setRotation(rotation);
-		setPosition(getPosition());
 	}
 
 	/**
@@ -194,12 +191,45 @@ public class Player {
 		return shirt;
 	}
 
+	// only works for some states
+	void setState(PlayerState state) {
+		switch (state) {
+			case RUN:
+			case THROW:
+			case CELEBRATE:
+			case PUNISH:
+				setUpright();
+				this.state = state;
+		}
+	}
+
+	private void setUpright() {
+		DMatrix3 rotation = new DMatrix3();
+		Rotation.dRFromAxisAndAngle(rotation, 0, 0, -1, getDirection());
+		body.setRotation(rotation);
+		setPosition(getPosition());
+	}
+
+	/**
+	 * @return
+	 */
+	@SuppressWarnings("fallthrough")
 	public PlayerState getState() {
+		if (state != null)
+			switch (state) {
+				case THROW:
+					if (actions.contains(Action.KICK))
+						return PlayerState.THROWING;
+				case CELEBRATE:
+				case PUNISH:
+					return state;
+			}
+
 		DVector3C position = body.getPosition();
 		DVector3C velocity = body.getLinearVel();
 
 		double tilt = getTilt();
-		double z = position.get2() - HEIGHT / 2 + 0.01;
+		double z = position.get2() - HEIGHT / 2;
 		double vz = velocity.get2();
 
 		if (tilt > Math.PI / 8) {
@@ -218,8 +248,6 @@ public class Player {
 			return PlayerState.HEAD_END;
 		if (actions.contains(Action.KICK))
 			return PlayerState.KICK;
-		if (z < 0)
-			return PlayerState.RUN; // ?? should be GROUND but numerical errors
 		return PlayerState.RUN;
 	}
 

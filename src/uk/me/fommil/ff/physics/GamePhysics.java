@@ -264,7 +264,7 @@ public class GamePhysics {
 		BallZone bz = ball.getZone(pitch);
 		Tactics tactics = a.getCurrentTactics();
 		for (Player p : as) {
-			helpStandUp(p);
+			transition(p);
 			if (p == selected)
 				continue;
 			Position target = bp;
@@ -284,8 +284,12 @@ public class GamePhysics {
 		world.step(dt);
 		if (ball.getVelocity().speed() < MIN_SPEED)
 			ball.setVelocity(new DVector3()); // stops small movements
-		if (selected.getState() == PlayerState.KICK) {
-			selected.kick(ball);
+		switch (selected.getState()) {
+			case KICK:
+				selected.kick(ball);
+				break;
+			case THROWING:
+				selected.throwIn(ball);
 		}
 		joints.empty();
 	}
@@ -314,7 +318,8 @@ public class GamePhysics {
 	}
 
 	@SuppressWarnings("fallthrough")
-	private void helpStandUp(Player p) {
+	private void transition(Player p) {
+		// TODO: should be in the Player class, not sure how
 		switch (p.getState()) {
 			case TACKLE:
 				if (p.getVelocity().speed() > MIN_SPEED)
@@ -323,7 +328,7 @@ public class GamePhysics {
 				if (!grounded.containsKey(p)) {
 					grounded.put(p, time);
 				} else if ((time - grounded.get(p)) > 2) {
-					p.setUpright();
+					p.setState(PlayerState.RUN);
 					grounded.remove(p);
 				}
 		}

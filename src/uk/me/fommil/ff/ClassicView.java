@@ -14,6 +14,7 @@
  */
 package uk.me.fommil.ff;
 
+import com.google.common.base.Joiner;
 import uk.me.fommil.ff.physics.Ball;
 import uk.me.fommil.ff.physics.GamePhysics;
 import uk.me.fommil.ff.physics.Player;
@@ -23,7 +24,6 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.event.KeyListener;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
@@ -59,7 +59,7 @@ public class ClassicView extends JPanel {
 
 	private final boolean debugging = false;
 
-	private final int zoom = 4;
+	private final int zoom = 2;
 
 	private final Team a;
 
@@ -269,7 +269,7 @@ public class ClassicView extends JPanel {
 		if (pm == game.getSelected()) {
 			sprite = teamNumberSprites.get(pm.getShirt());
 			s = sprite.getCentre();
-			g.drawImage(sprite.getImage(), gPos.x - s.x, gPos.y - s.y - 13, null);
+			g.drawImage(sprite.getImage(), gPos.x - s.x, gPos.y - s.y - 15, null);
 		}
 	}
 
@@ -450,11 +450,13 @@ public class ClassicView extends JPanel {
 		int gTopLeftY = Math.max(0, pitch.getHeight() - round(pTopRight.y * scale));
 		int gWidth = Math.min(round((pTopRight.x - pBottomLeft.x) * scale) + 1, pitch.getWidth() - gTopLeftX);
 		int gHeight = Math.min(round((pTopRight.y - pBottomLeft.y) * scale) + 1, pitch.getHeight() - gTopLeftY);
-
-//		log.info(pBottomLeft.x + " " + gTopLeftX + ", " + gTopLeftX);
-
 		// extra padding is for when a partial pixel is shown
-		BufferedImage sub = pitch.getSubimage(gTopLeftX, gTopLeftY, gWidth, gHeight);
-		g.drawImage(sub, 0, 0, null);
+		try {
+			BufferedImage sub = pitch.getSubimage(gTopLeftX, gTopLeftY, gWidth, gHeight);
+			g.drawImage(sub, 0, 0, null);
+		} catch (RuntimeException e) {
+			log.info(Joiner.on(" ").join(gTopLeftX, gTopLeftY, gWidth, gHeight));
+			throw e;
+		}
 	}
 }

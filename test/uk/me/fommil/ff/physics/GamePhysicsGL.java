@@ -32,6 +32,7 @@ import uk.me.fommil.ff.Main;
 import uk.me.fommil.ff.Pitch;
 import uk.me.fommil.ff.Sprite;
 import uk.me.fommil.ff.Team;
+import uk.me.fommil.ff.physics.Player.PlayerState;
 import uk.me.fommil.ff.swos.PitchParser;
 import uk.me.fommil.ff.swos.SpriteParser;
 import uk.me.fommil.ff.swos.TacticsParser;
@@ -58,6 +59,11 @@ public class GamePhysicsGL extends dsFunctions {
 		game.getSelected().setPosition(ballStart);
 		ballStart.set2(10);
 		game.getBall().setPosition(new Position(ballStart));
+		for (Player player : game.getPlayers()) {
+			if (player.getShirt() != 11)
+				continue;
+			player.setState(PlayerState.THROW);
+		}
 
 		GamePhysicsGL demo = new GamePhysicsGL(game);
 		DrawStuff.dsSimulationLoop(args, width, height, demo);
@@ -85,8 +91,7 @@ public class GamePhysicsGL extends dsFunctions {
 			frame.add(gv);
 			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			frame.setSize(400, 300);
-			frame.setLocation(800, 500);
-			frame.setLocationRelativeTo(null);
+			frame.setLocation(800, 300);
 			frame.setTitle("Foolish Football");
 			frame.setVisible(true);
 		} catch (IOException ex) {
