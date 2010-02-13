@@ -70,8 +70,6 @@ public class Player {
 
 	private final DBody body;
 
-	private volatile double direction;
-
 	private volatile Collection<Action> actions = Collections.emptySet();
 
 	Player(int i, PlayerStats stats, DWorld world, DSpace space) {
@@ -133,11 +131,11 @@ public class Player {
 		}
 		this.actions = actions;
 		DVector3 move = Action.asVector(actions);
-		direction = GamePhysics.toAngle(move, direction);
 		move.scale(SPEED);
 
 		DMatrix3 rotation = new DMatrix3();
 		DMatrix3 tilt = new DMatrix3();
+		double direction = GamePhysics.toAngle(move, getDirection());
 		Rotation.dRFromAxisAndAngle(rotation, 0, 0, -1, direction);
 		Rotation.dRFromAxisAndAngle(tilt, -1, 0, 0, getTilt());
 		rotation.eqMul(rotation.clone(), tilt);
@@ -180,13 +178,6 @@ public class Player {
 		setActions(auto);
 	}
 
-	/**
-	 * @return the angle relative to NORTH {@code (- PI, + PI]}.
-	 */
-	public double getDirection() {
-		return direction;
-	}
-
 	public int getShirt() {
 		return shirt;
 	}
@@ -220,7 +211,20 @@ public class Player {
 		return PlayerState.RUN;
 	}
 
-	// returns the angle (radians) off the vertical
+	/**
+	 * @return the angle relative to NORTH {@code (- PI, + PI]}.
+	 */
+	public double getDirection() {
+		DMatrix3C rotation = body.getRotation();
+		if (getTilt() > Math.PI / 4) {
+			DVector3 rotated = new DVector3(rotation.get02(), rotation.get12(), rotation.get22());
+			return Math.signum(rotated.get0()) * Math.acos(rotated.dot(new DVector3(0, 1, 0)));
+		}
+		DVector3 rotated = new DVector3(rotation.get01(), rotation.get11(), rotation.get21());
+		return Math.signum(rotated.get0()) * Math.acos(rotated.dot(new DVector3(0, 1, 0)));
+	}
+
+	// returns the angle (radians) off the vertical [0, PI]
 	double getTilt() {
 		DMatrix3C rotation = body.getRotation();
 		DVector3 rotated = new DVector3(rotation.get02(), rotation.get12(), rotation.get22());

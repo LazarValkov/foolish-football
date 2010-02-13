@@ -32,19 +32,22 @@ public enum Direction {
 		if (Double.isNaN(angle))
 			return null;
 		Preconditions.checkArgument(angle <= Math.PI && angle > -Math.PI, angle);
-		if (angle <= -3 * Math.PI / 4 + Math.PI / 8) {
+		angle = angle - Math.PI / 8; // tolerance
+		if (angle <= -Math.PI) {
+			return SOUTH;
+		} else if (angle <= -3 * Math.PI / 4) {
 			return SOUTH_WEST;
-		} else if (angle <= -Math.PI / 2 + Math.PI / 8) {
+		} else if (angle <= -Math.PI / 2) {
 			return WEST;
-		} else if (angle <= -Math.PI / 4 + Math.PI / 8) {
+		} else if (angle <= -Math.PI / 4) {
 			return NORTH_WEST;
-		} else if (angle <= 0 + Math.PI / 8) {
+		} else if (angle <= 0) {
 			return NORTH;
-		} else if (angle <= Math.PI / 4 + Math.PI / 8) {
+		} else if (angle <= Math.PI / 4) {
 			return NORTH_EAST;
-		} else if (angle <= Math.PI / 2 + Math.PI / 8) {
+		} else if (angle <= Math.PI / 2) {
 			return EAST;
-		} else if (angle <= 3 * Math.PI / 4 + Math.PI / 8) {
+		} else if (angle <= 3 * Math.PI / 4) {
 			return SOUTH_EAST;
 		} else {
 			return SOUTH;
