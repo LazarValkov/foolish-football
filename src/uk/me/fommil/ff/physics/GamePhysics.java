@@ -339,6 +339,7 @@ public class GamePhysics {
 	@SuppressWarnings("fallthrough")
 	private void transition(Player p) {
 		// TODO: should be in the Player class, not sure how
+		// TODO: really needs a cleanup
 		switch (p.getState()) {
 			case TACKLE:
 				if (p.getVelocity().speed() > MIN_SPEED)
@@ -347,10 +348,10 @@ public class GamePhysics {
 				if (!grounded.containsKey(p)) {
 					grounded.put(p, time);
 				} else if ((time - grounded.get(p)) > 2) {
-//					if (p.getState() == PlayerState.GROUND && new Random().nextBoolean()) {
-//						p.setState(PlayerState.INJURED);
-//						return;
-//					}
+					if (p.getState() == PlayerState.GROUND && new Random().nextBoolean()) {
+						p.setState(PlayerState.INJURED);
+						return;
+					}
 					p.setState(PlayerState.RUN);
 					grounded.remove(p);
 					break;

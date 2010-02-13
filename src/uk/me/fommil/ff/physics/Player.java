@@ -235,6 +235,7 @@ public class Player {
 						return PlayerState.THROWING;
 				case CELEBRATE:
 				case PUNISH:
+				case INJURED:
 					return state;
 			}
 
