@@ -29,6 +29,8 @@ import org.ode4j.ode.OdeHelper;
 
 /**
  * Wrapper class that greatly simplifies the collision detection behaviour for this package.
+ * <p>
+ * TODO: could be made much more general by using reflection instead of a hard-coded interface.
  *
  * @author Samuel Halliday
  */
@@ -84,7 +86,7 @@ class CollisionCallback implements DNearCallback {
 			DContact contact = contacts.get(i);
 			DSurfaceParameters surface = contact.surface;
 
-			// TODO: cleaner way to do this, without hand-coding the collision combinations
+			// TODO: clean
 			if (ballInvolved) {
 				Ball ball = (Ball) (obj1 instanceof Ball ? obj1 : obj2);
 				if (playerInvolved) {

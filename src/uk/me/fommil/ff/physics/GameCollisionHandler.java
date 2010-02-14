@@ -19,9 +19,10 @@ import org.ode4j.ode.OdeConstants;
 import uk.me.fommil.ff.physics.CollisionCallback.CollisionHandler;
 
 /**
- * Handles collisions using objects specific to this application.
+ * Handles collisions using objects specific to this package.
  *
  * @author Samuel Halliday
+ * @see CollisionCallback
  */
 class GameCollisionHandler implements CollisionHandler {
 
