@@ -27,7 +27,7 @@ import org.ode4j.ode.DWorld;
 import org.ode4j.ode.OdeHelper;
 import uk.me.fommil.ff.Pitch;
 import uk.me.fommil.ff.Tactics.BallZone;
-import uk.me.fommil.ff.physics.GamePhysics.Aftertouch;
+import uk.me.fommil.ff.physics.Aftertouch;
 
 /**
  * The model (M) and controller (C) for the ball during game play.

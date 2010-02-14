@@ -25,22 +25,14 @@ import java.util.Map;
 import java.util.Random;
 import java.util.logging.Logger;
 import org.ode4j.math.DVector3;
-import org.ode4j.ode.DContact.DSurfaceParameters;
 import org.ode4j.ode.DGeom;
-import org.ode4j.ode.DJointGroup;
-import org.ode4j.ode.DSpace;
-import org.ode4j.ode.DWorld;
-import org.ode4j.ode.OdeConstants;
-import org.ode4j.ode.OdeHelper;
-import org.ode4j.ode.internal.OdeInit;
-import uk.me.fommil.ff.Direction;
+import org.ode4j.ode.DGeom.DNearCallback;
 import uk.me.fommil.ff.Pitch;
 import uk.me.fommil.ff.PlayerStats;
 import uk.me.fommil.ff.Tactics;
 import uk.me.fommil.ff.Tactics.BallZone;
 import uk.me.fommil.ff.Tactics.PlayerZone;
 import uk.me.fommil.ff.Team;
-import uk.me.fommil.ff.physics.CollisionCallback.CollisionHandler;
 import uk.me.fommil.ff.physics.Player.PlayerState;
 
 /**
@@ -49,7 +41,7 @@ import uk.me.fommil.ff.physics.Player.PlayerState;
  *
  * @author Samuel Halliday
  */
-public class GamePhysics {
+public class GamePhysics extends Physics {
 
 	private static final Logger log = Logger.getLogger(GamePhysics.class.getName());
 
@@ -62,78 +54,6 @@ public class GamePhysics {
 		for (Player player : getPlayers()) {
 			player.getPosition();
 			player.getVelocity();
-		}
-	}
-
-	/**
-	 * The actions that a user can perform.
-	 */
-	public enum Action {
-
-		UP, DOWN, LEFT, RIGHT, KICK, TACKLE, HEAD, CHANGE;
-
-		// returns a normalised vector that represents the UP/DOWN/LEFT/RIGHT user input
-		static DVector3 asVector(Collection<Action> actions) {
-			DVector3 move = new DVector3();
-			for (Action action : actions) {
-				switch (action) {
-					case UP:
-						move.add(0, 1, 0);
-						break;
-					case DOWN:
-						move.sub(0, 1, 0);
-						break;
-					case LEFT:
-						move.sub(1, 0, 0);
-						break;
-					case RIGHT:
-						move.add(1, 0, 0);
-						break;
-				}
-			}
-			if (move.length() > 0) {
-				move.normalize();
-			}
-			return move;
-		}
-	};
-
-	/** The aftertouch that a ball may exhibit. Aftertouch depends on the direction of motion. */
-	public enum Aftertouch {
-
-		UP, DOWN, LEFT, RIGHT;
-
-		// returns a normalised vector that represents the aftertouch user input
-		static DVector3 asVector(Collection<Aftertouch> touches) {
-			Preconditions.checkNotNull(touches);
-			DVector3 aftertouch = new DVector3();
-			for (Aftertouch touch : touches) {
-				assert touch != null;
-				switch (touch) {
-					case UP:
-						aftertouch.add(0, 1, 0);
-						break;
-					case DOWN:
-						aftertouch.sub(0, 1, 0);
-						break;
-					case LEFT:
-						aftertouch.sub(1, 0, 0);
-						break;
-					case RIGHT:
-						aftertouch.add(1, 0, 0);
-						break;
-				}
-			}
-			if (aftertouch.length() > 0) {
-				aftertouch.normalize();
-			}
-			return aftertouch;
-		}
-
-		static Direction toDirection(Collection<Aftertouch> touches) {
-			DVector3 vector = asVector(touches);
-			double angle = toAngle(vector, 0);
-			return Direction.valueOf(angle);
 		}
 	}
 
@@ -161,55 +81,6 @@ public class GamePhysics {
 
 	private Player selected;
 
-	private double time;
-
-	private final DWorld world;
-
-	private final DSpace space;
-
-	private final DJointGroup joints;
-
-	private final CollisionCallback collision;
-
-	private final CollisionHandler collisionHandler = new CollisionHandler() {
-
-		@Override
-		public void collide(Ball ball, Player player, DSurfaceParameters surface) {
-			enableSoftBounce(surface);
-			ball.setDamping(0.1); // ?? can be overridden
-			surface.bounce = player.getBounce();
-			if (player.equals(getSelected())) {
-				selected.control(ball);
-			}
-		}
-
-		@Override
-		public void collide(Player player1, Player player2, DSurfaceParameters surface) {
-			enableSoftBounce(surface);
-			surface.bounce = 0.75; // affects tackling
-		}
-
-		@Override
-		public void collide(Ball ball, DSurfaceParameters surface) {
-			enableSoftBounce(surface);
-			surface.bounce = 0.5;
-			ball.setDamping(0.1); // ?? can be overridden
-			ball.setAftertouchEnabled(false);
-		}
-
-		@Override
-		public void collide(Player player, DSurfaceParameters surface) {
-			enableSoftBounce(surface);
-			if (player.getTilt() > Math.PI / 8) // ?? exposing more than is needed?
-				surface.mu = 1000;
-		}
-
-		private void enableSoftBounce(DSurfaceParameters surface) {
-			surface.mode = OdeConstants.dContactBounce | OdeConstants.dContactSoftERP;
-			surface.bounce_vel = 0.1;
-		}
-	};
-
 	private volatile Collection<Action> actions = Collections.emptyList();
 
 	private volatile Collection<Aftertouch> aftertouches = Collections.emptyList();
@@ -221,18 +92,9 @@ public class GamePhysics {
 	 * @param pitch
 	 */
 	public GamePhysics(Team a, Pitch pitch) {
+		super(9.81);
 		this.a = a;
 		this.pitch = pitch;
-
-		OdeInit.dInitODE();
-
-		world = OdeHelper.createWorld();
-		world.setGravity(0, 0, -9.81);
-
-		space = OdeHelper.createSimpleSpace();
-		joints = OdeHelper.createJointGroup();
-
-		OdeHelper.createPlane(space, 0, 0, 1, 0);
 
 		ball = new Ball(world, space);
 		Position centre = pitch.getCentre();
@@ -248,8 +110,12 @@ public class GamePhysics {
 			as.add(pma);
 		}
 		selected = as.get(9);
+	}
 
-		collision = new CollisionCallback(world, joints, collisionHandler);
+	@Override
+	protected DNearCallback getCollisionCallback() {
+		GameCollisionHandler handler = new GameCollisionHandler();
+		return new CollisionCallback(world, joints, handler);
 	}
 
 	/**
@@ -265,11 +131,9 @@ public class GamePhysics {
 		this.aftertouches = Sets.newHashSet(aftertouches);
 	}
 
-	/**
-	 * @param dt in seconds
-	 */
-	public void step(double dt) {
-		time += dt;
+	@Override
+	protected void beforeStep() {
+		debugNaNs();
 
 		if (actions.contains(Action.CHANGE))
 			updateSelected();
@@ -293,15 +157,10 @@ public class GamePhysics {
 		selected.setActions(actions);
 		ball.setAftertouch(aftertouches);
 		ball.setDamping(0);
+	}
 
-		debugNaNs();
-		space.collide(null, collision);
-		debugNaNs();
-
-		world.step(dt);
-		joints.empty();
-		debugNaNs();
-
+	@Override
+	protected void afterStep() {
 		if (ball.getVelocity().speed() < MIN_SPEED)
 			ball.setVelocity(new DVector3()); // stops small movements
 		switch (selected.getState()) {
@@ -367,6 +226,10 @@ public class GamePhysics {
 		}
 	}
 
+	public Iterable<Goalkeeper> getGoalkeepers() {
+		return Collections.emptyList(); // TODO: goalkeepers
+	}
+
 	// <editor-fold defaultstate="collapsed" desc="BOILERPLATE GETTERS/SETTERS">
 	public Ball getBall() {
 		return ball;
@@ -391,19 +254,5 @@ public class GamePhysics {
 	public Pitch getPitch() {
 		return pitch;
 	}
-
 	// </editor-fold>
-	public Iterable<Goalkeeper> getGoalkeepers() {
-		return Collections.emptyList(); // TODO: goalkeepers
-	}
-
-	Collection<DGeom> getGeoms() {
-		Collection<DGeom> geoms = Lists.newArrayList();
-		int num = space.getNumGeoms();
-		for (int i = 0; i
-				< num; i++) {
-			geoms.add(space.getGeom(i));
-		}
-		return geoms;
-	}
 }

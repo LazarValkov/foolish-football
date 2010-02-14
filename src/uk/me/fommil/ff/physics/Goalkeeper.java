@@ -17,7 +17,7 @@ package uk.me.fommil.ff.physics;
 import java.util.Collection;
 import uk.me.fommil.ff.Direction;
 import uk.me.fommil.ff.PlayerStats;
-import uk.me.fommil.ff.physics.GamePhysics.Action;
+import uk.me.fommil.ff.physics.Action;
 
 /**
  * The model (M) for a goalkeeper.

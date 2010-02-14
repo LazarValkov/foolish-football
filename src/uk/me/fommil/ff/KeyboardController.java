@@ -19,8 +19,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.Collection;
 import uk.me.fommil.ff.physics.GamePhysics;
-import uk.me.fommil.ff.physics.GamePhysics.Action;
-import uk.me.fommil.ff.physics.GamePhysics.Aftertouch;
+import uk.me.fommil.ff.physics.Action;
+import uk.me.fommil.ff.physics.Aftertouch;
 
 /**
  *

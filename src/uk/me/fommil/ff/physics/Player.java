@@ -32,7 +32,7 @@ import org.ode4j.ode.DWorld;
 import org.ode4j.ode.OdeHelper;
 import org.ode4j.ode.internal.Rotation;
 import uk.me.fommil.ff.PlayerStats;
-import uk.me.fommil.ff.physics.GamePhysics.Action;
+import uk.me.fommil.ff.physics.Action;
 
 /**
  * The model (M) and controller (C) for a {@link Player} during game play.
@@ -94,6 +94,7 @@ public class Player {
 		body.setAngularDamping(0.1);
 	}
 
+	@Deprecated
 	void control(Ball ball) {
 		Preconditions.checkNotNull(ball);
 		if (distanceTo(ball) > 2)

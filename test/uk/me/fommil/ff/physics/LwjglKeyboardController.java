@@ -21,8 +21,8 @@ import com.google.common.collect.Sets;
 import java.util.Collection;
 import java.util.Map;
 import org.lwjgl.input.Keyboard;
-import uk.me.fommil.ff.physics.GamePhysics.Action;
-import uk.me.fommil.ff.physics.GamePhysics.Aftertouch;
+import uk.me.fommil.ff.physics.Action;
+import uk.me.fommil.ff.physics.Aftertouch;
 
 /**
  * Keyboard listening is synchronous, not asynchronous, with LWJGL - this class provides the poll.
