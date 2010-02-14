@@ -33,6 +33,14 @@ import org.ode4j.ode.internal.OdeInit;
  */
 public abstract class Physics {
 
+	static {
+		try {
+			OdeInit.dInitODE(); // TODO: better way to initialise world
+		} catch (Exception e) {
+			throw new ExceptionInInitializerError(e);
+		}
+	}
+
 	final DWorld world;
 
 	final DSimpleSpace space;
@@ -44,8 +52,6 @@ public abstract class Physics {
 	volatile double time;
 
 	Physics(double gravity) {
-		OdeInit.dInitODE(); // TODO: better way to initialise world
-
 		world = OdeHelper.createWorld();
 		world.setGravity(0, 0, -gravity);
 
@@ -61,7 +67,6 @@ public abstract class Physics {
 		joints.destroy();
 		space.destroy();
 		world.destroy();
-		OdeInit.dCloseODE();
 	}
 
 	protected DSimpleSpace createSpace() {

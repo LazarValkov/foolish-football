@@ -164,6 +164,9 @@ public class GamePhysics extends Physics {
 		if (ball.getVelocity().speed() < MIN_SPEED)
 			ball.setVelocity(new DVector3()); // stops small movements
 		switch (selected.getState()) {
+			case RUN:
+				selected.control(ball);
+				break;
 			case KICK:
 				selected.kick(ball);
 				break;

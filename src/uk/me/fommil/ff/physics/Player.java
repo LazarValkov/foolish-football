@@ -76,7 +76,7 @@ public class Player {
 
 	private volatile Collection<Action> actions = Collections.emptySet();
 
-	private volatile PlayerState state;
+	private volatile PlayerState forcedState;
 
 	Player(int i, PlayerStats stats, DWorld world, DSpace space) {
 		Preconditions.checkArgument(i >= 1 && i <= 11, i);
@@ -94,21 +94,20 @@ public class Player {
 		body.setAngularDamping(0.1);
 	}
 
-	@Deprecated
 	void control(Ball ball) {
 		Preconditions.checkNotNull(ball);
-		if (distanceTo(ball) > 2)
+		if (distanceTo(ball) > 1)
 			return;
-		// TODO: come up with a solution that avoids the oscillation
-		DVector3 control = getPosition().toDVector().sub(ball.getPosition().toDVector());
-		control.set(2, 0);
-		control.scale(25);
-		ball.addForce(control);
+//		// TODO: come up with a solution that avoids the oscillation
+//		DVector3 control = getPosition().toDVector().sub(ball.getPosition().toDVector());
+//		control.set(2, 0);
+//		control.scale(25);
+//		ball.addForce(control);
 	}
 
 	void kick(Ball ball) {
 		assert actions.contains(Action.KICK);
-		if (distanceTo(ball) > 1)
+		if (distanceTo(ball) > 1.5)
 			return;
 		hit(ball, 10, 2);
 	}
@@ -141,9 +140,10 @@ public class Player {
 	 */
 	public void setActions(Collection<Action> actions) {
 		Preconditions.checkNotNull(actions);
-		switch (getState()) {
-			case RUN:
+		PlayerState state = getState();
+		switch (state) {
 			case THROW:
+			case RUN:
 			case KICK:
 				break;
 			default:
@@ -161,18 +161,20 @@ public class Player {
 		rotation.eqMul(rotation.clone(), tilt);
 
 		move.add(2, body.getLinearVel().get(2));
-		if (actions.contains(Action.HEAD)) {
-			move.scale(HEADER_BOOST);
-			move.add(0, 0, 3);
-			// TODO: trajectory that doesn't make player land with feet on ground after heading
-		} else if (actions.contains(Action.TACKLE)) {
-			move.scale(TACKLE_BOOST);
-			DMatrix3 horizontal = new DMatrix3();
-			Rotation.dRFromAxisAndAngle(horizontal, -1, 0, 0, Math.PI / 2);
-			rotation.eqMul(rotation.clone(), horizontal);
+		if (state == PlayerState.RUN) {
+			if (actions.contains(Action.HEAD)) {
+				move.scale(HEADER_BOOST);
+				move.add(0, 0, 3);
+				// TODO: trajectory that doesn't make player land with feet on ground after heading
+			} else if (actions.contains(Action.TACKLE)) {
+				move.scale(TACKLE_BOOST);
+				DMatrix3 horizontal = new DMatrix3();
+				Rotation.dRFromAxisAndAngle(horizontal, -1, 0, 0, Math.PI / 2);
+				rotation.eqMul(rotation.clone(), horizontal);
+			}
 		}
 
-		if (getState() != PlayerState.THROW)
+		if (state != PlayerState.THROW)
 			body.setLinearVel(move);
 		body.setRotation(rotation);
 	}
@@ -210,7 +212,7 @@ public class Player {
 			case PUNISH:
 				setUpright();
 			case INJURED:
-				this.state = state;
+				this.forcedState = state;
 				break;
 			default:
 				throw new UnsupportedOperationException();
@@ -229,15 +231,15 @@ public class Player {
 	 */
 	@SuppressWarnings("fallthrough")
 	public PlayerState getState() {
-		if (state != null)
-			switch (state) {
+		if (forcedState != null)
+			switch (forcedState) {
 				case THROW:
 					if (actions.contains(Action.KICK))
 						return PlayerState.THROWING;
 				case CELEBRATE:
 				case PUNISH:
 				case INJURED:
-					return state;
+					return forcedState;
 			}
 
 		DVector3C position = body.getPosition();

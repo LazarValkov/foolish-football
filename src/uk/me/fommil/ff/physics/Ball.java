@@ -131,10 +131,6 @@ public class Ball {
 		return new Velocity(sphere.getBody().getLinearVel());
 	}
 
-	public Position getPosition() {
-		return new Position(sphere.getPosition());
-	}
-
 	/**
 	 * Places the ball, at rest, at the given position.
 	 *
@@ -152,8 +148,17 @@ public class Ball {
 		setVelocity(new DVector3());
 	}
 
+	public Position getPosition() {
+		DVector3C p = sphere.getPosition();
+		return new Position(p.get0(), p.get1(), p.get2() - sphere.getRadius());
+	}
+
 	void setVelocity(DVector3 v) {
 		sphere.getBody().setLinearVel(v);
+	}
+
+	void setVelocity(Velocity v) {
+		setVelocity(v.toDVector());
 	}
 
 	void addForce(DVector3C force) {
