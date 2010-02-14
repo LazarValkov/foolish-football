@@ -45,6 +45,8 @@ class CollisionCallback implements DNearCallback {
 		void collide(Ball ball, DSurfaceParameters surface);
 
 		void collide(Player player, DSurfaceParameters surface);
+
+		void collide(Goalpost post, DSurfaceParameters surface);
 	}
 
 	private static final int MAX_CONTACTS = 8;
@@ -78,6 +80,7 @@ class CollisionCallback implements DNearCallback {
 		boolean ballInvolved = obj1 instanceof Ball || obj2 instanceof Ball;
 		boolean playerInvolved = obj1 instanceof Player || obj2 instanceof Player;
 		boolean groundInvolved = o1 instanceof DPlane || o2 instanceof DPlane;
+		boolean goalPostInvolved = obj1 instanceof Goalpost || obj2 instanceof Goalpost;
 
 		DContactBuffer contacts = new DContactBuffer(MAX_CONTACTS);
 		int numc = OdeHelper.collide(o1, o2, MAX_CONTACTS, contacts.getGeomBuffer());
@@ -92,7 +95,8 @@ class CollisionCallback implements DNearCallback {
 				if (playerInvolved) {
 					Player player = (Player) (obj1 instanceof Player ? obj1 : obj2);
 					handler.collide(ball, player, surface);
-				} else if (groundInvolved) {
+				} else if (groundInvolved || goalPostInvolved) {
+					// TODO: treat ground and goalposts differently
 					handler.collide(ball, surface);
 				} else {
 					throw new UnsupportedOperationException(o1 + " " + o2);
@@ -102,13 +106,15 @@ class CollisionCallback implements DNearCallback {
 				if (obj1 instanceof Player && obj2 instanceof Player) {
 					Player player2 = (Player) obj2;
 					handler.collide(player, player2, surface);
-				} else if (groundInvolved) {
+				} else if (groundInvolved || goalPostInvolved) {
 					handler.collide(player, surface);
 				} else {
 					throw new UnsupportedOperationException(o1 + " " + o2);
 				}
-			} else {
-				throw new UnsupportedOperationException(o1 + " " + o2);
+			} else if (goalPostInvolved) {
+				assert groundInvolved;
+				Goalpost post = (Goalpost) (obj1 instanceof Goalpost ? obj1 : obj2);
+				handler.collide(post, surface);
 			}
 
 			DJoint c = OdeHelper.createContactJoint(world, joints, contact);

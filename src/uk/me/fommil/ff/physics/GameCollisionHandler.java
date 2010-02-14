@@ -54,6 +54,13 @@ class GameCollisionHandler implements CollisionHandler {
 			surface.mu = 1000;
 	}
 
+	@Override
+	public void collide(Goalpost post, DSurfaceParameters surface) {
+		enableSoftBounce(surface);
+		surface.bounce = 0;
+		surface.mu = Double.POSITIVE_INFINITY;
+	}
+
 	private void enableSoftBounce(DSurfaceParameters surface) {
 		surface.mode = OdeConstants.dContactBounce | OdeConstants.dContactSoftERP;
 		surface.bounce_vel = 0.1;

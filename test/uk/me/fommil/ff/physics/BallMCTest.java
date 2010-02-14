@@ -14,10 +14,7 @@
  */
 package uk.me.fommil.ff.physics;
 
-import com.google.common.collect.Lists;
-import java.util.List;
 import org.junit.Test;
-import org.ode4j.math.DVector3;
 import uk.me.fommil.ff.Pitch;
 import static org.junit.Assert.*;
 
@@ -27,6 +24,7 @@ import static org.junit.Assert.*;
 public class BallMCTest {
 
 	private static final double dt = 0.01;
+
 	private static final double EPSILON = 0.0001;
 
 	private final Pitch pitch = new Pitch();
@@ -183,8 +181,9 @@ public class BallMCTest {
 		}
 	}
 
-//	@Test
-//	public void testAirKicks() {
+	@Test
+	public void testAirKicks() {
+		fail("test not written");
 //		Position centre = pitch.getCentre();
 //		List<DVector3> velocities = Lists.newArrayList();
 //		velocities.add(new DVector3(10, 0, 10)); // 0 right
@@ -240,7 +239,7 @@ public class BallMCTest {
 //			assertEquals(0.0, ball.getVelocity().speed());
 //			assertEquals(0.0, ball.getPosition().z);
 //		}
-//	}
+	}
 
 	@Test
 	public void testBendyAftertouch() {

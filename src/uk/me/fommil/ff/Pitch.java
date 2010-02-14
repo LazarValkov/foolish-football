@@ -88,6 +88,26 @@ public class Pitch {
 		return new Position(centreSpot.x * SCALE, (bounds.y - centreSpot.y) * SCALE, 0);
 	}
 
+	public double getGoalWidth() {
+		return 71 * SCALE;
+	}
+
+	public double getGoalHeight() {
+		return 3;
+	}
+
+	public double getGoalDepth() {
+		return 12 * SCALE;
+	}
+
+	public Position getGoalTop() {
+		return new Position(SCALE * (300 + 71 / 2.0), SCALE * (bounds.y - 117 - 12 / 2.0), 0);
+	}
+
+	public Position getGoalBottom() {
+		return new Position(SCALE * (300 + 71 / 2.0), SCALE * (bounds.y - 769 - 12 / 2.0), 0);
+	}
+
 	@Deprecated // implementation detail
 	public double getScale() {
 		return SCALE;

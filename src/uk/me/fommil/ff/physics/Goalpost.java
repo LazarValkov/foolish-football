@@ -18,10 +18,15 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import java.util.logging.Logger;
 import javax.media.j3d.BoundingBox;
-import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
+import org.ode4j.math.DVector3;
+import org.ode4j.ode.DBody;
+import org.ode4j.ode.DBox;
+import org.ode4j.ode.DMass;
+import org.ode4j.ode.DSpace;
+import org.ode4j.ode.DWorld;
+import org.ode4j.ode.OdeHelper;
 import uk.me.fommil.ff.Direction;
-import uk.me.fommil.ff.Utils;
+import uk.me.fommil.ff.Pitch;
 
 /**
  * The model (M) and controller (C) for a goal during game play.
@@ -32,73 +37,41 @@ public class Goalpost {
 
 	private static final Logger log = Logger.getLogger(Goalpost.class.getName());
 
-	private final BoundingBox roof, west, east, back, bbox;
+	private final DBody body;
 
 	/**
 	 * @param bbox
 	 * @param posts the width of the posts, inset from the bounding box
 	 * @param facing
 	 */
-	public Goalpost(BoundingBox bbox, double posts, Direction facing) {
-		Preconditions.checkNotNull(bbox);
+	Goalpost(DWorld world, DSpace space, Pitch pitch, Direction facing) {
+		Preconditions.checkNotNull(world);
+		Preconditions.checkNotNull(space);
 		Preconditions.checkArgument(facing == Direction.NORTH || facing == Direction.SOUTH);
-		this.bbox = bbox;
 
-		Point3d lower = Utils.getLower(bbox);
-		Point3d upper = Utils.getUpper(bbox);
+		this.body = OdeHelper.createBody(world);
 
-		// build the goal posts and net out of four individual components
-		Point3d westLower = new Point3d(lower.x, lower.y, lower.z);
-		Point3d westUpper = new Point3d(lower.x + posts, upper.y, upper.z);
-		west = new BoundingBox(westLower, westUpper);
+		double width = pitch.getGoalWidth();
+		double height = pitch.getGoalHeight();
+		double depth = pitch.getGoalDepth();
 
-		Point3d eastLower = new Point3d(upper.x - posts, lower.y, lower.z);
-		Point3d eastUpper = new Point3d(upper.x, upper.y, upper.z);
-		east = new BoundingBox(eastLower, eastUpper);
+		DBox box = OdeHelper.createBox(space, width, depth, height);
+		box.setBody(body);
 
-		Point3d roofLower = new Point3d(lower.x, lower.y, upper.z - posts);
-		Point3d roofUpper = new Point3d(upper.x, upper.y, upper.z);
-		roof = new BoundingBox(roofLower, roofUpper);
+		DMass mass = OdeHelper.createMass();
+		mass.setBoxTotal(10000, width, depth, height);
+		body.setMass(mass);
+		body.setData(this);
+		body.setAngularDamping(1);
 
-		Point3d backLower = new Point3d(lower.x, lower.y, lower.z);
-		Point3d backUpper = new Point3d(upper.x, upper.y, upper.z);
+		DVector3 centre;
 		if (facing == Direction.NORTH) {
-			backLower.y = upper.y - posts;
-		} else if (facing == Direction.SOUTH) {
-			backUpper.y = lower.y + posts;
+			centre = pitch.getGoalBottom().toDVector();
+		} else {
+			centre = pitch.getGoalTop().toDVector();
 		}
-		back = new BoundingBox(backLower, backUpper);
-	}
-
-//	public void bounce(Point3d p, Vector3d v, Point3d oldPosition) {
-//		if (!Utils.intersect(bbox, oldPosition, p))
-//			return;
-//		for (BoundingBox box : Lists.newArrayList(roof, west, east, back)) {
-//			bounce(oldPosition, p, v, box);
-//		}
-//	}
-//
-//	private void bounce(Point3d oldS, Point3d s, Vector3d v, BoundingBox box) {
-//		if (v.length() == 0 || !Utils.intersect(box, oldS, s))
-//			return;
-//		s.set(Utils.exitPoint(box, s, v, 0.1)); // ?? energy loss
-//		s.set(Utils.entryPoint(box, s, v, 0.1)); // ?? energy loss
-//		v.set(Utils.rebound(box, s, v));
-//		v.scale(0.5);
-//	}
-//
-//	public boolean inside(Point3d p) {
-//		if (!bbox.intersect(p))
-//			return false;
-//		for (BoundingBox box : Lists.newArrayList(roof, west, east, back)) {
-//			if (box.intersect(p))
-//				return false;
-//		}
-//		return true;
-//	}
-
-	@Override
-	public String toString() {
-		return Lists.newArrayList(roof, west, east, back).toString();
+		centre.add(2, height / 2);
+		log.info(centre.toString());
+		body.setPosition(centre);
 	}
 }

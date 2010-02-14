@@ -27,6 +27,7 @@ import java.util.logging.Logger;
 import org.ode4j.math.DVector3;
 import org.ode4j.ode.DGeom;
 import org.ode4j.ode.DGeom.DNearCallback;
+import uk.me.fommil.ff.Direction;
 import uk.me.fommil.ff.Pitch;
 import uk.me.fommil.ff.PlayerStats;
 import uk.me.fommil.ff.Tactics;
@@ -110,6 +111,9 @@ public class GamePhysics extends Physics {
 			as.add(pma);
 		}
 		selected = as.get(9);
+
+		new Goalpost(world, space, pitch, Direction.NORTH);
+		new Goalpost(world, space, pitch, Direction.SOUTH);
 	}
 
 	@Override
