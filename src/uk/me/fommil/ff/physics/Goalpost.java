@@ -42,6 +42,8 @@ public class Goalpost {
 
 	private final DBox goal;
 
+	private final Direction facing;
+
 	/**
 	 * @param bbox
 	 * @param posts the width of the posts, inset from the bounding box
@@ -51,6 +53,7 @@ public class Goalpost {
 		Preconditions.checkNotNull(world);
 		Preconditions.checkNotNull(space);
 		Preconditions.checkArgument(facing == Direction.NORTH || facing == Direction.SOUTH);
+		this.facing = facing;
 
 		this.body = OdeHelper.createBody(world);
 		body.setData(this);
@@ -111,5 +114,9 @@ public class Goalpost {
 			}
 		});
 		return inside.get();
+	}
+
+	public Direction getFacing() {
+		return facing;
 	}
 }

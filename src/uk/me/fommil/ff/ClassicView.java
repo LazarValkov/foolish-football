@@ -158,11 +158,11 @@ public class ClassicView extends JPanel {
 
 		// draw the players that are in view
 		for (Player pm : game.getPlayers()) {
-			drawPlayer(g, pm);
-		}
-
-		for (Goalkeeper gm : game.getGoalkeepers()) {
-			drawGoalkeeper(g, gm);
+			if (pm instanceof Goalkeeper) {
+				drawGoalkeeper(g, (Goalkeeper) pm);
+			} else {
+				drawPlayer(g, pm);
+			}
 		}
 
 		for (Entry<Position, Sprite> e : objectSprites.entrySet()) {
@@ -353,7 +353,7 @@ public class ClassicView extends JPanel {
 		long ts = (long) (1000L * game.getTimestamp());
 		long t = ts % 800L;
 
-		if (gm.getGkState() == GoalkeeperState.RUN) {
+		if (gm.getGkState() == null) {
 			switch (direction) {
 				case SOUTH:
 					spriteIndex = 1;
@@ -378,7 +378,7 @@ public class ClassicView extends JPanel {
 					break;
 			}
 			spriteIndex *= 3;
-			if (gm.getVelocity().speed() > 0) {
+			if (gm.getVelocity().speed() > 0.1) {
 				if (t < 200) {
 				} else if (t < 400) {
 					spriteIndex += 1;

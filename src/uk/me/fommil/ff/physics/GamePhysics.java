@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.logging.Logger;
 import org.ode4j.math.DVector3;
-import org.ode4j.ode.DGeom;
 import org.ode4j.ode.DGeom.DNearCallback;
 import uk.me.fommil.ff.Direction;
 import uk.me.fommil.ff.Pitch;
@@ -47,10 +46,6 @@ public class GamePhysics extends Physics {
 	private static final Logger log = Logger.getLogger(GamePhysics.class.getName());
 
 	static final double MIN_SPEED = 0.1;
-
-	private final Goalpost goalBottom;
-
-	private final Goalpost goalTop;
 
 	@Deprecated // DEBUGGING
 	private void debugNaNs() {
@@ -92,6 +87,8 @@ public class GamePhysics extends Physics {
 
 	private final Map<Player, Double> grounded = Maps.newHashMap();
 
+	private final Collection<Goalpost> goals = Lists.newArrayList();
+
 	/**
 	 * @param a
 	 * @param pitch
@@ -105,9 +102,16 @@ public class GamePhysics extends Physics {
 		Position centre = pitch.getCentre();
 		ball.setPosition(centre);
 
+		goals.add(new Goalpost(world, space, pitch, Direction.NORTH));
+		goals.add(new Goalpost(world, space, pitch, Direction.SOUTH));
+
 		BallZone bz = ball.getZone(pitch);
 		List<PlayerStats> aPlayers = a.getPlayers();
 		Tactics tactics = a.getCurrentTactics();
+		Goalkeeper goalkeeper = new Goalkeeper(1, aPlayers.get(0), world, space);
+		goalkeeper.setPosition(pitch.getGoalBottom());
+		as.add(goalkeeper);
+
 		for (int i = 2; i <= 11; i++) {
 			Position p = tactics.getZone(bz, i).getCentre(pitch, Pitch.Facing.NORTH);
 			Player pma = new Player(i, aPlayers.get(i - 1), world, space);
@@ -116,8 +120,6 @@ public class GamePhysics extends Physics {
 		}
 		selected = as.get(9);
 
-		goalBottom = new Goalpost(world, space, pitch, Direction.NORTH);
-		goalTop = new Goalpost(world, space, pitch, Direction.SOUTH);
 	}
 
 	@Override
@@ -143,11 +145,9 @@ public class GamePhysics extends Physics {
 	protected void beforeStep() {
 		debugNaNs();
 
-		if (goalTop.isInside(ball)) {
-			log.info("GOAL TO BOTTOM TEAM");
-		}
-		if (goalBottom.isInside(ball)) {
-			log.info("GOAL TO TOP TEAM");
+		for (Goalpost goal : goals) {
+			if (goal.isInside(ball))
+				log.info("GOAL TO " + goal.getFacing());
 		}
 
 		if (actions.contains(Action.CHANGE))
@@ -161,10 +161,15 @@ public class GamePhysics extends Physics {
 			if (p == selected)
 				continue;
 			Position target = bp;
-			double near = Math.min(10, bp.distance(selected.getPosition()));
-			if (bp.distance(p.getPosition()) > near) {
-				PlayerZone pz = tactics.getZone(bz, p.getShirt());
-				target = pz.getCentre(pitch, Pitch.Facing.NORTH);
+			if (p instanceof Goalkeeper) {
+				target = pitch.getGoalBottom(); // TODO: implement goalkeeper AI
+				target = new Position(target.x, target.y + 3, target.z);
+			} else {
+				double near = Math.min(10, bp.distance(selected.getPosition()));
+				if (bp.distance(p.getPosition()) > near) {
+					PlayerZone pz = tactics.getZone(bz, p.getShirt());
+					target = pz.getCentre(pitch, Pitch.Facing.NORTH);
+				}
 			}
 			p.autoPilot(target);
 		}
@@ -242,10 +247,6 @@ public class GamePhysics extends Physics {
 					grounded.remove(p);
 				}
 		}
-	}
-
-	public Iterable<Goalkeeper> getGoalkeepers() {
-		return Collections.emptyList(); // TODO: goalkeepers
 	}
 
 	// <editor-fold defaultstate="collapsed" desc="BOILERPLATE GETTERS/SETTERS">

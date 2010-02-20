@@ -60,7 +60,7 @@ public class GamePhysicsGL extends dsFunctions {
 		ballStart.set2(10);
 		game.getBall().setPosition(new Position(ballStart));
 		for (Player player : game.getPlayers()) {
-			if (player.getShirt() != 11)
+			if (player.getShirt() != 10)
 				continue;
 			player.setState(PlayerState.THROW);
 		}

@@ -14,29 +14,51 @@
  */
 package uk.me.fommil.ff.physics;
 
+import com.google.common.collect.Lists;
 import java.util.Collection;
+import org.ode4j.ode.DSpace;
+import org.ode4j.ode.DWorld;
 import uk.me.fommil.ff.Direction;
 import uk.me.fommil.ff.PlayerStats;
-import uk.me.fommil.ff.physics.Action;
 
 /**
  * The model (M) for a goalkeeper.
  *
  * @author Samuel Halliday
  */
-public class Goalkeeper {
+public class Goalkeeper extends Player {
 
 	public enum GoalkeeperState {
 
-		DIVE_START, DIVE_MID, DIVE_PEAK, FALL_START, FALL_MID, FALL_END, RUN
-		// TODO FALL_END_BALL
+		DIVE_START, DIVE_MID, DIVE_PEAK, FALL_START, FALL_MID, FALL_END
+		// TODO FALL_END_BALL HOLDING
 
 	}
 
-	private volatile GoalkeeperState gkState = GoalkeeperState.RUN;
+	private volatile GoalkeeperState gkState;
 
 	private Direction opponent;
 
+	/**
+	 * @param i
+	 * @param stats
+	 * @param world
+	 * @param space
+	 */
+	public Goalkeeper(int i, PlayerStats stats, DWorld world, DSpace space) {
+		super(i, stats, world, space);
+	}
+
+	@Override
+	public void setActions(Collection<Action> actions) {
+		Collection<Action> sanitised = Lists.newArrayList(actions);
+		sanitised.remove(Action.TACKLE);
+		sanitised.remove(Action.HEAD);
+		// TODO: remove KICK when diving
+		super.setActions(sanitised);
+	}
+
+	// <editor-fold defaultstate="collapsed" desc="BOILERPLATE GETTERS/SETTERS">
 	public Direction getOpponent() {
 		return opponent;
 	}
@@ -45,30 +67,8 @@ public class Goalkeeper {
 		this.opponent = opponent;
 	}
 
-	public Goalkeeper(int i, PlayerStats player) {
-	}
-
 	public GoalkeeperState getGkState() {
 		return gkState;
 	}
-
-	public void setActions(Collection<Action> actions) {
-		// TODO: allow player to direct and kick
-		throw new UnsupportedOperationException("actions not available for goalkeeper");
-	}
-
-	public Velocity getVelocity() {
-		// TODO: implement method
-		throw new UnsupportedOperationException("not implemented yet");
-	}
-
-	public Position getPosition() {
-		// TODO: implement method
-		throw new UnsupportedOperationException("not implemented yet");
-	}
-
-	public double getDirection() {
-		// TODO: implement method
-		throw new UnsupportedOperationException("not implemented yet");
-	}
+	// </editor-fold>
 }
