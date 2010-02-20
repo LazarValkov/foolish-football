@@ -48,6 +48,10 @@ public class GamePhysics extends Physics {
 
 	static final double MIN_SPEED = 0.1;
 
+	private final Goalpost goalBottom;
+
+	private final Goalpost goalTop;
+
 	@Deprecated // DEBUGGING
 	private void debugNaNs() {
 		ball.getPosition();
@@ -112,8 +116,8 @@ public class GamePhysics extends Physics {
 		}
 		selected = as.get(9);
 
-		new Goalpost(world, space, pitch, Direction.NORTH);
-		new Goalpost(world, space, pitch, Direction.SOUTH);
+		goalBottom = new Goalpost(world, space, pitch, Direction.NORTH);
+		goalTop = new Goalpost(world, space, pitch, Direction.SOUTH);
 	}
 
 	@Override
@@ -138,6 +142,13 @@ public class GamePhysics extends Physics {
 	@Override
 	protected void beforeStep() {
 		debugNaNs();
+
+		if (goalTop.isInside(ball)) {
+			log.info("GOAL TO BOTTOM TEAM");
+		}
+		if (goalBottom.isInside(ball)) {
+			log.info("GOAL TO TOP TEAM");
+		}
 
 		if (actions.contains(Action.CHANGE))
 			updateSelected();

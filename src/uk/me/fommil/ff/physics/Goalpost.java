@@ -15,11 +15,14 @@
 package uk.me.fommil.ff.physics;
 
 import com.google.common.base.Preconditions;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 import org.ode4j.math.DVector3;
 import org.ode4j.ode.DBody;
 import org.ode4j.ode.DBox;
 import org.ode4j.ode.DFixedJoint;
+import org.ode4j.ode.DGeom;
+import org.ode4j.ode.DGeom.DNearCallback;
 import org.ode4j.ode.DSpace;
 import org.ode4j.ode.DWorld;
 import org.ode4j.ode.OdeHelper;
@@ -36,6 +39,8 @@ public class Goalpost {
 	private static final Logger log = Logger.getLogger(Goalpost.class.getName());
 
 	private final DBody body;
+
+	private final DBox goal;
 
 	/**
 	 * @param bbox
@@ -85,5 +90,26 @@ public class Goalpost {
 		DBox roof = OdeHelper.createBox(space, width, depth, thickness);
 		roof.setBody(body);
 		roof.setOffsetPosition(0, 0, height - thickness / 2);
+
+		// goal is not registered with the world
+		goal = OdeHelper.createBox(width - thickness, depth - thickness / 2, height - thickness / 2);
+		DVector3 pos = new DVector3(body.getPosition());
+		pos.add(1, backUp * thickness / 4);
+		pos.add(2, height / 2 + thickness / 4);
+		goal.setPosition(pos);
+	}
+
+	boolean isInside(Ball ball) {
+		Preconditions.checkNotNull(ball);
+
+		final AtomicBoolean inside = new AtomicBoolean();
+		goal.collide2(ball.getGeom(), null, new DNearCallback() {
+
+			@Override
+			public void call(Object data, DGeom o1, DGeom o2) {
+				inside.set(true);
+			}
+		});
+		return inside.get();
 	}
 }

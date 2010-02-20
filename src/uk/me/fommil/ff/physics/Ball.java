@@ -20,6 +20,7 @@ import java.util.logging.Logger;
 import org.ode4j.math.DVector3;
 import org.ode4j.math.DVector3C;
 import org.ode4j.ode.DBody;
+import org.ode4j.ode.DGeom;
 import org.ode4j.ode.DMass;
 import org.ode4j.ode.DSpace;
 import org.ode4j.ode.DSphere;
@@ -177,5 +178,9 @@ public class Ball {
 
 	void setAftertouchEnabled(boolean aftertouchEnabled) {
 		this.aftertouchEnabled = aftertouchEnabled;
+	}
+
+	DGeom getGeom() {
+		return sphere;
 	}
 }
