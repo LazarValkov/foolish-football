@@ -15,14 +15,11 @@
 package uk.me.fommil.ff.physics;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 import java.util.logging.Logger;
-import javax.media.j3d.BoundingBox;
 import org.ode4j.math.DVector3;
 import org.ode4j.ode.DBody;
 import org.ode4j.ode.DBox;
 import org.ode4j.ode.DFixedJoint;
-import org.ode4j.ode.DMass;
 import org.ode4j.ode.DSpace;
 import org.ode4j.ode.DWorld;
 import org.ode4j.ode.OdeHelper;
@@ -51,27 +48,42 @@ public class Goalpost {
 		Preconditions.checkArgument(facing == Direction.NORTH || facing == Direction.SOUTH);
 
 		this.body = OdeHelper.createBody(world);
-
-		double width = pitch.getGoalWidth();
-		double height = pitch.getGoalHeight();
-		double depth = pitch.getGoalDepth();
-
-		DBox box = OdeHelper.createBox(space, width, depth, height);
-		box.setBody(body);
 		body.setData(this);
-
 		DVector3 centre;
 		if (facing == Direction.NORTH) {
 			centre = pitch.getGoalBottom().toDVector();
 		} else {
 			centre = pitch.getGoalTop().toDVector();
 		}
-		centre.add(2, height / 2);
-		log.info(centre.toString());
 		body.setPosition(centre);
-
+		body.setKinematic();
 		DFixedJoint fixed = OdeHelper.createFixedJoint(world, null);
 		fixed.attach(null, body);
 		fixed.setFixed();
+
+		double width = pitch.getGoalWidth();
+		double height = pitch.getGoalHeight();
+		double depth = pitch.getGoalDepth();
+		double thickness = pitch.getGoalThickness();
+
+		DBox left = OdeHelper.createBox(space, thickness, depth, height);
+		left.setBody(body);
+		left.setOffsetPosition(thickness / 2 - width / 2, 0, height / 2);
+
+		DBox right = OdeHelper.createBox(space, thickness, depth, height);
+		right.setBody(body);
+		right.setOffsetPosition(-thickness / 2 + width / 2, 0, height / 2);
+
+		DBox back = OdeHelper.createBox(space, width, thickness, height);
+		back.setBody(body);
+		double backUp = 1;
+		if (facing == Direction.NORTH) {
+			backUp = -1;
+		}
+		back.setOffsetPosition(0, backUp * (depth / 2 - thickness / 2), height / 2);
+
+		DBox roof = OdeHelper.createBox(space, width, depth, thickness);
+		roof.setBody(body);
+		roof.setOffsetPosition(0, 0, height - thickness / 2);
 	}
 }

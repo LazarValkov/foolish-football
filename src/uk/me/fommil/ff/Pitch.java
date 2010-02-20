@@ -100,6 +100,10 @@ public class Pitch {
 		return 12 * SCALE;
 	}
 
+	public double getGoalThickness() {
+		return 2 * SCALE;
+	}
+
 	public Position getGoalTop() {
 		return new Position(SCALE * (300 + 71 / 2.0), SCALE * (bounds.y - 117 - 12 / 2.0), 0);
 	}
