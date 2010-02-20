@@ -112,7 +112,7 @@ class CollisionCallback implements DNearCallback {
 					throw new UnsupportedOperationException(o1 + " " + o2);
 				}
 			} else if (goalPostInvolved) {
-				assert groundInvolved;
+				assert groundInvolved : obj1 + " " + obj2;
 				Goalpost post = (Goalpost) (obj1 instanceof Goalpost ? obj1 : obj2);
 				handler.collide(post, surface);
 			}

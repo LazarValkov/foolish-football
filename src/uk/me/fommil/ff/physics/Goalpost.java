@@ -21,6 +21,7 @@ import javax.media.j3d.BoundingBox;
 import org.ode4j.math.DVector3;
 import org.ode4j.ode.DBody;
 import org.ode4j.ode.DBox;
+import org.ode4j.ode.DFixedJoint;
 import org.ode4j.ode.DMass;
 import org.ode4j.ode.DSpace;
 import org.ode4j.ode.DWorld;
@@ -57,12 +58,7 @@ public class Goalpost {
 
 		DBox box = OdeHelper.createBox(space, width, depth, height);
 		box.setBody(body);
-
-		DMass mass = OdeHelper.createMass();
-		mass.setBoxTotal(10000, width, depth, height);
-		body.setMass(mass);
 		body.setData(this);
-		body.setAngularDamping(1);
 
 		DVector3 centre;
 		if (facing == Direction.NORTH) {
@@ -73,5 +69,9 @@ public class Goalpost {
 		centre.add(2, height / 2);
 		log.info(centre.toString());
 		body.setPosition(centre);
+
+		DFixedJoint fixed = OdeHelper.createFixedJoint(world, null);
+		fixed.attach(null, body);
+		fixed.setFixed();
 	}
 }
