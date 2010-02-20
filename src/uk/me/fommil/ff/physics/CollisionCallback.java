@@ -38,15 +38,15 @@ class CollisionCallback implements DNearCallback {
 
 	interface CollisionHandler {
 
-		void collide(Ball ball, Player player, DSurfaceParameters surface);
+		boolean collide(Ball ball, Player player, DSurfaceParameters surface);
 
-		void collide(Player player1, Player player2, DSurfaceParameters surface);
+		boolean collide(Player player1, Player player2, DSurfaceParameters surface);
 
-		void collide(Ball ball, DSurfaceParameters surface);
+		boolean collide(Ball ball, DSurfaceParameters surface);
 
-		void collide(Player player, DSurfaceParameters surface);
+		boolean collide(Player player, DSurfaceParameters surface);
 
-		void collide(Goalpost post, DSurfaceParameters surface);
+		boolean collide(Goalpost post, DSurfaceParameters surface);
 	}
 
 	private static final int MAX_CONTACTS = 8;
@@ -94,10 +94,12 @@ class CollisionCallback implements DNearCallback {
 				Ball ball = (Ball) (obj1 instanceof Ball ? obj1 : obj2);
 				if (playerInvolved) {
 					Player player = (Player) (obj1 instanceof Player ? obj1 : obj2);
-					handler.collide(ball, player, surface);
+					if (!handler.collide(ball, player, surface))
+						continue;
 				} else if (groundInvolved || goalPostInvolved) {
 					// TODO: treat ground and goalposts differently
-					handler.collide(ball, surface);
+					if (!handler.collide(ball, surface))
+						continue;
 				} else {
 					throw new UnsupportedOperationException(o1 + " " + o2);
 				}
@@ -105,16 +107,19 @@ class CollisionCallback implements DNearCallback {
 				Player player = (Player) (obj1 instanceof Player ? obj1 : obj2);
 				if (obj1 instanceof Player && obj2 instanceof Player) {
 					Player player2 = (Player) obj2;
-					handler.collide(player, player2, surface);
+					if (!handler.collide(player, player2, surface))
+						continue;
 				} else if (groundInvolved || goalPostInvolved) {
-					handler.collide(player, surface);
+					if (!handler.collide(player, surface))
+						continue;
 				} else {
 					throw new UnsupportedOperationException(o1 + " " + o2);
 				}
 			} else if (goalPostInvolved) {
 				assert groundInvolved : obj1 + " " + obj2;
 				Goalpost post = (Goalpost) (obj1 instanceof Goalpost ? obj1 : obj2);
-				handler.collide(post, surface);
+				if (!handler.collide(post, surface))
+					continue;
 			}
 
 			DJoint c = OdeHelper.createContactJoint(world, joints, contact);

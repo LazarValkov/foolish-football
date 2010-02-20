@@ -27,38 +27,45 @@ import uk.me.fommil.ff.physics.CollisionCallback.CollisionHandler;
 class GameCollisionHandler implements CollisionHandler {
 
 	@Override
-	public void collide(Ball ball, Player player, DSurfaceParameters surface) {
+	public boolean collide(Ball ball, Player player, DSurfaceParameters surface) {
 		enableSoftBounce(surface);
 		ball.setDamping(0.1); // ?? can be overridden
 		surface.bounce = player.getBounce();
+		return true;
 	}
 
 	@Override
-	public void collide(Player player1, Player player2, DSurfaceParameters surface) {
+	public boolean collide(Player player1, Player player2, DSurfaceParameters surface) {
+		if (player1 instanceof Goalkeeper || player2 instanceof Goalkeeper)
+			return false; // classic graphics can't handle goalkeepers on the ground
 		enableSoftBounce(surface);
 		surface.bounce = 0.75; // affects tackling
+		return true;
 	}
 
 	@Override
-	public void collide(Ball ball, DSurfaceParameters surface) {
+	public boolean collide(Ball ball, DSurfaceParameters surface) {
 		enableSoftBounce(surface);
 		surface.bounce = 0.5;
 		ball.setDamping(0.1); // ?? can be overridden
 		ball.setAftertouchEnabled(false);
+		return true;
 	}
 
 	@Override
-	public void collide(Player player, DSurfaceParameters surface) {
+	public boolean collide(Player player, DSurfaceParameters surface) {
 		enableSoftBounce(surface);
 		if (player.getTilt() > Math.PI / 8) // ?? exposing more than is needed?
 			surface.mu = 1000;
+		return true;
 	}
 
 	@Override
-	public void collide(Goalpost post, DSurfaceParameters surface) {
+	public boolean collide(Goalpost post, DSurfaceParameters surface) {
 		enableSoftBounce(surface);
 		surface.bounce = 0;
 		surface.mu = Double.POSITIVE_INFINITY;
+		return true;
 	}
 
 	private void enableSoftBounce(DSurfaceParameters surface) {
