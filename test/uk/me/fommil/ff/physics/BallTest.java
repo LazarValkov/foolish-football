@@ -21,7 +21,7 @@ import static org.junit.Assert.*;
 /**
  * @author Samuel Halliday
  */
-public class BallMCTest {
+public class BallTest {
 
 	private static final double dt = 0.01;
 
@@ -31,12 +31,12 @@ public class BallMCTest {
 
 	private final Position centre = pitch.getCentre();
 
-	interface BallTest {
+	interface Tester {
 
 		void test(Position s, Velocity v);
 	}
 
-	void testHelper(Position position, Velocity velocity, BallTest stepTest) {
+	void testHelper(Position position, Velocity velocity, Tester stepTest) {
 		DummyPhysics physics = new DummyPhysics();
 		Ball ball = physics.createBall();
 		ball.setPosition(position);
@@ -56,7 +56,7 @@ public class BallMCTest {
 	@Test
 	public void testNoKick() {
 		final Velocity velocity = new Velocity(0, 0, 0);
-		testHelper(centre, velocity, new BallTest() {
+		testHelper(centre, velocity, new Tester() {
 
 			@Override
 			public void test(Position s, Velocity v) {
@@ -71,7 +71,7 @@ public class BallMCTest {
 	public void testGroundKicks() {
 		{
 			final Velocity velocity = new Velocity(10, 0, 0); // right
-			testHelper(centre, velocity, new BallTest() {
+			testHelper(centre, velocity, new Tester() {
 
 				@Override
 				public void test(Position s, Velocity v) {
@@ -82,7 +82,7 @@ public class BallMCTest {
 		}
 		{
 			final Velocity velocity = new Velocity(0, -10, 0); // down
-			testHelper(centre, velocity, new BallTest() {
+			testHelper(centre, velocity, new Tester() {
 
 				@Override
 				public void test(Position s, Velocity v) {
@@ -93,7 +93,7 @@ public class BallMCTest {
 		}
 		{
 			final Velocity velocity = new Velocity(-10, 0, 0); // left
-			testHelper(centre, velocity, new BallTest() {
+			testHelper(centre, velocity, new Tester() {
 
 				@Override
 				public void test(Position s, Velocity v) {
@@ -104,7 +104,7 @@ public class BallMCTest {
 		}
 		{
 			final Velocity velocity = new Velocity(0, 10, 0); // up
-			testHelper(centre, velocity, new BallTest() {
+			testHelper(centre, velocity, new Tester() {
 
 				@Override
 				public void test(Position s, Velocity v) {
@@ -115,7 +115,7 @@ public class BallMCTest {
 		}
 		{
 			final Velocity velocity = new Velocity(10, -10, 0); // down right
-			testHelper(centre, velocity, new BallTest() {
+			testHelper(centre, velocity, new Tester() {
 
 				@Override
 				public void test(Position s, Velocity v) {
@@ -126,7 +126,7 @@ public class BallMCTest {
 		}
 		{
 			final Velocity velocity = new Velocity(-10, 10, 0); // up left
-			testHelper(centre, velocity, new BallTest() {
+			testHelper(centre, velocity, new Tester() {
 
 				@Override
 				public void test(Position s, Velocity v) {
@@ -137,7 +137,7 @@ public class BallMCTest {
 		}
 		{
 			final Velocity velocity = new Velocity(10, 10, 0); // up right
-			testHelper(centre, velocity, new BallTest() {
+			testHelper(centre, velocity, new Tester() {
 
 				@Override
 				public void test(Position s, Velocity v) {
@@ -148,7 +148,7 @@ public class BallMCTest {
 		}
 		{
 			final Velocity velocity = new Velocity(-10, -10, 0); // down left
-			testHelper(centre, velocity, new BallTest() {
+			testHelper(centre, velocity, new Tester() {
 
 				@Override
 				public void test(Position s, Velocity v) {
@@ -159,7 +159,7 @@ public class BallMCTest {
 		}
 		{
 			final Velocity velocity = new Velocity(50, 0, 0); // right, fast
-			testHelper(centre, velocity, new BallTest() {
+			testHelper(centre, velocity, new Tester() {
 
 				@Override
 				public void test(Position s, Velocity v) {
@@ -170,7 +170,7 @@ public class BallMCTest {
 		}
 		{
 			final Velocity velocity = new Velocity(0, -50, 0); // down, fast
-			testHelper(centre, velocity, new BallTest() {
+			testHelper(centre, velocity, new Tester() {
 
 				@Override
 				public void test(Position s, Velocity v) {

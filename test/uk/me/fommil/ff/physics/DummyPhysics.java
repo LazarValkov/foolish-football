@@ -15,6 +15,8 @@
 package uk.me.fommil.ff.physics;
 
 import org.ode4j.ode.DGeom.DNearCallback;
+import uk.me.fommil.ff.Direction;
+import uk.me.fommil.ff.Pitch;
 import uk.me.fommil.ff.PlayerStats;
 
 /**
@@ -22,6 +24,8 @@ import uk.me.fommil.ff.PlayerStats;
  * @author Samuel Halliday
  */
 public class DummyPhysics extends Physics {
+
+	private final Pitch pitch = new Pitch();
 
 	public DummyPhysics() {
 		super(9.81);
@@ -41,5 +45,10 @@ public class DummyPhysics extends Physics {
 	public Player createPlayer(int shirt, PlayerStats stats) {
 		Player player = new Player(shirt, stats, world, space);
 		return player;
+	}
+
+	public Goalpost createGoalpost(Direction direction) {
+		Goalpost goal = new Goalpost(world, space, pitch, direction);
+		return goal;
 	}
 }
