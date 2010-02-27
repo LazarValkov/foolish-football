@@ -14,6 +14,8 @@
  */
 package uk.me.fommil.ff;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -113,5 +115,23 @@ public class KeyboardController extends KeyAdapter {
 
 	private void updateActions() {
 		game.setUserActions(actions, aftertouches);
+	}
+
+	private boolean directionSelected() {
+		return Iterables.any(actions, new Predicate<Action>() {
+
+			@Override
+			public boolean apply(Action input) {
+				switch (input) {
+					case UP:
+					case DOWN:
+					case LEFT:
+					case RIGHT:
+						return true;
+					default:
+						return false;
+				}
+			}
+		});
 	}
 }

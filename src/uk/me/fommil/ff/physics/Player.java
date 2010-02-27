@@ -32,7 +32,6 @@ import org.ode4j.ode.DWorld;
 import org.ode4j.ode.OdeHelper;
 import org.ode4j.ode.internal.Rotation;
 import uk.me.fommil.ff.PlayerStats;
-import uk.me.fommil.ff.physics.Action;
 
 /**
  * The model (M) and controller (C) for a {@link Player} during game play.
@@ -43,7 +42,7 @@ public class Player {
 
 	private static final Logger log = Logger.getLogger(Player.class.getName());
 
-	private static final double HEIGHT = 1.7; // http://en.wikipedia.org/wiki/Human_height
+	protected static final double HEIGHT = 1.7; // http://en.wikipedia.org/wiki/Human_height
 
 	private static final double WIDTH = 1.0;
 
@@ -72,7 +71,7 @@ public class Player {
 
 	private final DBox box;
 
-	private final DBody body;
+	protected final DBody body;
 
 	private volatile Collection<Action> actions = Collections.emptySet();
 
@@ -138,7 +137,7 @@ public class Player {
 	 * 
 	 * @param actions
 	 */
-	public void setActions(Collection<Action> actions) {
+	void setActions(Collection<Action> actions) {
 		Preconditions.checkNotNull(actions);
 		PlayerState state = getState();
 		switch (state) {
@@ -184,7 +183,7 @@ public class Player {
 	 *
 	 * @param attractor
 	 */
-	public void autoPilot(Position attractor) {
+	void autoPilot(Position attractor) {
 		Preconditions.checkNotNull(attractor);
 		List<Action> auto = Lists.newArrayList();
 		double dx = body.getPosition().get0() - attractor.x;
@@ -211,6 +210,8 @@ public class Player {
 			case CELEBRATE:
 			case PUNISH:
 				setUpright();
+				this.forcedState = state;
+				break;
 			case INJURED:
 				this.forcedState = state;
 				break;
@@ -301,7 +302,7 @@ public class Player {
 		return new Position(body.getPosition());
 	}
 
-	public void setPosition(Position p) {
+	void setPosition(Position p) {
 		setPosition(p.toDVector());
 	}
 

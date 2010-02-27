@@ -47,6 +47,8 @@ public class GamePhysics extends Physics {
 
 	static final double MIN_SPEED = 0.1;
 
+	private final GoalkeeperController goalkeeperController;
+
 	@Deprecated // DEBUGGING
 	private void debugNaNs() {
 		ball.getPosition();
@@ -98,6 +100,8 @@ public class GamePhysics extends Physics {
 		this.a = a;
 		this.pitch = pitch;
 
+		goalkeeperController = new GoalkeeperController(pitch);
+
 		ball = new Ball(world, space);
 		Position centre = pitch.getCentre();
 		ball.setPosition(centre);
@@ -110,6 +114,7 @@ public class GamePhysics extends Physics {
 		Tactics tactics = a.getCurrentTactics();
 		Goalkeeper goalkeeper = new Goalkeeper(1, aPlayers.get(0), world, space);
 		goalkeeper.setPosition(pitch.getGoalBottom());
+		goalkeeper.setOpponent(Direction.NORTH);
 		as.add(goalkeeper);
 
 		for (int i = 2; i <= 11; i++) {
@@ -162,14 +167,13 @@ public class GamePhysics extends Physics {
 				continue;
 			Position target = bp;
 			if (p instanceof Goalkeeper) {
-				target = pitch.getGoalBottom(); // TODO: implement goalkeeper AI
-				target = new Position(target.x, target.y + 3, target.z);
-			} else {
-				double near = Math.min(10, bp.distance(selected.getPosition()));
-				if (bp.distance(p.getPosition()) > near) {
-					PlayerZone pz = tactics.getZone(bz, p.getShirt());
-					target = pz.getCentre(pitch, Pitch.Facing.NORTH);
-				}
+				goalkeeperController.autoPilot((Goalkeeper) p, ball);
+				continue;
+			}
+			double near = Math.min(10, bp.distance(selected.getPosition()));
+			if (bp.distance(p.getPosition()) > near) {
+				PlayerZone pz = tactics.getZone(bz, p.getShirt());
+				target = pz.getCentre(pitch, Pitch.Facing.NORTH);
 			}
 			p.autoPilot(target);
 		}

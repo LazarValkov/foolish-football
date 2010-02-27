@@ -14,10 +14,17 @@
  */
 package uk.me.fommil.ff.physics;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import java.util.Collection;
+import java.util.List;
+import javax.annotation.Nullable;
+import org.ode4j.math.DMatrix3;
+import org.ode4j.math.DVector3;
+import org.ode4j.math.DVector3C;
 import org.ode4j.ode.DSpace;
 import org.ode4j.ode.DWorld;
+import org.ode4j.ode.internal.Rotation;
 import uk.me.fommil.ff.Direction;
 import uk.me.fommil.ff.PlayerStats;
 
@@ -35,8 +42,6 @@ public class Goalkeeper extends Player {
 
 	}
 
-	private volatile GoalkeeperState gkState;
-
 	private Direction opponent;
 
 	/**
@@ -46,16 +51,80 @@ public class Goalkeeper extends Player {
 	 * @param space
 	 */
 	public Goalkeeper(int i, PlayerStats stats, DWorld world, DSpace space) {
+		// TODO: consider rolling Goalkeeper functionality into Player
 		super(i, stats, world, space);
 	}
 
 	@Override
-	public void setActions(Collection<Action> actions) {
+	void setActions(Collection<Action> actions) {
+		if (getGkState() != null)
+			return;
+
 		Collection<Action> sanitised = Lists.newArrayList(actions);
 		sanitised.remove(Action.TACKLE);
 		sanitised.remove(Action.HEAD);
-		// TODO: remove KICK when diving
-		super.setActions(sanitised);
+		if (actions.contains(Action.DIVE))
+			sanitised.remove(Action.KICK);
+
+		if (!sanitised.contains(Action.DIVE)) {
+			super.setActions(sanitised);
+			return;
+		}
+		sanitised.remove(Action.UP);
+		sanitised.remove(Action.DOWN);
+		DVector3 move = Action.asVector(sanitised);
+
+		DMatrix3 rotation = new DMatrix3();
+		DMatrix3 tilt = new DMatrix3();
+		double direction = 0; // TODO: opponent direction
+		Rotation.dRFromAxisAndAngle(rotation, 0, 0, -1, direction);
+		Rotation.dRFromAxisAndAngle(tilt, 0, 1, 0, Math.PI / 4);
+		rotation.eqMul(rotation.clone(), tilt);
+
+		move.scale(5); // TODO: goalkeeper stats
+		move.set2(3);
+
+		body.setLinearVel(move);
+		body.setRotation(rotation);
+	}
+
+	public GoalkeeperState getGkState() {
+		double tilt = getTilt();
+		if (tilt < Math.PI / 8)
+			return null;
+		DVector3C position = body.getPosition();
+		DVector3C velocity = body.getLinearVel();
+		double z = position.get2() - HEIGHT / 2;
+		double vz = velocity.get2();
+
+		if (vz > 0.5) {
+			if (z < 0.1)
+				return GoalkeeperState.DIVE_START;
+			if (z < 0.25)
+				return GoalkeeperState.DIVE_MID;
+			return GoalkeeperState.DIVE_PEAK;
+		}
+		if (z < 0.1)
+			return GoalkeeperState.FALL_END;
+		if (z < 0.25)
+			return GoalkeeperState.FALL_MID;
+		return GoalkeeperState.FALL_START;
+	}
+
+	public void dive(@Nullable Direction direction) {
+		Preconditions.checkArgument(direction == null || direction == Direction.EAST || direction == Direction.WEST, direction);
+
+		List<Action> auto = Lists.newArrayList();
+		switch (direction) {
+			case EAST:
+				auto.add(opponent == Direction.NORTH ? Action.RIGHT : Action.LEFT);
+				break;
+			case WEST:
+				auto.add(opponent == Direction.NORTH ? Action.LEFT : Action.RIGHT);
+				break;
+		}
+		auto.add(Action.DIVE);
+		setActions(auto);
 	}
 
 	// <editor-fold defaultstate="collapsed" desc="BOILERPLATE GETTERS/SETTERS">
@@ -65,10 +134,6 @@ public class Goalkeeper extends Player {
 
 	public void setOpponent(Direction opponent) {
 		this.opponent = opponent;
-	}
-
-	public GoalkeeperState getGkState() {
-		return gkState;
 	}
 	// </editor-fold>
 }
