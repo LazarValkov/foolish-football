@@ -36,21 +36,24 @@ class GoalkeeperController {
 	public void autoPilot(Goalkeeper p, Ball ball) {
 		Preconditions.checkNotNull(p);
 		Preconditions.checkNotNull(ball);
-
-		if (ball.getPosition().distance(p.getPosition()) > 5) {
+		Position position = p.getPosition();
+		Position ballPosition = ball.getPosition();
+		if (ballPosition.distance(position) > 5) {
 			Position target = pitch.getGoalBottom();
 			target = new Position(target.x, target.y + 3, target.z);
 			p.autoPilot(target);
 			return;
 		}
 
-//		DVector3 ballPosition = ball.getPosition().toDVector();
-//		DVector3 position = p.getPosition().toDVector();
-//		DVector3 dive = ballPosition.sub(position);
-//		dive.set1(0);
-//		dive.set2(0);
-		p.dive(Direction.EAST);
+		DVector3 ballP = ballPosition.toDVector();
+		DVector3 s = position.toDVector();
+		DVector3 diff = ballP.sub(s);
 
-		// FIXME: diving
+		if (diff.get0() > 0.5)
+			p.dive(Direction.EAST);
+		else if (diff.get0() < -0.5)
+			p.dive(Direction.WEST);
+		else
+			p.dive(null);
 	}
 }

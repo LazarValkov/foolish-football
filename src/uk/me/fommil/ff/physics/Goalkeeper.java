@@ -78,7 +78,12 @@ public class Goalkeeper extends Player {
 		DMatrix3 tilt = new DMatrix3();
 		double direction = 0; // TODO: opponent direction
 		Rotation.dRFromAxisAndAngle(rotation, 0, 0, -1, direction);
-		Rotation.dRFromAxisAndAngle(tilt, 0, 1, 0, Math.PI / 4);
+		double tiltAngle = 0;
+		if (sanitised.contains(Action.RIGHT))
+			tiltAngle = Math.PI / 4;
+		else if (sanitised.contains(Action.LEFT))
+			tiltAngle = -Math.PI / 4;
+		Rotation.dRFromAxisAndAngle(tilt, 0, 1, 0, tiltAngle);
 		rotation.eqMul(rotation.clone(), tilt);
 
 		move.scale(5); // TODO: goalkeeper stats
@@ -115,14 +120,15 @@ public class Goalkeeper extends Player {
 		Preconditions.checkArgument(direction == null || direction == Direction.EAST || direction == Direction.WEST, direction);
 
 		List<Action> auto = Lists.newArrayList();
-		switch (direction) {
-			case EAST:
-				auto.add(opponent == Direction.NORTH ? Action.RIGHT : Action.LEFT);
-				break;
-			case WEST:
-				auto.add(opponent == Direction.NORTH ? Action.LEFT : Action.RIGHT);
-				break;
-		}
+		if (direction != null)
+			switch (direction) {
+				case EAST:
+					auto.add(opponent == Direction.NORTH ? Action.RIGHT : Action.LEFT);
+					break;
+				case WEST:
+					auto.add(opponent == Direction.NORTH ? Action.LEFT : Action.RIGHT);
+					break;
+			}
 		auto.add(Action.DIVE);
 		setActions(auto);
 	}
