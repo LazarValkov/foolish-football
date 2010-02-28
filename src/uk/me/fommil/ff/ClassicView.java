@@ -14,9 +14,9 @@
  */
 package uk.me.fommil.ff;
 
-import com.google.common.base.Joiner;
 import uk.me.fommil.ff.physics.Ball;
 import uk.me.fommil.ff.physics.GamePhysics;
+import uk.me.fommil.ff.physics.Goalkeeper.GoalkeeperState;
 import uk.me.fommil.ff.physics.Player;
 import com.google.common.collect.Maps;
 import java.awt.Color;
@@ -32,7 +32,6 @@ import java.util.Map.Entry;
 import java.util.logging.Logger;
 import javax.swing.JPanel;
 import uk.me.fommil.ff.physics.Goalkeeper;
-import uk.me.fommil.ff.physics.Goalkeeper.GoalkeeperState;
 import uk.me.fommil.ff.physics.Position;
 import uk.me.fommil.ff.physics.Velocity;
 import static uk.me.fommil.ff.Utils.*;
@@ -395,7 +394,8 @@ public class ClassicView extends JPanel {
 					spriteIndex = 24;
 					break;
 			}
-			int stage = gm.getGkState().ordinal();
+			GoalkeeperState gkState = gm.getGkState();
+			int stage = gkState.ordinal();
 			assert stage < 6;
 			switch (direction) {
 				case EAST:
@@ -404,6 +404,20 @@ public class ClassicView extends JPanel {
 				case WEST:
 					spriteIndex += (12 - stage);
 					break;
+				default:
+					spriteIndex += 14;
+					switch (gkState) {
+						case DIVE_START:
+						case FALL_END:
+							break;
+						case DIVE_MID:
+						case FALL_MID:
+							spriteIndex++;
+							break;
+						case DIVE_PEAK:
+						case FALL_START:
+							spriteIndex += 2;
+					}
 			}
 		}
 

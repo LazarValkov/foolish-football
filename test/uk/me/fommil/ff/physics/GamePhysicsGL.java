@@ -23,7 +23,6 @@ import java.util.logging.Logger;
 import javax.swing.JFrame;
 import org.ode4j.drawstuff.DrawStuff;
 import org.ode4j.drawstuff.DrawStuff.dsFunctions;
-import org.ode4j.math.DVector3;
 import org.ode4j.ode.DBox;
 import org.ode4j.ode.DGeom;
 import org.ode4j.ode.DSphere;
@@ -32,7 +31,6 @@ import uk.me.fommil.ff.Main;
 import uk.me.fommil.ff.Pitch;
 import uk.me.fommil.ff.Sprite;
 import uk.me.fommil.ff.Team;
-import uk.me.fommil.ff.physics.Player.PlayerState;
 import uk.me.fommil.ff.swos.PitchParser;
 import uk.me.fommil.ff.swos.SpriteParser;
 import uk.me.fommil.ff.swos.TacticsParser;
@@ -55,15 +53,8 @@ public class GamePhysicsGL extends dsFunctions {
 		Pitch pitch = new Pitch();
 
 		GamePhysics game = new GamePhysics(a, pitch);
-		DVector3 ballStart = game.getBall().getPosition().toDVector();
-		game.getSelected().setPosition(ballStart);
-		ballStart.set2(10);
-		game.getBall().setPosition(new Position(ballStart));
-		for (Player player : game.getPlayers()) {
-			if (player.getShirt() != 10)
-				continue;
-			player.setState(PlayerState.THROW);
-		}
+		Position ballStart = pitch.getPenaltySpotBottom();
+		game.getBall().setPosition(ballStart);
 
 		GamePhysicsGL demo = new GamePhysicsGL(game);
 		DrawStuff.dsSimulationLoop(args, width, height, demo);

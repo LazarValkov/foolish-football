@@ -73,9 +73,10 @@ public class Pitch {
 //	private final Rectangle goalNetTop = new Rectangle(300, 117, 71, 12);
 //
 //	private final Rectangle goalNetBottom = new Rectangle(300, 769, 71, 12);
-//	private final Point penaltySpotTop = new Point(336, 187);
-//
-//	private final Point penaltySpotBottom = new Point(336, 711);
+	private final Point penaltySpotTop = new Point(336, 187);
+
+	private final Point penaltySpotBottom = new Point(336, 711);
+
 	public Position getPitchLowerLeft() {
 		return new Position(pitch.x * SCALE, (bounds.y - pitch.y - pitch.height) * SCALE, 0);
 	}
@@ -110,6 +111,18 @@ public class Pitch {
 
 	public Position getGoalBottom() {
 		return new Position(SCALE * (300 + 71 / 2.0), SCALE * (bounds.y - 769 - 12 / 2.0), 0);
+	}
+
+	public Position getPenaltySpotTop() {
+		return pointToPosition(penaltySpotTop);
+	}
+
+	public Position getPenaltySpotBottom() {
+		return pointToPosition(penaltySpotBottom);
+	}
+
+	private Position pointToPosition(Point point) {
+		return new Position(SCALE * point.x, SCALE * (bounds.y - point.y), 0);
 	}
 
 	@Deprecated // implementation detail

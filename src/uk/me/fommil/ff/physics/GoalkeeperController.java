@@ -40,7 +40,7 @@ class GoalkeeperController {
 		Position ballPosition = ball.getPosition();
 		if (ballPosition.distance(position) > 5) {
 			Position target = pitch.getGoalBottom();
-			target = new Position(target.x, target.y + 3, target.z);
+			target = new Position(target.x, target.y + 5, target.z);
 			p.autoPilot(target);
 			return;
 		}
@@ -49,9 +49,9 @@ class GoalkeeperController {
 		DVector3 s = position.toDVector();
 		DVector3 diff = ballP.sub(s);
 
-		if (diff.get0() > 0.5)
+		if (diff.get0() > 1)
 			p.dive(Direction.EAST);
-		else if (diff.get0() < -0.5)
+		else if (diff.get0() < -1)
 			p.dive(Direction.WEST);
 		else
 			p.dive(null);

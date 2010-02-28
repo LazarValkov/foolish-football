@@ -94,13 +94,13 @@ public class Goalkeeper extends Player {
 	}
 
 	public GoalkeeperState getGkState() {
-		double tilt = getTilt();
-		if (tilt < Math.PI / 8)
-			return null;
 		DVector3C position = body.getPosition();
 		DVector3C velocity = body.getLinearVel();
 		double z = position.get2() - HEIGHT / 2;
 		double vz = velocity.get2();
+		double tilt = getTilt();
+		if (tilt < Math.PI / 8 && z < 0.1 && Math.abs(vz) < 0.1)
+			return null;
 
 		if (vz > 0.5) {
 			if (z < 0.1)

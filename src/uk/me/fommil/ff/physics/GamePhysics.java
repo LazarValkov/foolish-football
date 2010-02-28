@@ -150,10 +150,10 @@ public class GamePhysics extends Physics {
 	protected void beforeStep() {
 		debugNaNs();
 
-		for (Goalpost goal : goals) {
-			if (goal.isInside(ball))
-				log.info("GOAL TO " + goal.getFacing());
-		}
+//		for (Goalpost goal : goals) {
+//			if (goal.isInside(ball))
+//				log.info("GOAL TO " + goal.getFacing());
+//		}
 
 		if (actions.contains(Action.CHANGE))
 			updateSelected();
