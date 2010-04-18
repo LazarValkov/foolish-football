@@ -36,8 +36,8 @@ public class SoundParser {
 	 * @throws Exception
 	 */
 	public static final void main(String[] args) throws Exception {
-		File file = new File(Main.SWOS + "/SFX/PIERCE/M196_K_.RAW"); // "penalty" SFX
-//		File file = new File(Main.SWOS + "/SFX/ENGLISH/ECA01.RAW");
+//		File file = new File(Main.SWOS + "/SFX/PIERCE/M196_K_.RAW"); // "penalty" SFX
+		File file = new File(Main.SWOS + "/HARD/CHEER.RAW");
 
 		InputStream in = new FileInputStream(file);
 
@@ -47,6 +47,7 @@ public class SoundParser {
 		clip.open(audio);
 		clip.start();
 
+		clip.drain();
 		audio.close();
 	}
 }
