@@ -36,7 +36,7 @@ import uk.me.fommil.ff.swos.SpriteParser;
 @SuppressWarnings("serial")
 public class Main {
 
-	public static final File SWOS = new File("data/Sensible World of Soccer 96-97");
+	public static final File SWOS = new File("../data/Sensible World of Soccer 96-97");
 
 	/**
 	 * @param args
