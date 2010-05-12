@@ -14,9 +14,11 @@
  */
 package uk.me.fommil.ff.physics;
 
+import java.util.logging.Logger;
 import org.ode4j.ode.DContact.DSurfaceParameters;
 import org.ode4j.ode.OdeConstants;
 import uk.me.fommil.ff.physics.CollisionCallback.CollisionHandler;
+import uk.me.fommil.ff.swos.SoundParser;
 
 /**
  * Handles collisions using objects specific to this package.
@@ -25,6 +27,8 @@ import uk.me.fommil.ff.physics.CollisionCallback.CollisionHandler;
  * @see CollisionCallback
  */
 class GameCollisionHandler implements CollisionHandler {
+
+	private static final Logger log = Logger.getLogger(GameCollisionHandler.class.getName());
 
 	@Override
 	public boolean collide(Ball ball, Player player, DSurfaceParameters surface) {
@@ -49,6 +53,15 @@ class GameCollisionHandler implements CollisionHandler {
 		surface.bounce = 0.5;
 		ball.setDamping(0.1); // ?? can be overridden
 		ball.setAftertouchEnabled(false);
+
+		if (ball.getVelocity().speed() > 10) {
+			try {
+				SoundParser.play(SoundParser.Fx.BALL_BOUNCE);
+			} catch (Exception ex) {
+				log.warning(ex.getMessage());
+			}
+		}
+
 		return true;
 	}
 

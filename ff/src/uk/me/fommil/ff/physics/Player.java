@@ -32,6 +32,7 @@ import org.ode4j.ode.DWorld;
 import org.ode4j.ode.OdeHelper;
 import org.ode4j.ode.internal.Rotation;
 import uk.me.fommil.ff.PlayerStats;
+import uk.me.fommil.ff.swos.SoundParser;
 
 /**
  * The model (M) and controller (C) for a {@link Player} during game play.
@@ -109,6 +110,12 @@ public class Player {
 		if (distanceTo(ball) > 1.5)
 			return;
 		hit(ball, 10, 2);
+
+		try {
+			SoundParser.play(SoundParser.Fx.BALL_KICK);
+		} catch (Exception ex) {
+			log.warning(ex.getMessage());
+		}
 	}
 
 	void throwIn(Ball ball) {

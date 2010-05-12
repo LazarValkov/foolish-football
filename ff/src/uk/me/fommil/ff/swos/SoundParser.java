@@ -18,15 +18,19 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineUnavailableException;
 import uk.me.fommil.ff.Main;
 
 /**
@@ -36,6 +40,36 @@ import uk.me.fommil.ff.Main;
  * @see <a href="http://swos.hajas.org/sounds.htm">Hajas SWOS Brasil</a>
  */
 public class SoundParser {
+
+	private static final Map<String, AudioInputStream> fxClips = Maps.newHashMap();
+
+	/**
+	 * @param fx
+	 * @throws IOException
+	 * @throws LineUnavailableException
+	 *
+	 * @deprecated because this is a hack
+	 */
+	@Deprecated
+	public synchronized static void play(Fx fx) throws IOException, LineUnavailableException {
+		Preconditions.checkNotNull(fx);
+		String filename = fx.getFilename();
+
+		File file = new File(Main.SWOS + filename);
+
+		Preconditions.checkArgument(file.exists());
+		InputStream in = new FileInputStream(file);
+		AudioInputStream audio = new AudioInputStream(in, SWOS_RAW_FORMAT, file.length());
+		fxClips.put(filename, audio);
+
+		Clip clip = AudioSystem.getClip();
+		clip.open(audio);
+
+		clip.start();
+
+		clip.drain();
+		audio.close();
+	}
 
 	private static final AudioFormat SWOS_RAW_FORMAT = new AudioFormat(22000, 8, 1, false, true);
 
@@ -101,12 +135,51 @@ public class SoundParser {
 		// FIXME: document the SFX/FLC files, used for ambient sounds tied to results
 	}
 
-	enum Fx {
+	public enum Fx {
 		// FIXME: document the FX files, used for sound effects during play
 
-		AWAYSUBL, BOUNCEX, CHANT8L, COMBROWN, COMWHITE, ENDGAMEW, FOUL, HOMEGOAL, KICKX, ONENIL, TWONIL,
-		BGCRD3L, CHANT10L, CHEER, COMGREEN, COMYELO, EREWEGO, FOURNIL, HOMESUBL, MISSGOAL, REF_WH, WHISTLE,
-		BOOWHISL, CHANT4L, COMBLUE, COMRED, EASY, FIVENIL, GOALKICK, HOMEWINL, NOTSING, THREENIL,
+		WHISTLE_FOUL("FOUL"),
+		WHISTLE_1("REF_WH"),
+		WHISTLE_2("WHISTLE"),
+		WHISTLE_ENDGAME("ENDGAMEW"),
+		BALL_BOUNCE("BOUNCEX"),
+		BALL_KICK("KICKX"),
+		CROWD_AWAYSUBL("AWAYSUBL"),
+		CROWD_BGCRD3L("BGCRD3L"),
+		CROWD_BOOWHISL("BOOWHISL"),
+		CROWD_CHANT10L("CHANT10L"),
+		CROWD_CHANT4L("CHANT4L"),
+		CROWD_CHANT8L("CHANT8L"),
+		CROWD_CHEER("CHEER"),
+		CROWD_COMBLUE("COMBLUE"),
+		CROWD_COMBROWN("COMBROWN"),
+		CROWD_COMGREEN("COMGREEN"),
+		CROWD_COMRED("COMRED"),
+		CROWD_COMWHITE("COMWHITE"),
+		CROWD_COMYELO("COMYELO"),
+		CROWD_EASY("EASY"),
+		CROWD_EREWEGO("EREWEGO"),
+		CROWD_GOALKICK("GOALKICK"),
+		CROWD_HOMEGOAL("HOMEGOAL"),
+		CROWD_HOMESUBL("HOMESUBL"),
+		CROWD_HOMEWINL("HOMEWINL"),
+		CROWD_MISSGOAL("MISSGOAL"),
+		CROWD_NOTSING("NOTSING"),
+		CROWD_ONENIL("ONENIL"),
+		CROWD_TWONIL("TWONIL"),
+		CROWD_THREENIL("THREENIL"),
+		CROWD_FOURNIL("FOURNIL"),
+		CROWD_FIVENIL("FIVENIL");
+
+		private final String filename;
+
+		Fx(String filename) {
+			this.filename = filename;
+		}
+
+		String getFilename() {
+			return "/SFX/FX/" + this.filename + ".RAW";
+		}
 	}
 
 	/**
@@ -114,21 +187,11 @@ public class SoundParser {
 	 * @throws Exception
 	 */
 	public static final void main(String[] args) throws Exception {
-		for (String filename : Commentary.END_GAME.getFilenames()) {
-			File file = new File(Main.SWOS + filename);
 
-			System.out.println(file);
-			Preconditions.checkArgument(file.exists());
-			InputStream in = new FileInputStream(file);
-
-			AudioInputStream audio = new AudioInputStream(in, SWOS_RAW_FORMAT, file.length());
-
-			Clip clip = AudioSystem.getClip();
-			clip.open(audio);
-			clip.start();
-
-			clip.drain();
-			audio.close();
+		//for (String filename : Commentary.END_GAME.getFilenames()) {
+		for (Fx fx : Fx.values()) {
+			System.out.println(fx.name());
+			play(fx);
 		}
 	}
 }
