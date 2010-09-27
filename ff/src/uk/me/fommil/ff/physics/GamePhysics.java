@@ -15,6 +15,7 @@
 package uk.me.fommil.ff.physics;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -73,11 +74,12 @@ public class GamePhysics extends Physics {
 		return d;
 	}
 
-	private final Team a;
+	private final Team a, b;
 
 	private final Ball ball;
 
 	private final List<Player> as = Lists.newArrayListWithCapacity(11);
+	private final List<Player> bs = Lists.newArrayListWithCapacity(11);
 
 	private final Pitch pitch;
 
@@ -93,11 +95,13 @@ public class GamePhysics extends Physics {
 
 	/**
 	 * @param a
+	 * @param b
 	 * @param pitch
 	 */
-	public GamePhysics(Team a, Pitch pitch) {
+	public GamePhysics(Team a, Team b, Pitch pitch) {
 		super(9.81);
 		this.a = a;
+		this.b = b;
 		this.pitch = pitch;
 
 		goalkeeperController = new GoalkeeperController(pitch);
@@ -110,21 +114,34 @@ public class GamePhysics extends Physics {
 		goals.add(new Goalpost(world, space, pitch, Direction.SOUTH));
 
 		BallZone bz = ball.getZone(pitch);
+
 		List<PlayerStats> aPlayers = a.getPlayers();
 		Tactics tactics = a.getCurrentTactics();
-		Goalkeeper goalkeeper = new Goalkeeper(1, aPlayers.get(0), world, space);
+		Goalkeeper goalkeeper = new Goalkeeper(1, a, aPlayers.get(0), world, space);
 		goalkeeper.setPosition(pitch.getGoalBottom());
 		goalkeeper.setOpponent(Direction.NORTH);
 		as.add(goalkeeper);
-
 		for (int i = 2; i <= 11; i++) {
 			Position p = tactics.getZone(bz, i).getCentre(pitch, Pitch.Facing.NORTH);
-			Player pma = new Player(i, aPlayers.get(i - 1), world, space);
+			Player pma = new Player(i, a, aPlayers.get(i - 1), world, space);
 			pma.setPosition(p);
 			as.add(pma);
 		}
 		selected = as.get(9);
 
+		// TODO: remove duplication
+		List<PlayerStats> bPlayers = a.getPlayers();
+		tactics = b.getCurrentTactics();
+		goalkeeper = new Goalkeeper(1, b, bPlayers.get(0), world, space);
+		goalkeeper.setPosition(pitch.getGoalTop());
+		goalkeeper.setOpponent(Direction.SOUTH);
+		bs.add(goalkeeper);
+		for (int i = 2; i <= 11; i++) {
+			Position p = tactics.getZone(bz, i).getCentre(pitch, Pitch.Facing.SOUTH);
+			Player pma = new Player(i, b, bPlayers.get(i - 1), world, space);
+			pma.setPosition(p);
+			bs.add(pma);
+		}
 	}
 
 	@Override
@@ -160,8 +177,7 @@ public class GamePhysics extends Physics {
 
 		Position bp = ball.getPosition();
 		BallZone bz = ball.getZone(pitch);
-		Tactics tactics = a.getCurrentTactics();
-		for (Player p : as) {
+		for (Player p : getPlayers()) {
 			transition(p);
 			if (p == selected)
 				continue;
@@ -172,8 +188,12 @@ public class GamePhysics extends Physics {
 			}
 			double near = Math.min(10, bp.distance(selected.getPosition()));
 			if (bp.distance(p.getPosition()) > near) {
-				PlayerZone pz = tactics.getZone(bz, p.getShirt());
-				target = pz.getCentre(pitch, Pitch.Facing.NORTH);
+				// FIXME: tactics placer not working for south facing teams
+				PlayerZone pz = p.getTeam().getCurrentTactics().getZone(bz, p.getShirt());
+				if (p.getTeam() == a)
+					target = pz.getCentre(pitch, Pitch.Facing.NORTH);
+				else
+					target = pz.getCentre(pitch, Pitch.Facing.SOUTH);
 			}
 			p.autoPilot(target);
 		}
@@ -259,7 +279,7 @@ public class GamePhysics extends Physics {
 	}
 
 	public Iterable<Player> getPlayers() {
-		return as;
+		return Iterables.concat(as, bs);
 	}
 
 	public Player getSelected() {
@@ -272,6 +292,10 @@ public class GamePhysics extends Physics {
 
 	public Team getTeamA() {
 		return a;
+	}
+
+	public Team getTeamB() {
+		return b;
 	}
 
 	public Pitch getPitch() {

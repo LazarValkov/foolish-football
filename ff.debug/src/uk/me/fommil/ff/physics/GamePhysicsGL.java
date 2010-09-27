@@ -51,8 +51,12 @@ public class GamePhysicsGL extends dsFunctions {
 		Team a = new Team();
 		a.setCurrentTactics(TacticsParser.getSwosTactics(Main.SWOS).get("442"));
 		Pitch pitch = new Pitch();
+		Team b = new Team();
+		b.setCurrentTactics(TacticsParser.getSwosTactics(Main.SWOS).get("433"));
+		b.setHomeKit(a.getAwayKit());
+		b.setAwayKit(a.getHomeKit());
 
-		GamePhysics game = new GamePhysics(a, pitch);
+		GamePhysics game = new GamePhysics(a, b, pitch);
 		Position ballStart = pitch.getPenaltySpotBottom();
 		game.getBall().setPosition(ballStart);
 
@@ -102,6 +106,7 @@ public class GamePhysicsGL extends dsFunctions {
 		DrawStuff.dsSetViewpoint(xyz, hpr);
 
 		for (DGeom geom : game.getGeoms()) {
+			// TODO: draw different colours for the teams/ball/goalies, etc
 			draw(geom, Color.RED);
 		}
 		gv.repaint();

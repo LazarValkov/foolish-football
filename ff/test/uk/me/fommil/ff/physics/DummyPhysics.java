@@ -43,7 +43,7 @@ public class DummyPhysics extends Physics {
 	}
 
 	public Player createPlayer(int shirt, PlayerStats stats) {
-		Player player = new Player(shirt, stats, world, space);
+		Player player = new Player(shirt, null, stats, world, space);
 		return player;
 	}
 

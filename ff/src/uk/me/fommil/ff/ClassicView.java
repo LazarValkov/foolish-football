@@ -14,6 +14,9 @@
  */
 package uk.me.fommil.ff;
 
+import java.util.List;
+import uk.me.fommil.ff.Team.Colours;
+import uk.me.fommil.ff.swos.SwosUtils;
 import uk.me.fommil.ff.physics.Ball;
 import uk.me.fommil.ff.physics.GamePhysics;
 import uk.me.fommil.ff.physics.Goalkeeper.GoalkeeperState;
@@ -60,11 +63,13 @@ public class ClassicView extends JPanel {
 
 	private final int zoom = 2;
 
-	private final Team a;
+	private final Team a, b; // ?? no real need to store these
 
 	private final BufferedImage pitch;
 
-	private final Map<Integer, Sprite> teamSprites = Maps.newHashMap();
+	private final Map<Integer, Sprite> teamASprites = Maps.newHashMap();
+
+	private final Map<Integer, Sprite> teamBSprites = Maps.newHashMap();
 
 	private final Map<Integer, Sprite> ballSprites = Maps.newHashMap();
 
@@ -88,15 +93,33 @@ public class ClassicView extends JPanel {
 	public ClassicView(GamePhysics game, BufferedImage pitch, Map<Integer, Sprite> sprites) {
 		this.pitch = pitch;
 		this.a = game.getTeamA();
+		this.b = game.getTeamB();
 		this.game = game;
 		keyboardInput = new KeyboardController(game);
 
 		setFocusable(true);
 		addKeyListener(keyboardInput);
+		// TODO: calculate home/away kit use
+		Colours aColours = a.getHomeKit();
+		Colours bColours = b.getHomeKit();
 
-		Map<Color, Color> teamColours = a.getTeamColors();
+		List<Color> pal = SwosUtils.getPalette();
+
+		// ??: cleanup duplication
+		Map<Color, Color> teamAColours = Maps.newHashMap();
+		teamAColours.put(pal.get(10), aColours.getPrimary());
+		teamAColours.put(pal.get(11), aColours.getSecondary());
+		teamAColours.put(pal.get(14), aColours.getShorts());
+		teamAColours.put(pal.get(15), aColours.getSocks());
+		Map<Color, Color> teamBColours = Maps.newHashMap();
+		teamBColours.put(pal.get(10), bColours.getPrimary());
+		teamBColours.put(pal.get(11), bColours.getSecondary());
+		teamBColours.put(pal.get(14), bColours.getShorts());
+		teamBColours.put(pal.get(15), bColours.getSocks());
+
 		for (int i = 0; i < 101; i++) {
-			teamSprites.put(i, sprites.get(i + 341).copyWithReplace(teamColours));
+			teamASprites.put(i, sprites.get(i + 341).copyWithReplace(teamAColours));
+			teamBSprites.put(i, sprites.get(i + 341).copyWithReplace(teamBColours));
 		}
 		for (int i = 0; i < 5; i++) {
 			ballSprites.put(i, sprites.get(i + 1179));
@@ -262,7 +285,8 @@ public class ClassicView extends JPanel {
 					}
 				}
 		}
-		Sprite sprite = teamSprites.get(spriteIndex);
+
+		Sprite sprite = (pm.getTeam() == a) ? teamASprites.get(spriteIndex) : teamBSprites.get(spriteIndex);
 		Point s = sprite.getCentre();
 		g.drawImage(sprite.getImage(), gPos.x - s.x, gPos.y - s.y, null);
 

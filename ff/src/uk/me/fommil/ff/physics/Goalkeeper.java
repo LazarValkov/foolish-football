@@ -27,6 +27,7 @@ import org.ode4j.ode.DWorld;
 import org.ode4j.ode.internal.Rotation;
 import uk.me.fommil.ff.Direction;
 import uk.me.fommil.ff.PlayerStats;
+import uk.me.fommil.ff.Team;
 
 /**
  * The model (M) for a goalkeeper.
@@ -46,13 +47,14 @@ public class Goalkeeper extends Player {
 
 	/**
 	 * @param i
+	 * @param team
 	 * @param stats
 	 * @param world
 	 * @param space
 	 */
-	public Goalkeeper(int i, PlayerStats stats, DWorld world, DSpace space) {
+	public Goalkeeper(int i, Team team, PlayerStats stats, DWorld world, DSpace space) {
 		// TODO: consider rolling Goalkeeper functionality into Player
-		super(i, stats, world, space);
+		super(i, team, stats, world, space);
 	}
 
 	@Override

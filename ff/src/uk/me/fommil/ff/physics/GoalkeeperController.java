@@ -39,8 +39,14 @@ class GoalkeeperController {
 		Position position = p.getPosition();
 		Position ballPosition = ball.getPosition();
 		if (ballPosition.distance(position) > 5) {
-			Position target = pitch.getGoalBottom();
-			target = new Position(target.x, target.y + 5, target.z);
+			Position target;
+			if (p.getOpponent() == Direction.SOUTH) {
+ 				target = pitch.getGoalTop();
+				target = new Position(target.x, target.y - 5, target.z);
+			} else {
+				target = pitch.getGoalBottom();
+				target = new Position(target.x, target.y + 5, target.z);
+			}
 			p.autoPilot(target);
 			return;
 		}

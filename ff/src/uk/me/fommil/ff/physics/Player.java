@@ -32,6 +32,7 @@ import org.ode4j.ode.DWorld;
 import org.ode4j.ode.OdeHelper;
 import org.ode4j.ode.internal.Rotation;
 import uk.me.fommil.ff.PlayerStats;
+import uk.me.fommil.ff.Team;
 import uk.me.fommil.ff.swos.SoundParser;
 
 /**
@@ -59,6 +60,8 @@ public class Player {
 
 	private static final double TACKLE_BOOST = 2;
 
+	private final Team team;
+
 	public enum PlayerState {
 
 		RUN, KICK, TACKLE, HEAD_START, HEAD_MID, HEAD_END, GROUND, INJURED,
@@ -78,10 +81,11 @@ public class Player {
 
 	private volatile PlayerState forcedState;
 
-	Player(int i, PlayerStats stats, DWorld world, DSpace space) {
+	Player(int i, Team team, PlayerStats stats, DWorld world, DSpace space) {
 		Preconditions.checkArgument(i >= 1 && i <= 11, i);
 		Preconditions.checkNotNull(stats);
 		this.shirt = i;
+		this.team = team;
 		this.stats = stats;
 		this.body = OdeHelper.createBody(world);
 		box = OdeHelper.createBox(space, WIDTH, DEPTH, HEIGHT);
@@ -333,5 +337,9 @@ public class Player {
 
 	public int getShirt() {
 		return shirt;
+	}
+
+	public Team getTeam() {
+		return team;
 	}
 }

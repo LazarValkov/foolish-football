@@ -54,9 +54,11 @@ public class Main {
 		a.setCurrentTactics(swosTactics.get("442"));
 		Team b = new Team();
 		b.setCurrentTactics(swosTactics.get("433"));
+		b.setHomeKit(a.getAwayKit());
+		b.setAwayKit(a.getHomeKit());
 
 		Pitch pitch = new Pitch();
-		final GamePhysics game = new GamePhysics(a, pitch);
+		final GamePhysics game = new GamePhysics(a, b, pitch);
 		final ClassicView gv = new ClassicView(game, pitchImage, sprites);
 
 		JFrame frame = new JFrame();

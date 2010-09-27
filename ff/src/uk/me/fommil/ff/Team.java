@@ -30,8 +30,54 @@ import uk.me.fommil.ff.swos.SwosUtils;
  */
 public class Team {
 
+	public static class Colours {
+
+		private final Color primary;
+
+		private final Color secondary;
+
+		private final Color shorts;
+
+		private final Color socks;
+
+		/**
+		 * @param primary
+		 * @param secondary
+		 * @param shorts
+		 * @param socks
+		 */
+		public Colours(Color primary, Color secondary, Color shorts, Color socks) {
+			this.primary = primary;
+			this.secondary = secondary;
+			this.shorts = shorts;
+			this.socks = socks;
+		}
+
+		// <editor-fold defaultstate="collapsed" desc="BOILERPLATE GETTERS/SETTERS">
+		public Color getPrimary() {
+			return primary;
+		}
+
+		public Color getSecondary() {
+			return secondary;
+		}
+
+		public Color getShorts() {
+			return shorts;
+		}
+
+		public Color getSocks() {
+			return socks;
+		}
+		// </editor-fold>
+	}
+
 	private Tactics current;
+
 	private List<PlayerStats> players = Lists.newArrayList();
+
+	private Colours homeKit = new Colours(Color.RED, Color.RED, Color.WHITE, Color.RED);
+	private Colours awayKit = new Colours(Color.BLUE, Color.BLUE, Color.WHITE, Color.BLUE);
 
 	/** */
 	public Team() {
@@ -58,13 +104,21 @@ public class Team {
 		return Collections.unmodifiableList(players);
 	}
 
-	public Map<Color, Color> getTeamColors() {
-		Map<Color, Color> colours = Maps.newHashMap();
-		List<Color> pal = SwosUtils.getPalette();
-		colours.put(pal.get(10), Color.RED);
-		colours.put(pal.get(11), Color.RED);
-		colours.put(pal.get(14), Color.WHITE);
-		colours.put(pal.get(15), Color.RED);
-		return colours;
+	// <editor-fold defaultstate="collapsed" desc="BOILERPLATE GETTERS/SETTERS">
+	public Colours getAwayKit() {
+		return awayKit;
 	}
+
+	public void setAwayKit(Colours awayKit) {
+		this.awayKit = awayKit;
+	}
+
+	public Colours getHomeKit() {
+		return homeKit;
+	}
+
+	public void setHomeKit(Colours homeKit) {
+		this.homeKit = homeKit;
+	}
+	// </editor-fold>
 }
