@@ -19,17 +19,20 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineEvent;
+import javax.sound.sampled.LineListener;
 import javax.sound.sampled.LineUnavailableException;
 import uk.me.fommil.ff.Main;
 
@@ -41,7 +44,11 @@ import uk.me.fommil.ff.Main;
  */
 public class SoundParser {
 
-	private static final Map<String, AudioInputStream> fxClips = Maps.newHashMap();
+	private static final Logger log = Logger.getLogger(SoundParser.class.getName());
+
+	private static final Map<Fx, byte[]> fxCache = Maps.newEnumMap(Fx.class);
+
+	private static final Map<Fx, Date> playing = Maps.newEnumMap(Fx.class);
 
 	/**
 	 * @param fx
@@ -51,24 +58,49 @@ public class SoundParser {
 	 * @deprecated because this is a hack
 	 */
 	@Deprecated
-	public synchronized static void play(Fx fx) throws IOException, LineUnavailableException {
+	public static void play(final Fx fx) throws IOException, LineUnavailableException {
 		Preconditions.checkNotNull(fx);
-		String filename = fx.getFilename();
 
-		File file = new File(Main.SWOS + filename);
+		if (playing.containsKey(fx))
+			return;
 
-		Preconditions.checkArgument(file.exists());
-		InputStream in = new FileInputStream(file);
-		AudioInputStream audio = new AudioInputStream(in, SWOS_RAW_FORMAT, file.length());
-		fxClips.put(filename, audio);
+		playing.put(fx, new Date());
+		Thread player = new Thread(new Runnable() {
 
-		Clip clip = AudioSystem.getClip();
-		clip.open(audio);
+			@Override
+			public void run() {
+				try {
+					byte[] bytes;
+					if (!fxCache.containsKey(fx)) {
+						String filename = fx.getFilename();
+						File file = new File(Main.SWOS + filename);
+						Preconditions.checkArgument(file.exists());
+						bytes = SwosUtils.getBytes(file);
+						fxCache.put(fx, bytes);
+					} else {
+						bytes = fxCache.get(fx);
+					}
+					ByteArrayInputStream in = new ByteArrayInputStream(bytes);
+					AudioInputStream audio = new AudioInputStream(in, SWOS_RAW_FORMAT, bytes.length);
+					Clip clip = AudioSystem.getClip();
+					clip.open(audio);
+					clip.addLineListener(new LineListener() {
 
-		clip.start();
-
-		clip.drain();
-		audio.close();
+						@Override
+						public void update(LineEvent event) {
+							if (event.getType() == LineEvent.Type.STOP) {
+								playing.remove(fx);
+							}
+						}
+					});
+					clip.start();
+					clip.drain();
+				} catch (Exception e) {
+					log.warning(fx.getFilename());
+				}
+			}
+		});
+		player.start();
 	}
 
 	private static final AudioFormat SWOS_RAW_FORMAT = new AudioFormat(22000, 8, 1, false, true);

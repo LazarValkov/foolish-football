@@ -54,7 +54,8 @@ class GameCollisionHandler implements CollisionHandler {
 		ball.setDamping(0.1); // ?? can be overridden
 		ball.setAftertouchEnabled(false);
 
-		if (ball.getVelocity().speed() > 10) {
+		if (ball.getVelocity().z < -1) {
+			// TODO: different bounce sound for ground/player/post
 			try {
 				SoundParser.play(SoundParser.Fx.BALL_BOUNCE);
 			} catch (Exception ex) {

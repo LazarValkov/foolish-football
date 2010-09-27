@@ -17,8 +17,13 @@ package uk.me.fommil.ff.swos;
 import com.google.common.base.Preconditions;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -48,6 +53,28 @@ public final class SwosUtils {
 		}
 		ImageIO.write(gamePal, "png", new File("data/sprites/gamepal.png"));
 		ImageIO.write(pal, "png", new File("data/sprites/pal.png"));
+	}
+
+	/**
+	 * @param file
+	 * @return
+	 * @throws IOException
+	 */
+	public static byte[] getBytes(File file) throws IOException {
+		Preconditions.checkNotNull(file);
+		Preconditions.checkArgument(file.exists());
+
+		int size = (int) file.length();
+		byte[] bytes = new byte[size];
+		InputStream in = new FileInputStream(file);
+
+		try {
+			int response = in.read(bytes);
+			Preconditions.checkState(response == size);
+			return bytes;
+		} finally {
+			in.close();
+		}
 	}
 
 	/**
