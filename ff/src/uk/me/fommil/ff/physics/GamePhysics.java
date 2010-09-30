@@ -35,6 +35,8 @@ import uk.me.fommil.ff.Tactics.BallZone;
 import uk.me.fommil.ff.Tactics.PlayerZone;
 import uk.me.fommil.ff.Team;
 import uk.me.fommil.ff.physics.Player.PlayerState;
+import uk.me.fommil.ff.swos.SoundParser;
+import uk.me.fommil.ff.swos.SoundParser.Fx;
 
 /**
  * The model (M) and controller (C) for game play.
@@ -167,10 +169,12 @@ public class GamePhysics extends Physics {
 	protected void beforeStep() {
 		debugNaNs();
 
-//		for (Goalpost goal : goals) {
-//			if (goal.isInside(ball))
-//				log.info("GOAL TO " + goal.getFacing());
-//		}
+		for (Goalpost goal : goals) {
+			if (goal.isInside(ball)) {
+				log.info("GOAL TO " + goal.getFacing());
+				SoundParser.play(Fx.CROWD_CHEER);
+			}
+		}
 
 		if (actions.contains(Action.CHANGE))
 			updateSelected();

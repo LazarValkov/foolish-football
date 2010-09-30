@@ -58,7 +58,7 @@ public class SoundParser {
 	 * @deprecated because this is a hack
 	 */
 	@Deprecated
-	public static void play(final Fx fx) throws IOException, LineUnavailableException {
+	public static void play(final Fx fx) {
 		Preconditions.checkNotNull(fx);
 
 		if (playing.containsKey(fx))
