@@ -189,7 +189,6 @@ public class ClassicView extends JPanel {
 		//			}
 		//		}
 
-		// TODO: ordering of player drawing should be by most northerly first
 		// draw the players that are in view
 		List<Player> players = northOrder.sortedCopy(game.getPlayers());
 		for (Player pm : players) {

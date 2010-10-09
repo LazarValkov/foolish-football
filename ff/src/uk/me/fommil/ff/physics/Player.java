@@ -26,6 +26,8 @@ import org.ode4j.math.DVector3;
 import org.ode4j.math.DVector3C;
 import org.ode4j.ode.DBody;
 import org.ode4j.ode.DBox;
+import org.ode4j.ode.DCapsule;
+import org.ode4j.ode.DCylinder;
 import org.ode4j.ode.DMass;
 import org.ode4j.ode.DSpace;
 import org.ode4j.ode.DWorld;
@@ -69,6 +71,10 @@ public class Player {
 	private final Team team;
 
 	public enum PlayerState {
+		// TODO: perhaps the player states are too tied to the SWOS graphics states, it might
+		// make more sense to remove the state stages and provide visualisation implementations
+		// with additional physics information to make a call on the state (e.g. headers and
+		// diving goalkeepers)
 
 		RUN, KICK, TACKLE, HEAD_START, HEAD_MID, HEAD_END, GROUND, INJURED,
 		THROW, THROWING, PENALTY, CELEBRATE, PUNISH, OUT_OF_CONTROL
@@ -97,23 +103,23 @@ public class Player {
 		box = OdeHelper.createBox(space, WIDTH, DEPTH, HEIGHT);
 		box.setBody(body);
 
+		{
+			DBox foot = OdeHelper.createBox(space, 0.1, 0.3, HEIGHT / 3);
+			foot.setBody(body);
+			foot.setOffsetPosition(WIDTH / 2 - 0.05, DEPTH / 2, -HEIGHT / 6);
+		}
+		{
+			DBox foot = OdeHelper.createBox(space, 0.1, 0.3, HEIGHT / 3);
+			foot.setBody(body);
+			foot.setOffsetPosition(-WIDTH / 2 + 0.05, DEPTH / 2, -HEIGHT / 6);
+		}
+
 		DMass mass = OdeHelper.createMass();
 		mass.setBoxTotal(MASS, WIDTH, DEPTH, HEIGHT);
 		body.setMass(mass);
 		body.setData(this);
 		body.setAngularDamping(ANGULAR_DAMPING);
 		body.setLinearDamping(LINEAR_DAMPING);
-	}
-
-	void control(Ball ball) {
-		Preconditions.checkNotNull(ball);
-		if (distanceTo(ball) > 1)
-			return;
-//		// TODO: ball control that avoids oscillation
-//		DVector3 control = getPosition().toDVector().sub(ball.getPosition().toDVector());
-//		control.set(2, 0);
-//		control.scale(25);
-//		ball.addForce(control);
 	}
 
 	void kick(Ball ball) {
@@ -301,16 +307,19 @@ public class Player {
 	 * @return the angle relative to NORTH {@code (- PI, + PI]}.
 	 */
 	public double getDirection() {
-		// TODO: is there a cleaner way to calculate direction?
-		DMatrix3C rotation = body.getRotation();
-		if (getTilt() > Math.PI / 4) {
-			DVector3 rotated = new DVector3(rotation.get02(), rotation.get12(), rotation.get22());
-			rotated.normalize();
-			return Math.signum(rotated.get0()) * Math.acos(rotated.dot(new DVector3(0, 1, 0)));
-		}
-		DVector3 rotated = new DVector3(rotation.get01(), rotation.get11(), rotation.get21());
-		rotated.normalize();
+		DVector3 rotated = getFacing();
 		return Math.signum(rotated.get0()) * Math.acos(rotated.dot(new DVector3(0, 1, 0)));
+	}
+
+	DVector3 getFacing() {
+		DMatrix3C rotation = body.getRotation();
+		DVector3 rotated;
+		if (getTilt() > Math.PI / 4)
+			rotated = new DVector3(rotation.get02(), rotation.get12(), rotation.get22());
+		else
+			rotated = new DVector3(rotation.get01(), rotation.get11(), rotation.get21());
+		rotated.normalize();
+		return rotated;
 	}
 
 	// returns the angle (radians) off the vertical [0, PI]

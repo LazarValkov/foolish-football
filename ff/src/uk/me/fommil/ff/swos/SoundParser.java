@@ -160,15 +160,15 @@ public class SoundParser {
 	}
 
 	enum ManagerVoiceover {
-		// FIXME: document the SFX/ENGLISH files, used for voice overs in the management game
+		// TODO: document the SFX/ENGLISH files, used for voice overs in the management game
 	}
 
 	enum Flc {
-		// FIXME: document the SFX/FLC files, used for ambient sounds tied to results
+		// TODO: document the SFX/FLC files, used for ambient sounds tied to results
 	}
 
 	public enum Fx {
-		// FIXME: document the FX files, used for sound effects during play
+		// TODO: document the FX files, used for sound effects during play
 
 		WHISTLE_FOUL("FOUL"),
 		WHISTLE_1("REF_WH"),

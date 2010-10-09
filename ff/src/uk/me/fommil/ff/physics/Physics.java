@@ -109,6 +109,5 @@ public abstract class Physics {
 	}
 
 	protected void afterStep() {
-		// TODO is an afterStep even needed?
 	}
 }

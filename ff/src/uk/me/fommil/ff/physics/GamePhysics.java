@@ -216,9 +216,6 @@ public class GamePhysics extends Physics {
 		if (ball.getVelocity().speed() < MIN_SPEED)
 			ball.setVelocity(new DVector3()); // stops small movements
 		switch (selected.getState()) {
-			case RUN:
-				selected.control(ball);
-				break;
 			case KICK:
 				selected.kick(ball);
 				break;
@@ -252,8 +249,7 @@ public class GamePhysics extends Physics {
 
 	@SuppressWarnings("fallthrough")
 	private void transition(Player p) {
-		// TODO: should be in the Player class, not sure how
-		// TODO: really needs a cleanup
+		// TODO: should be in the Player class
 		switch (p.getState()) {
 			case TACKLE:
 				if (p.getVelocity().speed() > MIN_SPEED)
