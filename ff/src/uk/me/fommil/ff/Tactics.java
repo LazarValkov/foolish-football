@@ -91,6 +91,11 @@ public class Tactics {
 		public String toString() {
 			return "(" + x + ", " + y + ")";
 		}
+
+		// the equivalent if the direction of play is reversed
+		private BallZone flipped() {
+			return new BallZone(4 - x, 6 - y);
+		}
 	}
 
 	/**
@@ -142,7 +147,7 @@ public class Tactics {
 		 * @param facing
 		 * @return the central point represented by this for a pitch of the given width and height
 		 */
-		public Position getCentre(Pitch pitch, Pitch.Facing facing) {
+		public Position getCentre(Pitch pitch) {
 			Position upper = pitch.getPitchUpperRight();
 			Position lower = pitch.getPitchLowerLeft();
 
@@ -151,11 +156,12 @@ public class Tactics {
 
 			double xx = (width * (14 - x)) / 15 + width / 30;
 			double yy = (height * y) / 16 + height / 32;
-			if (facing == Pitch.Facing.SOUTH) {
-				xx = width - xx;
-				yy = height - yy;
-			}
 			return new Position(xx + lower.x, yy + lower.y, 0);
+		}
+
+		// reverse the direction of play
+		private PlayerZone flipped() {
+			return new PlayerZone(14 - x, 15 - y);
 		}
 	}
 
@@ -173,26 +179,22 @@ public class Tactics {
 	/**
 	 * @param ballZone
 	 * @param shirt
+	 * @param facing
 	 * @return the zone the player is in for the given ball location, or {@code null}
 	 * if no zone defined.
 	 */
-	public PlayerZone getZone(BallZone ballZone, Integer shirt) {
+	public PlayerZone getZone(BallZone ballZone, Integer shirt, Direction facing) {
 		Preconditions.checkNotNull(shirt);
 		Preconditions.checkArgument(shirt > 1 && shirt < 12);
-		Map<Integer, PlayerZone> shirt2player = getZones(ballZone);
+		if (facing == Direction.SOUTH)
+			ballZone = ballZone.flipped();
+		Map<Integer, PlayerZone> shirt2player = zones.get(ballZone);
 		if (shirt2player == null)
 			return null;
-		return shirt2player.get(shirt);
-	}
-
-	/**
-	 * @param ballZone
-	 * @return the zone the player is in for the given ball location, or {@code null}
-	 * if no zone defined.
-	 */
-	public Map<Integer, PlayerZone> getZones(BallZone ballZone) {
-		Preconditions.checkNotNull(ballZone);
-		return zones.get(ballZone);
+		PlayerZone pz = shirt2player.get(shirt);
+		if (facing == Direction.SOUTH)
+			return pz.flipped();
+		return pz;
 	}
 
 	/**
@@ -227,7 +229,7 @@ public class Tactics {
 				builder.append("=====");
 				builder.append(bz);
 				builder.append("=====\n");
-				Map<Integer, PlayerZone> z = getZones(bz);
+				Map<Integer, PlayerZone> z = zones.get(bz);
 				Collection<PlayerZone> zs = z.values();
 				for (int yy = 15; yy >= 0; yy--) {
 					for (int xx = 14; xx >= 0; xx--) {

@@ -81,6 +81,7 @@ public class GamePhysics extends Physics {
 	private final Ball ball;
 
 	private final List<Player> as = Lists.newArrayListWithCapacity(11);
+
 	private final List<Player> bs = Lists.newArrayListWithCapacity(11);
 
 	private final Pitch pitch;
@@ -124,7 +125,7 @@ public class GamePhysics extends Physics {
 		goalkeeper.setOpponent(Direction.NORTH);
 		as.add(goalkeeper);
 		for (int i = 2; i <= 11; i++) {
-			Position p = tactics.getZone(bz, i).getCentre(pitch, Pitch.Facing.NORTH);
+			Position p = tactics.getZone(bz, i, Direction.NORTH).getCentre(pitch);
 			Player pma = new Player(i, a, aPlayers.get(i - 1), world, space);
 			pma.setPosition(p);
 			as.add(pma);
@@ -132,14 +133,14 @@ public class GamePhysics extends Physics {
 		selected = as.get(9);
 
 		// TODO: remove duplication
-		List<PlayerStats> bPlayers = a.getPlayers();
+		List<PlayerStats> bPlayers = b.getPlayers();
 		tactics = b.getCurrentTactics();
 		goalkeeper = new Goalkeeper(1, b, bPlayers.get(0), world, space);
 		goalkeeper.setPosition(pitch.getGoalTop());
 		goalkeeper.setOpponent(Direction.SOUTH);
 		bs.add(goalkeeper);
 		for (int i = 2; i <= 11; i++) {
-			Position p = tactics.getZone(bz, i).getCentre(pitch, Pitch.Facing.SOUTH);
+			Position p = tactics.getZone(bz, i, Direction.SOUTH).getCentre(pitch);
 			Player pma = new Player(i, b, bPlayers.get(i - 1), world, space);
 			pma.setPosition(p);
 			bs.add(pma);
@@ -192,12 +193,15 @@ public class GamePhysics extends Physics {
 			}
 			double near = Math.min(10, bp.distance(selected.getPosition()));
 			if (bp.distance(p.getPosition()) > near) {
-				// FIXME: tactics placer not working for south facing teams
-				PlayerZone pz = p.getTeam().getCurrentTactics().getZone(bz, p.getShirt());
-				if (p.getTeam() == a)
-					target = pz.getCentre(pitch, Pitch.Facing.NORTH);
-				else
-					target = pz.getCentre(pitch, Pitch.Facing.SOUTH);
+				Team team = p.getTeam();
+				Tactics tactics = team.getCurrentTactics();
+				PlayerZone pz;
+				if (team == a) {
+					pz = tactics.getZone(bz, p.getShirt(), Direction.NORTH);
+				} else {
+					pz = tactics.getZone(bz, p.getShirt(), Direction.SOUTH);
+				}
+				target = pz.getCentre(pitch);
 			}
 			p.autoPilot(target);
 		}

@@ -102,7 +102,7 @@ public class Player {
 		Preconditions.checkNotNull(ball);
 		if (distanceTo(ball) > 1)
 			return;
-//		// TODO: come up with a solution that avoids the oscillation
+//		// TODO: ball control that avoids oscillation
 //		DVector3 control = getPosition().toDVector().sub(ball.getPosition().toDVector());
 //		control.set(2, 0);
 //		control.scale(25);
@@ -111,6 +111,7 @@ public class Player {
 
 	void kick(Ball ball) {
 		assert actions.contains(Action.KICK);
+		// FIXME: avoid multiple kicks
 		if (distanceTo(ball) > 1.5)
 			return;
 		hit(ball, 10, 2);
