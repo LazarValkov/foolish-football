@@ -14,6 +14,7 @@
  */
 package uk.me.fommil.ff;
 
+import com.google.common.collect.Lists;
 import java.util.List;
 import uk.me.fommil.ff.Team.Colours;
 import uk.me.fommil.ff.swos.SwosUtils;
@@ -22,6 +23,7 @@ import uk.me.fommil.ff.physics.GamePhysics;
 import uk.me.fommil.ff.physics.Goalkeeper.GoalkeeperState;
 import uk.me.fommil.ff.physics.Player;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Ordering;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -56,6 +58,16 @@ import static uk.me.fommil.ff.Utils.*;
  */
 @SuppressWarnings("serial")
 public class ClassicView extends JPanel {
+
+	private static final Ordering<Player> northOrder = new Ordering<Player>() {
+
+		@Override
+		public int compare(Player left, Player right) {
+			Position p1 = left.getPosition();
+			Position p2 = right.getPosition();
+			return Double.compare(p2.y, p1.y);
+		}
+	};
 
 	private static final Logger log = Logger.getLogger(ClassicView.class.getName());
 
@@ -160,26 +172,27 @@ public class ClassicView extends JPanel {
 		// draw the ball
 		// TODO: except when throw-in
 		drawBall(g);
+		//		// draw the zones
+		//		if (debugging) {
+		//			g.setColor(Color.GREEN);
+		//			for (int i = 0; i <= 5; i++) {
+		//				int x = 81 + i * (590 - 81) / 5;
+		//				Point start = pToG(new Position(x, 129, 0));
+		//				Point end = pToG(new Position(x, 769, 0));
+		//				g.drawLine(start.x, start.y, end.x, end.y);
+		//			}
+		//			for (int i = 0; i <= 7; i++) {
+		//				int y = 129 + i * (769 - 129) / 7;
+		//				Point start = pToG(new Position(81, y, 0));
+		//				Point end = pToG(new Position(590, y, 0));
+		//				g.drawLine(start.x, start.y, end.x, end.y);
+		//			}
+		//		}
 
-//		// draw the zones
-//		if (debugging) {
-//			g.setColor(Color.GREEN);
-//			for (int i = 0; i <= 5; i++) {
-//				int x = 81 + i * (590 - 81) / 5;
-//				Point start = pToG(new Position(x, 129, 0));
-//				Point end = pToG(new Position(x, 769, 0));
-//				g.drawLine(start.x, start.y, end.x, end.y);
-//			}
-//			for (int i = 0; i <= 7; i++) {
-//				int y = 129 + i * (769 - 129) / 7;
-//				Point start = pToG(new Position(81, y, 0));
-//				Point end = pToG(new Position(590, y, 0));
-//				g.drawLine(start.x, start.y, end.x, end.y);
-//			}
-//		}
-
+		// TODO: ordering of player drawing should be by most northerly first
 		// draw the players that are in view
-		for (Player pm : game.getPlayers()) {
+		List<Player> players = northOrder.sortedCopy(game.getPlayers());
+		for (Player pm : players) {
 			if (pm instanceof Goalkeeper) {
 				drawGoalkeeper(g, (Goalkeeper) pm);
 			} else {

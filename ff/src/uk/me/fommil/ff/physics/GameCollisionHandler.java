@@ -14,10 +14,13 @@
  */
 package uk.me.fommil.ff.physics;
 
+import com.google.common.collect.Lists;
+import java.util.EnumSet;
 import java.util.logging.Logger;
 import org.ode4j.ode.DContact.DSurfaceParameters;
 import org.ode4j.ode.OdeConstants;
 import uk.me.fommil.ff.physics.CollisionCallback.CollisionHandler;
+import uk.me.fommil.ff.physics.Player.PlayerState;
 import uk.me.fommil.ff.swos.SoundParser;
 
 /**
@@ -42,6 +45,14 @@ class GameCollisionHandler implements CollisionHandler {
 	public boolean collide(Player player1, Player player2, DSurfaceParameters surface) {
 		if (player1 instanceof Goalkeeper || player2 instanceof Goalkeeper)
 			return false; // classic graphics can't handle goalkeepers on the ground
+		if (player1.getTeam() == player2.getTeam())
+			return false; // team mates do not collide
+		// team mates do not collide
+		EnumSet<PlayerState> nonBlocking = EnumSet.of(PlayerState.CELEBRATE, PlayerState.KICK, PlayerState.RUN);
+		if (nonBlocking.contains(player1.getState()) && nonBlocking.contains(player2.getState()))
+			// let opposing players run through each other in most cases
+			return false;
+
 		enableSoftBounce(surface);
 		surface.bounce = 0.75; // affects tackling
 		return true;
