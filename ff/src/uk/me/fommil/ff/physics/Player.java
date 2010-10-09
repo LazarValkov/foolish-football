@@ -48,7 +48,7 @@ public class Player {
 
 	private static final double WIDTH = 1.0;
 
-	private static final double DEPTH = 0.75;
+	private static final double DEPTH = 0.5;
 
 	private static final double SPEED = 6.5; // about 15 MPH
 
@@ -60,12 +60,18 @@ public class Player {
 
 	private static final double TACKLE_BOOST = 2;
 
+	private static final double ANGULAR_DAMPING = 0.05; // fudge factor for recovery from imbalance
+
+	private static final double LINEAR_DAMPING = 0.05; // fudge factor for resistance in air (tackling and heading)
+
+	private static final double ANGULAR_OOC = 0.3; // fudge factor for out of control threshold
+
 	private final Team team;
 
 	public enum PlayerState {
 
 		RUN, KICK, TACKLE, HEAD_START, HEAD_MID, HEAD_END, GROUND, INJURED,
-		THROW, THROWING, PENALTY, CELEBRATE, PUNISH
+		THROW, THROWING, PENALTY, CELEBRATE, PUNISH, OUT_OF_CONTROL
 
 	}
 
@@ -95,7 +101,8 @@ public class Player {
 		mass.setBoxTotal(MASS, WIDTH, DEPTH, HEIGHT);
 		body.setMass(mass);
 		body.setData(this);
-		body.setAngularDamping(0.1);
+		body.setAngularDamping(ANGULAR_DAMPING);
+		body.setLinearDamping(LINEAR_DAMPING);
 	}
 
 	void control(Ball ball) {
@@ -244,7 +251,7 @@ public class Player {
 	 */
 	@SuppressWarnings("fallthrough")
 	public PlayerState getState() {
-		if (forcedState != null)
+		if (forcedState != null) {
 			switch (forcedState) {
 				case THROW:
 					if (actions.contains(Action.KICK))
@@ -254,9 +261,18 @@ public class Player {
 				case INJURED:
 					return forcedState;
 			}
+		}
+
+		DVector3C angular = body.getAngularVel();
+		if (angular.length() > ANGULAR_OOC) {
+			// fudge factor that stops control when the player is in the initial toppling state,
+			// but may yet recover.
+			return PlayerState.OUT_OF_CONTROL;
+		}
 
 		DVector3C position = body.getPosition();
 		DVector3C velocity = body.getLinearVel();
+
 
 		double tilt = getTilt();
 		double z = position.get2() - HEIGHT / 2;

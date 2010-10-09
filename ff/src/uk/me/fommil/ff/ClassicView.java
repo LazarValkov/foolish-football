@@ -263,6 +263,7 @@ public class ClassicView extends JPanel {
 			case HEAD_END:
 				spriteIndex += 92;
 				break;
+			case OUT_OF_CONTROL:
 			case GROUND:
 				switch (direction) {
 					case WEST:
