@@ -213,6 +213,7 @@ public class GamePhysics extends Physics {
 
 	@Override
 	protected void afterStep() {
+		// FIXME: velocity sometimes is NaN
 		if (ball.getVelocity().speed() < MIN_SPEED)
 			ball.setVelocity(new DVector3()); // stops small movements
 		switch (selected.getState()) {
