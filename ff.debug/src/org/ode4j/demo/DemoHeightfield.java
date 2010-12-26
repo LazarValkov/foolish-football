@@ -158,7 +158,7 @@ class DemoHeightfield extends dsFunctions {
 
 	private DHeightfieldGetHeight heightfield_callback = new DHeightfieldGetHeight(){
 		@Override
-		public double call(Object[] pUserData, int x, int z) {
+		public double call(Object pUserData, int x, int z) {
 			return heightfield_callback(pUserData, x, z);
 		}
 	};
@@ -629,14 +629,13 @@ class DemoHeightfield extends dsFunctions {
 		// create world
 		OdeHelper.initODE2(0);
 		world = OdeHelper.createWorld ();
-		space = OdeHelper.createSimpleSpace (null);  //TODO TZ back to hashspace!
+		space = OdeHelper.createHashSpace (null);
 		contactgroup = OdeHelper.createJointGroup ();
 		world.setGravity (0,0,-0.05);
 		world.setCFM (1e-5);
 		world.setAutoDisableFlag (true);
 		world.setContactMaxCorrectingVel (0.1);
 		world.setContactSurfaceLayer (0.001);
-		//memset (obj,0,sizeof(obj));
 		for (int i = 0; i < obj.length; i++) {
 			obj[i] = new MyObject();
 		}
@@ -658,7 +657,16 @@ class DemoHeightfield extends dsFunctions {
 		// Create an finite heightfield.
 		heightid.buildCallback( null, heightfield_callback,
 				HFIELD_WIDTH, HFIELD_DEPTH, HFIELD_WSTEP, HFIELD_DSTEP,
-				( 1.0 ), ( 0.0 ), ( 0.0 ), false );
+				1.0, 0.0, 0.0, false );
+		// alternative: create heightfield from array
+//		double[] data = new double[HFIELD_WSTEP*HFIELD_DSTEP];
+//		for (int x = 0; x < HFIELD_WSTEP; x++) {
+//			for (int z = 0; z < HFIELD_DSTEP; z++) {
+//				data[x+HFIELD_WSTEP*z] = heightfield_callback(null, x, z);
+//			}
+//		}
+//		heightid.build(data, false, HFIELD_WIDTH, HFIELD_DEPTH, 
+//				HFIELD_WSTEP, HFIELD_DSTEP, 1.0, 0.0, 0.0, false );
 
 		// Give some very bounds which, while conservative,
 		// makes AABB computation more accurate than +/-INF.
