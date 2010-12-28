@@ -63,7 +63,7 @@ class GameCollisionHandler implements CollisionHandler {
 	public boolean collide(Ball ball, DSurfaceParameters surface) {
 		enableSoftBounce(surface);
 		surface.bounce = 0.5;
-		ball.setDamping(0.05); // ?? can be overridden
+		ball.setDamping(0.1); // ?? can be overridden
 
 		if (ball.getVelocity().z < -1) {
 			ball.setAftertouch(false);

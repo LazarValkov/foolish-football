@@ -45,7 +45,7 @@ public class Ball {
 
 	private static final double LIFT = 6;
 
-	private static final double POWER = 5;
+	private static final double POWER = 2;
 
 	private static final double BEND = 5;
 
@@ -113,6 +113,8 @@ public class Ball {
 			} else {
 				DVector3 powery = new DVector3(forward);
 				powery.scale(POWER);
+				// power diminishes with height
+				powery.scale(Math.abs(MAX_HEIGHT - z));
 				addForce(powery);
 			}
 		}

@@ -124,7 +124,7 @@ public class Player {
 
 	void kick(Ball ball) {
 		assert actions.contains(Action.KICK);
-		if (distanceTo(ball) > 1)
+		if (distanceTo(ball) > 1.1)
 			return;
 
 		// avoid multiple kicks by ignoring kick when the ball is going in the same direction
