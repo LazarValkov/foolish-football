@@ -28,7 +28,6 @@ import org.ode4j.ode.DWorld;
 import org.ode4j.ode.OdeHelper;
 import uk.me.fommil.ff.Pitch;
 import uk.me.fommil.ff.Tactics.BallZone;
-import uk.me.fommil.ff.physics.Aftertouch;
 
 /**
  * The model (M) and controller (C) for the ball during game play.
@@ -44,11 +43,11 @@ public class Ball {
 
 	private static final double RADIUS = 0.2; // official size = 0.7 / (2 * Math.PI);
 
-	private static final double LIFT = 6;
+	private static final double LIFT = 60;
 
-	private static final double POWER = 10;
+	private static final double POWER = 100;
 
-	private static final double BEND = 2;
+	private static final double BEND = 20;
 
 	private static final double MAX_HEIGHT = 4;
 

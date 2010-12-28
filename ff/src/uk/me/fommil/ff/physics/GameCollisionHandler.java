@@ -42,6 +42,8 @@ class GameCollisionHandler implements CollisionHandler {
 
 	@Override
 	public boolean collide(Player player1, Player player2, DSurfaceParameters surface) {
+		// FIXME: consider ignoring player/player interactions altogether for gameplay!
+
 		if (player1 instanceof Goalkeeper || player2 instanceof Goalkeeper)
 			return false; // classic graphics can't handle goalkeepers on the ground
 		if (player1.getTeam() == player2.getTeam())

@@ -25,7 +25,7 @@ public enum Direction {
 	NORTH, SOUTH, WEST, EAST, NORTH_EAST, NORTH_WEST, SOUTH_EAST, SOUTH_WEST;
 
 	/**
-	 * @param angle {@code [-PI, PI]}
+	 * @param angle {@code [-PI, PI]} with 0 being NORTH.
 	 * @return
 	 */
 	public static Direction valueOf(double angle) {
