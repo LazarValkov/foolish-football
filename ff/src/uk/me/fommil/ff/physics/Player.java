@@ -124,7 +124,7 @@ public class Player {
 
 	void kick(Ball ball) {
 		assert actions.contains(Action.KICK);
-		if (distanceTo(ball) > 1.5)
+		if (distanceTo(ball) > 1)
 			return;
 
 		// avoid multiple kicks by ignoring kick when the ball is going in the same direction
@@ -135,7 +135,7 @@ public class Player {
 		if (dot > getVelocity().speed() * DOUBLE_KICK_RATIO)
 			return;
 
-		hit(ball, 10, 3);
+		hit(ball, 10, 5);
 
 		try {
 			SoundParser.play(SoundParser.Fx.BALL_KICK);
@@ -157,7 +157,7 @@ public class Player {
 		double direction = getDirection();
 		DVector3 kick = new DVector3(power * Math.sin(direction), power * Math.cos(direction), lift);
 		ball.setVelocity(kick);
-		ball.setAftertouchEnabled(true);
+		ball.setAftertouch(true);
 	}
 
 	private double distanceTo(Ball ball) {

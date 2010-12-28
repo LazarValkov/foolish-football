@@ -45,15 +45,15 @@ public class Ball {
 
 	private static final double LIFT = 6;
 
-	private static final double POWER = 10;
+	private static final double POWER = 5;
 
-	private static final double BEND = 2;
+	private static final double BEND = 5;
 
 	private static final double MAX_HEIGHT = 4;
 
 	private final DSphere sphere;
 
-	private volatile boolean aftertouchEnabled;
+	private volatile boolean aftertouch;
 
 	Ball(DWorld world, DSpace space) {
 		Preconditions.checkNotNull(world);
@@ -76,7 +76,7 @@ public class Ball {
 	 */
 	public void setAftertouch(Collection<Aftertouch> aftertouches) {
 		Preconditions.checkNotNull(aftertouches);
-		if (!aftertouchEnabled || aftertouches.isEmpty())
+		if (!aftertouch || aftertouches.isEmpty())
 			return;
 		DVector3C velocity = sphere.getBody().getLinearVel();
 		if (velocity.length() < GamePhysics.MIN_SPEED)
@@ -92,7 +92,6 @@ public class Ball {
 
 		DVector3 touch = Aftertouch.asVector(aftertouches);
 		DVector3 sideways = new DVector3(-forward.get1(), forward.get0(), 0);
-
 		double bend = sideways.dot(touch);
 
 		if (Math.abs(bend) > 0.1) {
@@ -176,8 +175,8 @@ public class Ball {
 		sphere.getBody().setLinearDamping(damping);
 	}
 
-	void setAftertouchEnabled(boolean aftertouchEnabled) {
-		this.aftertouchEnabled = aftertouchEnabled;
+	void setAftertouch(boolean enabled) {
+		this.aftertouch = enabled;
 	}
 
 	DGeom getGeom() {

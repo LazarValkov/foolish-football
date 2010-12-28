@@ -153,12 +153,12 @@ public class GamePhysics extends Physics {
 		goalkeeper.setPosition(pitch.getGoalTop());
 		goalkeeper.setOpponent(Direction.SOUTH);
 		bs.add(goalkeeper);
-		for (int i = 2; i <= 11; i++) {
-			Position p = tactics.getZone(bz, i, Direction.SOUTH).getCentre(pitch);
-			Player pma = new Player(i, b, bPlayers.get(i - 1), world, space);
-			pma.setPosition(p);
-			bs.add(pma);
-		}
+//		for (int i = 2; i <= 11; i++) {
+//			Position p = tactics.getZone(bz, i, Direction.SOUTH).getCentre(pitch);
+//			Player pma = new Player(i, b, bPlayers.get(i - 1), world, space);
+//			pma.setPosition(p);
+//			bs.add(pma);
+//		}
 	}
 
 	@Override
