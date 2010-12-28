@@ -66,7 +66,9 @@ public class Player {
 
 	private static final double LINEAR_DAMPING = 0.05; // fudge factor for resistance in air (tackling and heading)
 
-	private static final double ANGULAR_OOC = 0.3; // fudge factor for out of control threshold
+	private static final double ANGULAR_OOC = 0.5; // fudge factor for out of control threshold
+
+	private static final double DOUBLE_KICK_RATIO = 1.1; // fudge factor for avoiding double kicks
 
 	private final Team team;
 
@@ -132,11 +134,10 @@ public class Player {
 		DVector3 ballVelocity = ball.getVelocity().toDVector();
 		DVector3 facing = getFacing();
 		double dot = facing.dot(ballVelocity);
-		log.info("dot = " + dot);
-		if (dot > getVelocity().speed() * 1.1) // fudge factor
+		if (dot > getVelocity().speed() * DOUBLE_KICK_RATIO)
 			return;
 
-		hit(ball, 10, 2);
+		hit(ball, 10, 3);
 
 		try {
 			SoundParser.play(SoundParser.Fx.BALL_KICK);

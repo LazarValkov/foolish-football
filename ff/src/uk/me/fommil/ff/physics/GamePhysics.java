@@ -50,6 +50,8 @@ public class GamePhysics extends Physics {
 
 	static final double MIN_SPEED = 0.1;
 
+	static final double MAX_SPEED = 50;
+
 	private final GoalkeeperController goalkeeperController;
 
 	@Deprecated // DEBUGGING
@@ -226,9 +228,20 @@ public class GamePhysics extends Physics {
 
 	@Override
 	protected void afterStep() {
-		// FIXME: velocity sometimes is NaN
-		if (ball.getVelocity().speed() < MIN_SPEED)
-			ball.setVelocity(new DVector3()); // stops small movements
+		double ballSpeed = ball.getVelocity().speed();
+		if (Double.isNaN(ballSpeed)) {
+			log.warning("ball had NaN speed");
+			ball.setVelocity(new DVector3());
+		}
+		if (ballSpeed < MIN_SPEED)// stops small movements
+			ball.setVelocity(new DVector3());
+		if (ballSpeed > MAX_SPEED) { // stops really weird rounding errors
+			log.warning("ball was going " + ballSpeed);
+			DVector3 ballVelocity = ball.getVelocity().toDVector();
+			ballVelocity.normalize();
+			ballVelocity.scale(MAX_SPEED);
+		}
+
 		switch (selected.getState()) {
 			case KICK:
 				selected.kick(ball);

@@ -35,9 +35,10 @@ public final class Velocity {
 	 * @param z
 	 */
 	public Velocity(double x, double y, double z) {
-		Preconditions.checkArgument(!Double.isNaN(x), "x cannot be NaN");
-		Preconditions.checkArgument(!Double.isNaN(y), "y cannot be NaN");
-		Preconditions.checkArgument(!Double.isNaN(z), "z cannot be NaN");
+		// ?? disabled because these are called before we can fix it
+//		Preconditions.checkArgument(!Double.isNaN(x), "x cannot be NaN");
+//		Preconditions.checkArgument(!Double.isNaN(y), "y cannot be NaN");
+//		Preconditions.checkArgument(!Double.isNaN(z), "z cannot be NaN");
 		this.x = x;
 		this.y = y;
 		this.z = z;

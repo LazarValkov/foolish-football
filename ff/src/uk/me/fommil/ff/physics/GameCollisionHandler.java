@@ -14,7 +14,6 @@
  */
 package uk.me.fommil.ff.physics;
 
-import com.google.common.collect.Lists;
 import java.util.EnumSet;
 import java.util.logging.Logger;
 import org.ode4j.ode.DContact.DSurfaceParameters;
@@ -62,7 +61,7 @@ class GameCollisionHandler implements CollisionHandler {
 	public boolean collide(Ball ball, DSurfaceParameters surface) {
 		enableSoftBounce(surface);
 		surface.bounce = 0.5;
-		ball.setDamping(0.1); // ?? can be overridden
+		ball.setDamping(0.05); // ?? can be overridden
 		ball.setAftertouchEnabled(false);
 
 		if (ball.getVelocity().z < -1) {
