@@ -142,6 +142,7 @@ public class GamePhysics extends Physics {
 			Position p = tactics.getZone(bz, i, Direction.NORTH).getCentre(pitch);
 			Player pma = new Player(i, a, aPlayers.get(i - 1), world, space);
 			pma.setPosition(p);
+			pma.setOpponent(Direction.NORTH);
 			as.add(pma);
 		}
 		selected = as.get(9);
@@ -153,12 +154,13 @@ public class GamePhysics extends Physics {
 		goalkeeper.setPosition(pitch.getGoalTop());
 		goalkeeper.setOpponent(Direction.SOUTH);
 		bs.add(goalkeeper);
-		for (int i = 2; i <= 11; i++) {
-			Position p = tactics.getZone(bz, i, Direction.SOUTH).getCentre(pitch);
-			Player pma = new Player(i, b, bPlayers.get(i - 1), world, space);
-			pma.setPosition(p);
-			bs.add(pma);
-		}
+//		for (int i = 2; i <= 11; i++) {
+//			Position p = tactics.getZone(bz, i, Direction.SOUTH).getCentre(pitch);
+//			Player pma = new Player(i, b, bPlayers.get(i - 1), world, space);
+//			pma.setPosition(p);
+//		    pma.setOpponent(Direction.SOUTH);
+//			bs.add(pma);
+//		}
 	}
 
 	@Override

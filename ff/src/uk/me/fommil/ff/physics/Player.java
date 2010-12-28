@@ -31,6 +31,7 @@ import org.ode4j.ode.DSpace;
 import org.ode4j.ode.DWorld;
 import org.ode4j.ode.OdeHelper;
 import org.ode4j.ode.internal.Rotation;
+import uk.me.fommil.ff.Direction;
 import uk.me.fommil.ff.PlayerStats;
 import uk.me.fommil.ff.Team;
 import uk.me.fommil.ff.swos.SoundParser;
@@ -70,6 +71,8 @@ public class Player {
 
 	private final Team team;
 
+	private Direction opponent;
+
 	public enum PlayerState {
 		// TODO: perhaps the player states are too tied to the SWOS graphics states, it might
 		// make more sense to remove the state stages and provide visualisation implementations
@@ -104,12 +107,12 @@ public class Player {
 		box.setBody(body);
 
 		{
-			DBox foot = OdeHelper.createBox(space, 0.1, 0.3, HEIGHT / 3);
+			DBox foot = OdeHelper.createBox(space, 0.1, 0.5, HEIGHT / 3);
 			foot.setBody(body);
 			foot.setOffsetPosition(WIDTH / 2 - 0.05, DEPTH / 2, -HEIGHT / 6);
 		}
 		{
-			DBox foot = OdeHelper.createBox(space, 0.1, 0.3, HEIGHT / 3);
+			DBox foot = OdeHelper.createBox(space, 0.1, 0.5, HEIGHT / 3);
 			foot.setBody(body);
 			foot.setOffsetPosition(-WIDTH / 2 + 0.05, DEPTH / 2, -HEIGHT / 6);
 		}
@@ -117,9 +120,9 @@ public class Player {
 		DMass mass = OdeHelper.createMass();
 		mass.setBoxTotal(MASS, WIDTH, DEPTH, HEIGHT);
 		body.setMass(mass);
-		body.setData(this);
 		body.setAngularDamping(ANGULAR_DAMPING);
 		body.setLinearDamping(LINEAR_DAMPING);
+		body.setData(this);
 	}
 
 	void kick(Ball ball) {
@@ -187,7 +190,8 @@ public class Player {
 
 		DMatrix3 rotation = new DMatrix3();
 		DMatrix3 tilt = new DMatrix3();
-		double direction = GamePhysics.toAngle(move, getDirection());
+		double direction = GamePhysics.toAngle(move, opponent.getAngle());
+
 		Rotation.dRFromAxisAndAngle(rotation, 0, 0, -1, direction);
 		Rotation.dRFromAxisAndAngle(tilt, -1, 0, 0, getTilt());
 		rotation.eqMul(rotation.clone(), tilt);
@@ -220,18 +224,22 @@ public class Player {
 		Preconditions.checkNotNull(attractor);
 		List<Action> auto = Lists.newArrayList();
 		double dx = body.getPosition().get0() - attractor.x;
-		if (dx < -AUTOPILOT_TOLERANCE) {
+		if (dx < -getAutoPilotTolerance()) {
 			auto.add(Action.RIGHT);
-		} else if (dx > AUTOPILOT_TOLERANCE) {
+		} else if (dx > getAutoPilotTolerance()) {
 			auto.add(Action.LEFT);
 		}
 		double dy = body.getPosition().get1() - attractor.y;
-		if (dy < -AUTOPILOT_TOLERANCE) {
+		if (dy < -getAutoPilotTolerance()) {
 			auto.add(Action.UP);
-		} else if (dy > AUTOPILOT_TOLERANCE) {
+		} else if (dy > getAutoPilotTolerance()) {
 			auto.add(Action.DOWN);
 		}
 		setActions(auto);
+	}
+
+	double getAutoPilotTolerance() {
+		return AUTOPILOT_TOLERANCE;
 	}
 
 	// only works for some states
@@ -375,4 +383,14 @@ public class Player {
 	public Team getTeam() {
 		return team;
 	}
+
+	// <editor-fold defaultstate="collapsed" desc="BOILERPLATE GETTERS/SETTERS">
+	public Direction getOpponent() {
+		return opponent;
+	}
+
+	public void setOpponent(Direction opponent) {
+		this.opponent = opponent;
+	}
+	// </editor-fold>
 }

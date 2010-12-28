@@ -22,7 +22,18 @@ import com.google.common.base.Preconditions;
  */
 public enum Direction {
 
-	NORTH, SOUTH, WEST, EAST, NORTH_EAST, NORTH_WEST, SOUTH_EAST, SOUTH_WEST;
+	NORTH(0), SOUTH(Math.PI), WEST(-Math.PI / 2), EAST(Math.PI / 2),
+	NORTH_EAST(Math.PI / 4), NORTH_WEST(-Math.PI / 4), SOUTH_EAST(3 * Math.PI / 4), SOUTH_WEST(-3 * Math.PI / 4);
+
+	private double angle;
+
+	Direction(double angle) {
+		this.angle = angle;
+	}
+
+	public double getAngle() {
+		return angle;
+	}
 
 	/**
 	 * @param angle {@code [-PI, PI]} with 0 being NORTH.

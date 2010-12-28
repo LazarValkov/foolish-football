@@ -39,11 +39,9 @@ public class Goalkeeper extends Player {
 	public enum GoalkeeperState {
 
 		DIVE_START, DIVE_MID, DIVE_PEAK, FALL_START, FALL_MID, FALL_END
-		// TODO FALL_END_BALL HOLDING
+		// TODO FALL_END_BALL, HOLDING
 
 	}
-
-	private Direction opponent;
 
 	/**
 	 * @param i
@@ -78,7 +76,11 @@ public class Goalkeeper extends Player {
 
 		DMatrix3 rotation = new DMatrix3();
 		DMatrix3 tilt = new DMatrix3();
-		double direction = 0; // TODO: opponent direction
+
+		double direction = 0;
+		if (getOpponent() == Direction.SOUTH) {
+			direction = Math.PI;
+		}
 		Rotation.dRFromAxisAndAngle(rotation, 0, 0, -1, direction);
 		double tiltAngle = 0;
 		if (sanitised.contains(Action.RIGHT))
@@ -88,8 +90,8 @@ public class Goalkeeper extends Player {
 		Rotation.dRFromAxisAndAngle(tilt, 0, 1, 0, tiltAngle);
 		rotation.eqMul(rotation.clone(), tilt);
 
-		move.scale(5); // TODO: goalkeeper stats
-		move.set2(3);
+		move.scale(10); // TODO: goalkeeper stats
+		move.set2(5);
 
 		body.setLinearVel(move);
 		body.setRotation(rotation);
@@ -125,23 +127,17 @@ public class Goalkeeper extends Player {
 		if (direction != null)
 			switch (direction) {
 				case EAST:
-					auto.add(opponent == Direction.NORTH ? Action.RIGHT : Action.LEFT);
+					auto.add(Action.RIGHT);
 					break;
 				case WEST:
-					auto.add(opponent == Direction.NORTH ? Action.LEFT : Action.RIGHT);
-					break;
+					auto.add(Action.LEFT);
 			}
 		auto.add(Action.DIVE);
 		setActions(auto);
 	}
 
-	// <editor-fold defaultstate="collapsed" desc="BOILERPLATE GETTERS/SETTERS">
-	public Direction getOpponent() {
-		return opponent;
+	@Override
+	double getAutoPilotTolerance() {
+		return 0.1;
 	}
-
-	public void setOpponent(Direction opponent) {
-		this.opponent = opponent;
-	}
-	// </editor-fold>
 }
