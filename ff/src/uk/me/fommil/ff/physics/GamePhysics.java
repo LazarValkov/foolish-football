@@ -228,18 +228,18 @@ public class GamePhysics extends Physics {
 	@Override
 	protected void afterStep() {
 		double ballSpeed = ball.getVelocity().speed();
-		if (Double.isNaN(ballSpeed)) {
-			log.warning("ball had NaN speed");
-			ball.setVelocity(new DVector3());
-		}
+//		if (Double.isNaN(ballSpeed)) {
+//			log.warning("ball had NaN speed");
+//			ball.setVelocity(new DVector3());
+//		}
 		if (ballSpeed < MIN_SPEED)// stops small movements
 			ball.setVelocity(new DVector3());
-		if (ballSpeed > MAX_SPEED) { // stops really weird rounding errors
-			log.warning("ball was going " + ballSpeed);
-			DVector3 ballVelocity = ball.getVelocity().toDVector();
-			ballVelocity.normalize();
-			ballVelocity.scale(MAX_SPEED);
-		}
+//		if (ballSpeed > MAX_SPEED) { // stops really weird rounding errors
+//			log.warning("ball was going " + ballSpeed);
+//			DVector3 ballVelocity = ball.getVelocity().toDVector();
+//			ballVelocity.normalize();
+//			ballVelocity.scale(MAX_SPEED);
+//		}
 
 		switch (selected.getState()) {
 			case KICK:
