@@ -124,9 +124,18 @@ public class Player {
 
 	void kick(Ball ball) {
 		assert actions.contains(Action.KICK);
-		// FIXME: avoid multiple kicks
 		if (distanceTo(ball) > 1.5)
 			return;
+
+		// avoid multiple kicks by ignoring kick when the ball is going in the same direction
+		// this is facing (but allowing for running speed)
+		DVector3 ballVelocity = ball.getVelocity().toDVector();
+		DVector3 facing = getFacing();
+		double dot = facing.dot(ballVelocity);
+		log.info("dot = " + dot);
+		if (dot > getVelocity().speed() * 1.1) // fudge factor
+			return;
+
 		hit(ball, 10, 2);
 
 		try {
@@ -307,8 +316,7 @@ public class Player {
 	 * @return the angle relative to NORTH {@code (- PI, + PI]}.
 	 */
 	public double getDirection() {
-		DVector3 rotated = getFacing();
-		return Math.signum(rotated.get0()) * Math.acos(rotated.dot(new DVector3(0, 1, 0)));
+		return GamePhysics.toAngle(getFacing());
 	}
 
 	DVector3 getFacing() {

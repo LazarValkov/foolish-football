@@ -62,10 +62,23 @@ public class GamePhysics extends Physics {
 		}
 	}
 
+	/**
+	 * @param vector
+	 * @return the angle relative to NORTH {@code (- PI, + PI]}.
+	 */
+	static double toAngle(DVector3 vector) {
+		return dePhase(Math.PI / 2 - Math.atan2(vector.get1(), vector.get0()));
+//		return Math.signum(vector.get0()) * Math.acos(vector.dot(new DVector3(0, 1, 0)));
+	}
+
+	/**
+	 * @return the angle relative to NORTH {@code (- PI, + PI]}.
+	 */
 	static double toAngle(DVector3 vector, double fallback) {
+		Preconditions.checkNotNull(vector);
 		if (vector.length() == 0)
 			return fallback;
-		return dePhase(Math.PI / 2 - Math.atan2(vector.get1(), vector.get0()));
+		return toAngle(vector);
 	}
 
 	private static double dePhase(double d) {
