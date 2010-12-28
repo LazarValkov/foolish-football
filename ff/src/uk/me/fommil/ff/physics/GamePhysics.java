@@ -70,7 +70,6 @@ public class GamePhysics extends Physics {
 	 */
 	static double toAngle(DVector3 vector) {
 		return dePhase(Math.PI / 2 - Math.atan2(vector.get1(), vector.get0()));
-//		return Math.signum(vector.get0()) * Math.acos(vector.dot(new DVector3(0, 1, 0)));
 	}
 
 	/**

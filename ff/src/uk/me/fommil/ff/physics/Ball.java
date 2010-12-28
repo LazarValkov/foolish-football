@@ -43,11 +43,11 @@ public class Ball {
 
 	private static final double RADIUS = 0.2; // official size = 0.7 / (2 * Math.PI);
 
-	private static final double LIFT = 60;
+	private static final double LIFT = 6;
 
-	private static final double POWER = 100;
+	private static final double POWER = 10;
 
-	private static final double BEND = 20;
+	private static final double BEND = 2;
 
 	private static final double MAX_HEIGHT = 4;
 
@@ -94,6 +94,7 @@ public class Ball {
 		DVector3 sideways = new DVector3(-forward.get1(), forward.get0(), 0);
 
 		double bend = sideways.dot(touch);
+
 		if (Math.abs(bend) > 0.1) {
 			DVector3 bendy = new DVector3(sideways);
 			bendy.scale(bend * BEND);
