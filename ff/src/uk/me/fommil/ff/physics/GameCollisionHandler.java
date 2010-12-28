@@ -38,17 +38,15 @@ class GameCollisionHandler implements CollisionHandler {
 		ball.setDamping(0.1); // ?? can be overridden
 		surface.bounce = player.getBounce();
 		return true;
+		// FIXME: consider ignoring many player/ball interactions altogether for gameplay!
 	}
 
 	@Override
 	public boolean collide(Player player1, Player player2, DSurfaceParameters surface) {
-		// FIXME: consider ignoring player/player interactions altogether for gameplay!
-
 		if (player1 instanceof Goalkeeper || player2 instanceof Goalkeeper)
 			return false; // classic graphics can't handle goalkeepers on the ground
 		if (player1.getTeam() == player2.getTeam())
 			return false; // team mates do not collide
-		// team mates do not collide
 		EnumSet<PlayerState> nonBlocking = EnumSet.of(PlayerState.CELEBRATE, PlayerState.KICK, PlayerState.RUN);
 		if (nonBlocking.contains(player1.getState()) && nonBlocking.contains(player2.getState()))
 			// let opposing players run through each other in most cases

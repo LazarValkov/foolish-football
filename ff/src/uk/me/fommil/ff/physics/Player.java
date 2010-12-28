@@ -60,11 +60,11 @@ public class Player {
 
 	private static final double TACKLE_BOOST = 2;
 
-	private static final double ANGULAR_DAMPING = 0.05; // fudge factor for recovery from imbalance
+	private static final double ANGULAR_DAMPING = 1.0; // fudge factor for recovery from imbalance
 
 	private static final double LINEAR_DAMPING = 0.05; // fudge factor for resistance in air (tackling and heading)
 
-	private static final double ANGULAR_OOC = 0.5; // fudge factor for out of control threshold
+	private static final double ANGULAR_OOC = 1.0; // fudge factor for out of control threshold
 
 	private static final double DOUBLE_KICK_RATIO = 1.1; // fudge factor for avoiding double kicks
 
