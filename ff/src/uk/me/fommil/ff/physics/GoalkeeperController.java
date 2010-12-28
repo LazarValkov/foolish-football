@@ -54,26 +54,23 @@ class GoalkeeperController {
 		Position ballPosition = ball.getPosition();
 		double ballSpeed = ball.getVelocity().speed();
 		double distance = ballPosition.distance(position);
-		// step 1: stand in a default position
 		if (p.getOpponent() == Direction.SOUTH) {
 			target = topDefault;
 		} else {
 			target = bottomDefault;
 		}
-		if (distance > 10 || Math.abs(target.y - ballPosition.y) > 5) {
+		if (distance > 15 || Math.abs(target.y - ballPosition.y) > 10) {
+			// step 1: stand in a default position
 			p.autoPilot(target);
 			return;
 		} else if (distance > 5) {
 			// step 2: stand between the ball and the goal
-			// TODO: clean up repetition
 			DVector3 b = ballPosition.toDVector();
+			double xOffset = (b.get0() - target.x) / 2.0;
+			double yOffset = Math.abs(b.get1() - topGoal.y) / 3.0;
 			if (p.getOpponent() == Direction.SOUTH) {
-				double xOffset = (b.get0() - topGoal.x) / 2.0;
-				double yOffset = Math.abs(b.get1() - topGoal.y) / 3.0;
 				target = new Position(topGoal.x + xOffset, topGoal.y - yOffset, 0);
 			} else {
-				double xOffset = (b.get0() - bottomGoal.x) / 2.0;
-				double yOffset = Math.abs(b.get1() - bottomGoal.y) / 3.0;
 				target = new Position(bottomGoal.x + xOffset, bottomGoal.y + yOffset, 0);
 			}
 			p.autoPilot(target);
@@ -81,9 +78,15 @@ class GoalkeeperController {
 			// step 3: go for the ball
 			p.autoPilot(ballPosition);
 		} else if (ballSpeed > 8) {
-			// step 3: dive!
+			// step 4: dive!
 			DVector3 s = position.toDVector();
-			DVector3 diff = ballPosition.toDVector().sub(s);
+
+			Velocity ballVelocity = ball.getVelocity();
+			DVector3 goingTo = ballPosition.toDVector().add(ballVelocity.toDVector());
+
+			// TODO: smarter dive logic: go to where the ball will be at goalie's y position
+
+			DVector3 diff = goingTo.sub(s);
 			if (diff.get0() > 0.5)
 				p.dive(Direction.EAST);
 			else if (diff.get0() < -0.5)
