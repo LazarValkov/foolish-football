@@ -88,7 +88,7 @@ public class TacticsParser {
 	 */
 	public static final Map<String, Tactics> getSwosTactics(File dir) throws IOException {
 		Preconditions.checkNotNull(dir);
-		Preconditions.checkArgument(dir.isDirectory());
+		Preconditions.checkArgument(dir.isDirectory(), "no tactics directory in " + dir);
 		File file = new File(dir.getPath() + File.separator + "ENGLISH.EXE");
 		Preconditions.checkArgument(file.isFile(), file);
 		Preconditions.checkArgument(file.length() == 1920801, file.length());
