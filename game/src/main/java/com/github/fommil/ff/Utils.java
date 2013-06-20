@@ -14,12 +14,7 @@
  */
 package com.github.fommil.ff;
 
-import com.github.fommil.ff.physics.GamePhysics;
 import com.google.common.base.Preconditions;
-import java.util.logging.Logger;
-import javax.media.j3d.BoundingBox;
-import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
 
 /**
  *
@@ -57,39 +52,4 @@ public class Utils {
 		return (int) Math.round(d);
 	}
 
-	private static final Logger log = Logger.getLogger(GamePhysics.class.getName());
-
-	// this is mutable, so be careful not to edit it
-	@Deprecated
-	private static final Vector3d NORTH = new Vector3d(0, -1, 0);
-
-	/**
-	 * @param vector
-	 * @return the angle relate to NORTH {@code (-PI, + PI]}, ignoring {@code z} component.
-	 */
-	@Deprecated
-	public static double getBearing(Vector3d vector) {
-		Vector3d v = (Vector3d) vector.clone();
-		v.z = 0;
-		if (v.x < 0)
-			return -v.angle(NORTH);
-		else
-			return v.angle(NORTH);
-	}
-
-	@Deprecated
-	public static Point3d getLower(BoundingBox box) {
-		Preconditions.checkNotNull(box);
-		Point3d lower = new Point3d();
-		box.getLower(lower);
-		return lower;
-	}
-
-	@Deprecated
-	public static Point3d getUpper(BoundingBox box) {
-		Preconditions.checkNotNull(box);
-		Point3d upper = new Point3d();
-		box.getUpper(upper);
-		return upper;
-	}
 }

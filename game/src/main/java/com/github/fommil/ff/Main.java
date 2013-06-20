@@ -15,10 +15,12 @@
 package com.github.fommil.ff;
 
 import com.github.fommil.ff.physics.GamePhysics;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import com.github.fommil.ff.swos.TacticsParser;
 import com.github.fommil.ff.swos.PitchParser;
+import com.github.fommil.ff.swos.SpriteParser;
+import com.github.fommil.ff.swos.TacticsParser;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -26,8 +28,6 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicLong;
-import javax.swing.JFrame;
-import com.github.fommil.ff.swos.SpriteParser;
 
 /**
  * @author Samuel Halliday
@@ -36,7 +36,7 @@ import com.github.fommil.ff.swos.SpriteParser;
 @SuppressWarnings("serial")
 public class Main {
 
-	public static final File SWOS = new File("../data/Sensible World of Soccer 96-97");
+	public static final File SWOS = new File("data/Sensible World of Soccer 96-97");
 
 	/**
 	 * @param args

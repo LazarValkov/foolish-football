@@ -14,31 +14,21 @@
  */
 package com.github.fommil.ff;
 
-import com.google.common.collect.Lists;
-import java.util.List;
-
-import com.github.fommil.ff.swos.SwosUtils;
-import com.github.fommil.ff.physics.Ball;
-import com.github.fommil.ff.physics.GamePhysics;
+import com.github.fommil.ff.physics.*;
 import com.github.fommil.ff.physics.Goalkeeper.GoalkeeperState;
-import com.github.fommil.ff.physics.Player;
+import com.github.fommil.ff.swos.SwosUtils;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.KeyListener;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
-import javax.swing.JPanel;
-import com.github.fommil.ff.physics.Goalkeeper;
-import com.github.fommil.ff.physics.Position;
-import com.github.fommil.ff.physics.Velocity;
 
 /**
  * The view (V) for the game play.
@@ -423,7 +413,7 @@ public class ClassicView extends JPanel {
 			}
 		} else {
 			switch (gm.getOpponent()) {
-				case Utils.NORTH:
+				case NORTH:
 					spriteIndex = 38;
 					break;
 				case SOUTH:

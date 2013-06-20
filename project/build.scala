@@ -44,10 +44,13 @@ object PatternsBuild extends Build {
     libraryDependencies += java_logging,
     libraryDependencies += guava,
 	libraryDependencies += jsr305,
+	libraryDependencies += junit % "test",
 	libraryDependencies += specs2 % "test"
   )
 
   lazy val analysis = module("analysis") dependsOn (game, ode4jdemo) settings (
+  	libraryDependencies += junit % "test",
+  	libraryDependencies += specs2 % "test"
   )
 
   lazy val root = Project(id = "parent", base = file("."), settings = defaultSettings) settings (
@@ -71,5 +74,6 @@ object Dependencies {
   val guava = "com.google.guava" % "guava" % "13.0.1" // includes Cache
   val jsr305 = "com.google.code.findbugs" % "jsr305" % "2.0.1" // undeclared dep of Guava
   val specs2 = "org.specs2" %% "specs2" % "1.13"
+  val junit = "junit" % "junit" % "4.11"
   val lwjgl = "org.lwjgl.lwjgl" % "lwjgl_util" % "2.9.0"
 }

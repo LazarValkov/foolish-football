@@ -14,29 +14,28 @@
  */
 package com.github.fommil.ff.physics;
 
-import java.awt.Color;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.swing.JFrame;
+import com.github.fommil.ff.*;
+import com.github.fommil.ff.swos.PitchParser;
+import com.github.fommil.ff.swos.SpriteParser;
+import com.github.fommil.ff.swos.TacticsParser;
 import org.ode4j.drawstuff.DrawStuff;
 import org.ode4j.drawstuff.DrawStuff.dsFunctions;
 import org.ode4j.ode.DBox;
 import org.ode4j.ode.DGeom;
 import org.ode4j.ode.DSphere;
-import com.github.fommil.ff.ClassicView;
-import com.github.fommil.ff.Main;
-import com.github.fommil.ff.Pitch;
-import com.github.fommil.ff.Sprite;
-import com.github.fommil.ff.Team;
-import com.github.fommil.ff.swos.PitchParser;
-import com.github.fommil.ff.swos.SpriteParser;
-import com.github.fommil.ff.swos.TacticsParser;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * A debugging version of the game using a 3D rendered view.
+ * <p>
+ * Don't forget to extract the native libs and pass -Djava.library.path=native
  *
  * @author Samuel Halliday
  */
