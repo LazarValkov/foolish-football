@@ -12,8 +12,8 @@ object PatternsBuild extends Build {
   )
 
   lazy val defaultSettings = Defaults.defaultSettings ++ graphSettings ++ Seq(
-    scalacOptions in Compile ++= Seq("-encoding", "UTF-8", "-target:jvm-1.6", "-deprecation", "-unchecked"),
-    javacOptions in Compile ++= Seq("-source", "1.6", "-target", "1.6", "-Xlint:unchecked", "-Xlint:deprecation", "-Xlint:-options"),
+    scalacOptions in Compile ++= Seq("-encoding", "UTF-8", "-target:jvm-1.6"),
+    javacOptions in Compile ++= Seq("-source", "1.6", "-target", "1.6"),
 	// https://github.com/sbt/sbt/issues/702
 	javaOptions += "-Djava.util.logging.config.file=logging.properties",
 	javaOptions += "-Xmx2G",
@@ -32,14 +32,22 @@ object PatternsBuild extends Build {
 
   def module(dir: String) = Project(id = dir, base = file(dir), settings = defaultSettings)
   import Dependencies._
+  
+  lazy val ode4j = module("ode4j") settings (
+  )
+  
+  lazy val ode4jdemo = module("ode4jdemo") dependsOn (ode4j) settings (	  
+	  libraryDependencies += lwjgl
+  )
 
-  lazy val game = module("game") settings (
+  lazy val game = module("game") dependsOn(ode4j) settings (
     libraryDependencies += java_logging,
+    libraryDependencies += guava,
+	libraryDependencies += jsr305,
 	libraryDependencies += specs2 % "test"
   )
 
-  lazy val analysis = module("analysis") dependsOn (game) settings (
-	
+  lazy val analysis = module("analysis") dependsOn (game, ode4jdemo) settings (
   )
 
   lazy val root = Project(id = "parent", base = file("."), settings = defaultSettings) settings (
@@ -63,4 +71,5 @@ object Dependencies {
   val guava = "com.google.guava" % "guava" % "13.0.1" // includes Cache
   val jsr305 = "com.google.code.findbugs" % "jsr305" % "2.0.1" // undeclared dep of Guava
   val specs2 = "org.specs2" %% "specs2" % "1.13"
+  val lwjgl = "org.lwjgl.lwjgl" % "lwjgl_util" % "2.9.0"
 }

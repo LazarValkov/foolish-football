@@ -1,0 +1,5 @@
+Taken from http://www.ode4j.org because there is no Maven distribution.
+
+Version ode4j-0.12.0-j1.4 with tweaks so it compiles (including converting to UTF-8).
+
+Distributed under the LGPL.
