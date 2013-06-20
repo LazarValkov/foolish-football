@@ -1,10 +1,10 @@
 Foolish Football
 ================
 
-Java clone of [Sensible Soccer](http://en.wikipedia.org/wiki/Sensible_Soccer_(series)), with aspirations to clone SWOS.
+Java clone of [Sensible Soccer](http://en.wikipedia.org/wiki/Sensible_Soccer_(series\)), with aspirations to clone SWOS.
 
 
-[![Foolish Football Screenshot](http://i1.ytimg.com/vi/mnLGjXrfbUs/2.jpg?time=1371768993839)](http://youtu.be/mnLGjXrfbUs)
+[![Foolish Football Screenshot](http://i40.tinypic.com/fk0h1g.jpg)](http://youtu.be/mnLGjXrfbUs)
 
 *(click image for a video of an old version of the application)*
 
