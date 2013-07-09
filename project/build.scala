@@ -33,22 +33,17 @@ object PatternsBuild extends Build {
   def module(dir: String) = Project(id = dir, base = file(dir), settings = defaultSettings)
   import Dependencies._
   
-  lazy val ode4j = module("ode4j") settings (
-  )
-  
-  lazy val ode4jdemo = module("ode4jdemo") dependsOn (ode4j) settings (	  
-	  libraryDependencies += lwjgl
-  )
-
-  lazy val game = module("game") dependsOn(ode4j) settings (
+  lazy val game = module("game") settings (
     libraryDependencies += java_logging,
     libraryDependencies += guava,
 	libraryDependencies += jsr305,
+	libraryDependencies += ode4j,
 	libraryDependencies += junit % "test",
 	libraryDependencies += specs2 % "test"
   )
 
-  lazy val analysis = module("analysis") dependsOn (game, ode4jdemo) settings (
+  lazy val analysis = module("analysis") dependsOn (game) settings (
+  	libraryDependencies += ode4j_demo,
   	libraryDependencies += junit % "test",
   	libraryDependencies += specs2 % "test"
   )
@@ -75,5 +70,7 @@ object Dependencies {
   val jsr305 = "com.google.code.findbugs" % "jsr305" % "2.0.1" // undeclared dep of Guava
   val specs2 = "org.specs2" %% "specs2" % "1.13"
   val junit = "junit" % "junit" % "4.11"
-  val lwjgl = "org.lwjgl.lwjgl" % "lwjgl_util" % "2.9.0"
+  val ode4j = "org.ode4j" % "core" % "0.2.6-SNAPSHOT"
+  val ode4j_demo = "org.ode4j" % "demo" % "0.2.6-SNAPSHOT"
+  
 }
