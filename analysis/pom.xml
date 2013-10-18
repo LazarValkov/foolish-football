@@ -13,10 +13,15 @@
     <artifactId>analysis</artifactId>
     <packaging>jar</packaging>
 
+    <properties>
+        <exec.mainClass>com.github.fommil.ff.physics.GamePhysicsGL</exec.mainClass>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.github.fommil.ff</groupId>
             <artifactId>game</artifactId>
+            <version>${project.parent.version}</version>
         </dependency>
         <dependency>
             <groupId>org.ode4j</groupId>
@@ -29,6 +34,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>com.googlecode.mavennatives</groupId>
+                <artifactId>maven-nativedependencies-plugin</artifactId>
             </plugin>
         </plugins>
     </build>

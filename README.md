@@ -16,7 +16,22 @@ Foolish Football is in *alpha* status and users will likely have to be technical
 
 A prerequisite is a copy of the file named `Sensible World of Soccer 96-97 (1996)(Sensible Software).zip` (md5 `87f967b9f04a03ff6cfbc1a1ff97cbef`) or similar, which should be extracted into the folder referenced in the `Main` class.
 
-SBT is the build tool and plugins exist for all popular IDEs. `sbt run` should be enough to start the main application, `ESC` to get out.
+We are using Maven for the build system
+
+```
+mvn -pl game compile
+mvn -pl game exec:exec
+```
+
+And to run the 3D Analysis module:
+
+```
+mvn -pl analysis compile
+mvn -pl analysis exec:exec
+```
+
+
+
 
 **If you don't understand these instructions, it is highly likely that you are *not* a suitable *alpha* tester – please come back when the application is in *beta*.**
 

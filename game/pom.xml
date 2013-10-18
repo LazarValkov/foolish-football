@@ -15,7 +15,6 @@
     
     <properties>
             <exec.mainClass>com.github.fommil.ff.Main</exec.mainClass>
-            <exec.args>-ea -Djava.util.logging.config.file=logging.properties -Xdock:name="Foolish Football" -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode</exec.args>
     </properties>
 
     <dependencies>

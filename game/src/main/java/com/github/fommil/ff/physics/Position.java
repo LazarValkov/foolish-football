@@ -16,10 +16,11 @@ package com.github.fommil.ff.physics;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import javax.vecmath.Vector3d;
 import org.ode4j.math.DVector3;
-import static java.lang.Math.*;
 import org.ode4j.math.DVector3C;
+
+import static java.lang.Math.pow;
+import static java.lang.Math.sqrt;
 
 /**
  * Container class describing the (x, y, z) position of an object. Used so that the physics engine
@@ -53,18 +54,6 @@ public final class Position {
 	// implementation specific convertor
 	DVector3 toDVector() {
 		return new DVector3(x, y, z);
-	}
-
-	// implementation specific constructor
-	@Deprecated
-	Position(Vector3d vector) {
-		this(vector.x, vector.y, vector.z);
-	}
-
-	// implementation specific convertor
-	@Deprecated
-	Vector3d toVector3d() {
-		return new Vector3d(x, y, z);
 	}
 
 	/**

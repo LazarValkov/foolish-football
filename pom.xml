@@ -191,6 +191,45 @@
                         <argLine>-Xmx2g</argLine>
                     </configuration>
                 </plugin>
+                <plugin>
+                    <groupId>com.googlecode.mavennatives</groupId>
+                    <artifactId>maven-nativedependencies-plugin</artifactId>
+                    <version>0.0.5</version>
+                    <executions>
+                        <execution>
+                            <id>unpacknatives</id>
+                            <phase>generate-resources</phase>
+                            <goals>
+                                <goal>copy</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <version>1.2.1</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>exec</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <executable>java</executable>
+                        <arguments>
+                            <argument>-ea</argument>
+                            <argument>-Djava.util.logging.config.file=logging.properties</argument>
+                            <argument>-XX:+UseConcMarkSweepGC</argument>
+                            <argument>-XX:+CMSIncrementalMode</argument>
+                            <argument>-Djava.library.path=native</argument>
+                            <argument>-classpath</argument>
+                            <classpath/>
+                            <argument>${exec.mainClass}</argument>
+                        </arguments>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>

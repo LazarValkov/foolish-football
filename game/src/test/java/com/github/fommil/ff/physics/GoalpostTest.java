@@ -14,12 +14,10 @@
  */
 package com.github.fommil.ff.physics;
 
-import java.util.logging.Logger;
-import javax.media.j3d.BoundingBox;
-import org.junit.Test;
 import com.github.fommil.ff.Direction;
 import com.github.fommil.ff.Pitch;
-import static org.junit.Assert.*;
+
+import java.util.logging.Logger;
 
 /**
  * @author Samuel Halliday
@@ -49,10 +47,5 @@ public class GoalpostTest {
 			stepTest.test(ball.getPosition(), ball.getVelocity());
 		}
 		physics.clean();
-	}
-
-	@Test
-	public void testBounce(BoundingBox bbox, Direction direction) throws Exception {
-		fail("test not written");
 	}
 }

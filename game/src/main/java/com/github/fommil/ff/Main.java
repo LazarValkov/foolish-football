@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @SuppressWarnings("serial")
 public class Main {
 
-	public static final File SWOS = new File("data/Sensible World of Soccer 96-97");
+	public static final File SWOS = new File("../data/Sensible World of Soccer 96-97");
 
 	/**
 	 * @param args
