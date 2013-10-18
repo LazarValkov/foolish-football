@@ -20,7 +20,6 @@ import com.github.fommil.ff.swos.SpriteParser;
 import com.github.fommil.ff.swos.TacticsParser;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -87,8 +86,8 @@ public class Main {
 
 		assert gv.getKeyListeners().length > 0;
 
-		GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-		GraphicsDevice[] gs = ge.getScreenDevices();
-		gs[0].setFullScreenWindow(frame);
+//		GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+//		GraphicsDevice[] gs = ge.getScreenDevices();
+//		gs[0].setFullScreenWindow(frame);
 	}
 }
