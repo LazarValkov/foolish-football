@@ -45,7 +45,11 @@ import com.github.fommil.ff.swos.SoundParser.Fx;
  * @author Samuel Halliday
  */
 public class GamePhysics extends Physics {
-
+	public enum GameState {
+		Running
+		,ThrowIn_PlayerPositioning, ThrowIn_BallPositioning, ThrowIn_BallPickup 
+	}
+	
 	private static final Logger log = Logger.getLogger(GamePhysics.class.getName());
 
 	static final double MIN_SPEED = 0.1;
@@ -53,7 +57,10 @@ public class GamePhysics extends Physics {
 	static final double MAX_SPEED = 50;
 
 	private final GoalkeeperController goalkeeperController;
-
+	
+	private volatile GameState currentState;
+	
+	
 	@Deprecated // DEBUGGING
 	private void debugNaNs() {
 		ball.getPosition();
@@ -161,6 +168,7 @@ public class GamePhysics extends Physics {
 //		    pma.setOpponent(Direction.SOUTH);
 //			bs.add(pma);
 //		}
+		currentState = GameState.Running;
 	}
 
 	@Override
@@ -185,19 +193,54 @@ public class GamePhysics extends Physics {
 	@Override
 	protected void beforeStep() {
 		debugNaNs();
-
+		
 		for (Goalpost goal : goals) {
 			if (goal.isInside(ball)) {
 				log.info("GOAL TO " + goal.getFacing());
 				SoundParser.play(Fx.CROWD_CHEER);
 			}
 		}
-
+		
+		switch(currentState)
+		{
+		case Running:
+			beforeStep_Running();
+			break;
+		case ThrowIn_PlayerPositioning:
+			beforeStep_ThrowIn_PlayerPositioning();
+			break;
+		case ThrowIn_BallPickup:
+			break;
+		case ThrowIn_BallPositioning:
+			break;
+		default:
+			break;
+		
+		}
+		
+		selected.setActions(actions);
+		ball.setAftertouch(aftertouches);
+		ball.setDamping(0);
+	}
+	
+	private void beforeStep_ThrowIn_PlayerPositioning()
+	{
+		movePlayersTowardsTheBall(positionWhereTheBallLeftTheField, ballZoneWhereTheBallLeftTheField);
+	}
+	
+	private void beforeStep_Running()
+	{
+		checkIfBallIsOutOfPlay();
 		if (actions.contains(Action.CHANGE))
 			updateSelected();
 
 		Position bp = ball.getPosition();
 		BallZone bz = ball.getZone(pitch);
+		movePlayersTowardsTheBall(bp, bz);
+	}
+	
+	private void movePlayersTowardsTheBall(Position bp, BallZone bz)
+	{
 		for (Player p : getPlayers()) {
 			transition(p);
 			if (p == selected)
@@ -221,12 +264,27 @@ public class GamePhysics extends Physics {
 			}
 			p.autoPilot(target);
 		}
-
-		selected.setActions(actions);
-		ball.setAftertouch(aftertouches);
-		ball.setDamping(0);
 	}
-
+	
+	private Position positionWhereTheBallLeftTheField;
+	private BallZone ballZoneWhereTheBallLeftTheField;
+	private void checkIfBallIsOutOfPlay()
+	{
+		Position bp = ball.getPosition();
+		//check if there is a throw-in
+		if(bp.x < pitch.getPitchLowerLeft().x || bp.x > pitch.getPitchUpperRight().x)
+		{
+			currentState = GameState.ThrowIn_PlayerPositioning;
+			// TODO: Improve the calculation of this point
+			double y = bp.y;
+			double z = bp.z;
+			double x = bp.x < pitch.getPitchLowerLeft().x ? pitch.getPitchLowerLeft().x : pitch.getPitchUpperRight().x;
+			
+			positionWhereTheBallLeftTheField = new Position(x, y, z);
+			ballZoneWhereTheBallLeftTheField = new BallZone(positionWhereTheBallLeftTheField, getPitch());
+		}
+	}
+	
 	@Override
 	protected void afterStep() {
 		double ballSpeed = ball.getVelocity().speed();
