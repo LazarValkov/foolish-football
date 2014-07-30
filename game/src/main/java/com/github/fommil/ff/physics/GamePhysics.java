@@ -19,14 +19,17 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.logging.Logger;
+
 import org.ode4j.math.DVector3;
 import org.ode4j.ode.DGeom.DNearCallback;
+
 import com.github.fommil.ff.Direction;
 import com.github.fommil.ff.Pitch;
 import com.github.fommil.ff.PlayerStats;
@@ -210,33 +213,79 @@ public class GamePhysics extends Physics {
 			beforeStep_ThrowIn_PlayerPositioning();
 			break;
 		case ThrowIn_BallPickup:
+			beforeStep_Pickup();
 			break;
 		case ThrowIn_BallPositioning:
+			beforeStep_BallPositioning();
 			break;
 		default:
 			break;
 		
 		}
 		
-		selected.setActions(actions);
+		
 		ball.setAftertouch(aftertouches);
 		ball.setDamping(0);
 	}
 	
+	private void beforeStep_BallPositioning()
+	{
+		ball.setPosition(positionWhereTheBallLeftTheField);
+		ball.setVelocity(new DVector3());
+		currentState = GameState.ThrowIn_BallPickup;
+	}
+	
+	private void beforeStep_Pickup()
+	{
+		if (selected.getVelocity().speed() < MIN_SPEED)
+		{
+			if (Math.abs(selected.getPosition().x - positionWhereTheBallLeftTheField.x) > 0.6
+					|| Math.abs(selected.getPosition().y - positionWhereTheBallLeftTheField.y) > 0.3)
+			{
+				selected.autoPilot(positionWhereTheBallLeftTheField);
+				//System.out.println("x = " + Math.abs(selected.getPosition().x - positionWhereTheBallLeftTheField.x));
+				//System.out.println("y = " + Math.abs(selected.getPosition().y - positionWhereTheBallLeftTheField.y));
+			}
+			else
+			{
+				selected.setState(Player.PlayerState.THROW);
+				currentState = GameState.Running;
+				List<Action> auto = Lists.newArrayList();
+				auto.add(Action.RIGHT);
+				selected.setActions(auto);
+			}
+		}
+	}
+	
 	private void beforeStep_ThrowIn_PlayerPositioning()
 	{
+		boolean areStatic = true;
+		for (Player p : getPlayers()) {
+			if (p.getVelocity().speed() > MIN_SPEED)
+				areStatic = false;
+		}
+		if (areStatic)
+		{
+			currentState = GameState.ThrowIn_BallPositioning;
+			return;
+		}
 		movePlayersTowardsTheBall(positionWhereTheBallLeftTheField, ballZoneWhereTheBallLeftTheField);
+		
 	}
 	
 	private void beforeStep_Running()
 	{
-		checkIfBallIsOutOfPlay();
+		if (selected.getState() != Player.PlayerState.THROW)
+			checkIfBallIsOutOfPlay();
 		if (actions.contains(Action.CHANGE))
 			updateSelected();
 
 		Position bp = ball.getPosition();
 		BallZone bz = ball.getZone(pitch);
 		movePlayersTowardsTheBall(bp, bz);
+		
+		// only send actions to the selected player if the game is running
+		selected.setActions(actions);
 	}
 	
 	private void movePlayersTowardsTheBall(Position bp, BallZone bz)

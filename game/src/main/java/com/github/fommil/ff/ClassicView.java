@@ -21,6 +21,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 
 import javax.swing.*;
+
 import java.awt.*;
 import java.awt.event.KeyListener;
 import java.awt.geom.AffineTransform;
@@ -160,7 +161,8 @@ public class ClassicView extends JPanel {
 
 		// draw the ball
 		// TODO: except when throw-in
-		drawBall(g);
+		if (game.getSelected().getState() != Player.PlayerState.THROW)
+			drawBall(g);
 		//		// draw the zones
 		//		if (debugging) {
 		//			g.setColor(Color.GREEN);
